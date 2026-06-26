@@ -1,0 +1,16 @@
+node_modules/*
+!node_modules/@rbxts
+node_modules/@rbxts/*
+
+# The following were modified
+!node_modules/@rbxts/better-maid
+!node_modules/@rbxts/destroyable
+!node_modules/@rbxts/mechanism
+!node_modules/@rbxts/lemon-signal
+!node_modules/@rbxts/signal
+!node_modules/@rbxts/trash
+
+.vscode
+flamework.build
+Packages
+sourcemap.json

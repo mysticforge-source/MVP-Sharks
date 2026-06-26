@@ -1,0 +1,1 @@
+interface Workspace extends Model {}
