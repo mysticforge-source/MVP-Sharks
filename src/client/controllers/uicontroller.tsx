@@ -1,8 +1,8 @@
 import { Controller, OnStart } from "@flamework/core";
 import { Players } from "@rbxts/services"
 import Vide from "@rbxts/vide";
+import { clientMaid } from "client/clientmaid";
 import AppRoot from "client/ui/AppRoot";
-import { clientMaid } from "client/ui/sources";
 
 @Controller(
     {loadOrder: 999}

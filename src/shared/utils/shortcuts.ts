@@ -10,7 +10,8 @@ export class Us2 extends UDim2 {
         xScale: number, 
         yScale: number
     ) {
-        super(xScale,0, yScale, 0);
+        return new UDim2(xScale, 0, yScale, 0);
+        super();
     }
 };
 
@@ -19,7 +20,8 @@ export class V2 extends Vector2 {
         x: number, 
         y: number
     ) {
-        super(x, y);
+        return new Vector2(x, y);
+        super();
     }
 };
 
@@ -29,7 +31,8 @@ export class V3 extends Vector3 {
         y: number,
         z: number,
     ) {
-        super(x, y, z);
+        return new Vector3(x, y, z);
+        super();
     }
 };
 
@@ -39,10 +42,11 @@ export class Col3 extends Color3 {
         G?: number,
         B?: number
     ) {
-        super(
+        return new Color3(
             R ?? 0,
             G ?? R ?? 0,
             B ?? G ?? R ?? 0,
-        )
+        );
+        super();
     }
 };

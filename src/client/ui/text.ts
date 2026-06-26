@@ -2,7 +2,9 @@
  * Collection of text used throughout the game
  */
 export = {
-    "en-us": {
-        
+    "en": {
+        Play: "Play",
+        Shop: "Shop",
+        Settings: "Settings",
     }
 }
