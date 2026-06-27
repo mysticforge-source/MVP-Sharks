@@ -1,5 +1,4 @@
 import Vide from "@rbxts/vide"
-import { V2 } from "shared/utils/shortcuts"
 import { css } from "../theme"
 
 declare interface Props {
@@ -34,7 +33,7 @@ export = (
 
             Activated={activated}
         >
-            <uiaspectratioconstraint AspectRatio={aspectratio} />
+            <uiaspectratioconstraint AspectRatio={ratio} />
             <uistroke {...css.tittlebuttonstroke} />
             <uicorner CornerRadius={new UDim(corner, 0)} />
         </textbutton>
