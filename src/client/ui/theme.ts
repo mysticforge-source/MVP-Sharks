@@ -1,19 +1,36 @@
 // A CSS module used for storing repetitive UI properties.
 
 import Vide, { JSX } from "@rbxts/vide";
-import { Col3, Us2, V2 } from "shared/utils/shortcuts";
-
-// Repetitive template values
-export const titleButtonTextColor = Color3.fromRGB(252, 250, 250)
-export const titleButtonTextFont = Enum.Font.GothamBold
-
-export const titleButtonBgColor = Color3.fromRGB(166, 224, 242)
-
-export const titleButtonStrokeColor = Color3.fromRGB(245, 247, 247)
-export const titleButtonStroke = 0.02
 
 // The CSS object
 export const css = {
+    tittlebutton: {
+        TextColor3: Color3.fromRGB(252, 250, 250),
+        Font: Enum.Font.GothamBold,
+        AnchorPoint: new Vector2(.5, .5),
+        TextScaled: true,
+
+        Position: UDim2.fromScale(.5 ,.5),
+        Size: UDim2.fromScale(.3, .045),
+
+        BackgroundColor3: Color3.fromRGB(166, 224, 242),
+    } as css.textbutton,
+
+    tittlebuttonstroke: {
+        Color: Color3.fromRGB(245, 247, 247),
+        Thickness: 0.02,
+        StrokeSizingMode: "ScaledSize",
+        BorderStrokePosition: "Outer",
+        ApplyStrokeMode: "Border"
+    } as CSS<'uistroke'>,
+
+    listcontainerlayout: {
+        FillDirection: "Vertical",
+        SortOrder: "LayoutOrder",
+        VerticalFlex: "SpaceEvenly",
+        Padding: new UDim(.1, 0)
+    } as CSS<'uilistlayout'>,
+
     screen: {
         ResetOnSpawn: false,
         IgnoreGuiInset: true,
