@@ -14,4 +14,4 @@ node_modules/@rbxts/*
 flamework.build
 Packages
 sourcemap.json
-out
+# out
