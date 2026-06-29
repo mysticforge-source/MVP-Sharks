@@ -1,9 +1,10 @@
-import Vide from "@rbxts/vide";
-import { css } from "../theme";
-import Titlebutton from "../components/titlebutton";
-import { Menu } from "../sources";
-import text from "../text";
-import Listcontainer from "../components/listcontainer";
+import Vide from '@rbxts/vide';
+
+import Listcontainer from '../components/listcontainer';
+import Titlebutton from '../components/titlebutton';
+import { Menu } from '../sources';
+import { text } from '../text';
+import { css } from '../theme';
 
 declare interface Props {
 	enabled?: Vide.Derivable<boolean>
