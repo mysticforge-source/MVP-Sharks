@@ -2,22 +2,199 @@
 export declare const sendEvents: () => void
 export type UserData = {
 	["coins"]: number,
+	["gems"]: number,
+	["revivetokens"]: number,
+	["slots"]: [{
+		["shark"]: number,
+		["dead"]: boolean,
+		["hunger"]: number,
+		["exp"]: number,
+		["level"]: number,
+	}, {
+		["shark"]: number,
+		["dead"]: boolean,
+		["hunger"]: number,
+		["exp"]: number,
+		["level"]: number,
+	}, {
+		["shark"]: number,
+		["dead"]: boolean,
+		["hunger"]: number,
+		["exp"]: number,
+		["level"]: number,
+	}],
+};
+export type SharkSlot = {
+	["shark"]: number,
+	["dead"]: boolean,
+	["hunger"]: number,
+	["exp"]: number,
+	["level"]: number,
+};
+export type PartialSharkSlot = {
+	["shark"]?: number | undefined,
+	["dead"]?: boolean | undefined,
+	["hunger"]?: number | undefined,
+	["exp"]?: number | undefined,
+	["level"]?: number | undefined,
 };
 
-export declare const PlayerData: {
+export declare const SlotDeltaEvent: {
+	fire: (player: Player, value: {
+		["shark"]?: number | undefined,
+		["dead"]?: boolean | undefined,
+		["hunger"]?: number | undefined,
+		["exp"]?: number | undefined,
+		["level"]?: number | undefined,
+	}) => void;
+	fireAll: (value: {
+		["shark"]?: number | undefined,
+		["dead"]?: boolean | undefined,
+		["hunger"]?: number | undefined,
+		["exp"]?: number | undefined,
+		["level"]?: number | undefined,
+	}) => void;
+	fireExcept: (except: Player, value: {
+		["shark"]?: number | undefined,
+		["dead"]?: boolean | undefined,
+		["hunger"]?: number | undefined,
+		["exp"]?: number | undefined,
+		["level"]?: number | undefined,
+	}) => void;
+	fireList: (list: Player[] | Record<string | number | symbol, Player> | Map<unknown, Player>, value: {
+		["shark"]?: number | undefined,
+		["dead"]?: boolean | undefined,
+		["hunger"]?: number | undefined,
+		["exp"]?: number | undefined,
+		["level"]?: number | undefined,
+	}) => void;
+	fireSet: (set: Set<Player> | Map<Player, unknown>, value: {
+		["shark"]?: number | undefined,
+		["dead"]?: boolean | undefined,
+		["hunger"]?: number | undefined,
+		["exp"]?: number | undefined,
+		["level"]?: number | undefined,
+	}) => void
+};
+export declare const PlayerDataEvent: {
 	fire: (player: Player, value: {
 		["coins"]: number,
+		["gems"]: number,
+		["revivetokens"]: number,
+		["slots"]: [{
+			["shark"]: number,
+			["dead"]: boolean,
+			["hunger"]: number,
+			["exp"]: number,
+			["level"]: number,
+		}, {
+			["shark"]: number,
+			["dead"]: boolean,
+			["hunger"]: number,
+			["exp"]: number,
+			["level"]: number,
+		}, {
+			["shark"]: number,
+			["dead"]: boolean,
+			["hunger"]: number,
+			["exp"]: number,
+			["level"]: number,
+		}],
 	}) => void;
 	fireAll: (value: {
 		["coins"]: number,
+		["gems"]: number,
+		["revivetokens"]: number,
+		["slots"]: [{
+			["shark"]: number,
+			["dead"]: boolean,
+			["hunger"]: number,
+			["exp"]: number,
+			["level"]: number,
+		}, {
+			["shark"]: number,
+			["dead"]: boolean,
+			["hunger"]: number,
+			["exp"]: number,
+			["level"]: number,
+		}, {
+			["shark"]: number,
+			["dead"]: boolean,
+			["hunger"]: number,
+			["exp"]: number,
+			["level"]: number,
+		}],
 	}) => void;
 	fireExcept: (except: Player, value: {
 		["coins"]: number,
+		["gems"]: number,
+		["revivetokens"]: number,
+		["slots"]: [{
+			["shark"]: number,
+			["dead"]: boolean,
+			["hunger"]: number,
+			["exp"]: number,
+			["level"]: number,
+		}, {
+			["shark"]: number,
+			["dead"]: boolean,
+			["hunger"]: number,
+			["exp"]: number,
+			["level"]: number,
+		}, {
+			["shark"]: number,
+			["dead"]: boolean,
+			["hunger"]: number,
+			["exp"]: number,
+			["level"]: number,
+		}],
 	}) => void;
 	fireList: (list: Player[] | Record<string | number | symbol, Player> | Map<unknown, Player>, value: {
 		["coins"]: number,
+		["gems"]: number,
+		["revivetokens"]: number,
+		["slots"]: [{
+			["shark"]: number,
+			["dead"]: boolean,
+			["hunger"]: number,
+			["exp"]: number,
+			["level"]: number,
+		}, {
+			["shark"]: number,
+			["dead"]: boolean,
+			["hunger"]: number,
+			["exp"]: number,
+			["level"]: number,
+		}, {
+			["shark"]: number,
+			["dead"]: boolean,
+			["hunger"]: number,
+			["exp"]: number,
+			["level"]: number,
+		}],
 	}) => void;
 	fireSet: (set: Set<Player> | Map<Player, unknown>, value: {
 		["coins"]: number,
+		["gems"]: number,
+		["revivetokens"]: number,
+		["slots"]: [{
+			["shark"]: number,
+			["dead"]: boolean,
+			["hunger"]: number,
+			["exp"]: number,
+			["level"]: number,
+		}, {
+			["shark"]: number,
+			["dead"]: boolean,
+			["hunger"]: number,
+			["exp"]: number,
+			["level"]: number,
+		}, {
+			["shark"]: number,
+			["dead"]: boolean,
+			["hunger"]: number,
+			["exp"]: number,
+			["level"]: number,
+		}],
 	}) => void
 };

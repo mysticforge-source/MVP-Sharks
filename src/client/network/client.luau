@@ -132,7 +132,10 @@ if not RunService:IsRunning() then
 	local noop = function() end
 	return table.freeze({
 		sendEvents = noop,
-		PlayerData = table.freeze({
+		SlotDeltaEvent = table.freeze({
+			on = noop
+		}),
+		PlayerDataEvent = table.freeze({
 			on = noop
 		}),
 	}) :: Events
@@ -144,6 +147,29 @@ assert(reliable:IsA("RemoteEvent"), "Expected ZAP_RELIABLE to be a RemoteEvent")
 
 export type UserData = ({
 	["coins"]: (number),
+	["gems"]: (number),
+	["revivetokens"]: (number),
+	["slots"]: ({ ({
+		["shark"]: (number),
+		["dead"]: (boolean),
+		["hunger"]: (number),
+		["exp"]: (number),
+		["level"]: (number),
+	}) }),
+})
+export type SharkSlot = ({
+	["shark"]: (number),
+	["dead"]: (boolean),
+	["hunger"]: (number),
+	["exp"]: (number),
+	["level"]: (number),
+})
+export type PartialSharkSlot = ({
+	["shark"]: ((number)?),
+	["dead"]: ((boolean)?),
+	["hunger"]: ((number)?),
+	["exp"]: ((number)?),
+	["level"]: ((number)?),
 })
 
 local function sendEvents()
@@ -164,8 +190,10 @@ end
 
 RunService.Heartbeat:Connect(sendEvents)
 
-local reliable_events = table.create(1)
-local reliable_event_queue: { [number]: { any } } = table.create(1)
+local reliable_events = table.create(2)
+local reliable_event_queue: { [number]: { any } } = table.create(2)
+reliable_events[1] = {}
+reliable_event_queue[1] = {}
 reliable_events[0] = {}
 reliable_event_queue[0] = {}
 reliable.OnClientEvent:Connect(function(buff, inst)
@@ -177,24 +205,104 @@ reliable.OnClientEvent:Connect(function(buff, inst)
 	local len = buffer.len(buff)
 	while incoming_read < len do
 		local id = buffer.readu8(buff, read(1))
-		if id == 0 then -- PlayerData
-			debug.profilebegin("PlayerData Deserialize")
+		if id == 1 then -- SlotDeltaEvent
+			debug.profilebegin("SlotDeltaEvent Deserialize")
 			local value
+			local bool_1 = buffer.readu8(incoming_buff, read(1))
 			value = {  }
-			value["coins"] = buffer.readu8(incoming_buff, read(1))
-			assert(value["coins"] >= 0, "value is less than 0!")
-			assert(value["coins"] <= 200, "value is more than 200!")
+			if bit32.btest(bool_1, 0b0000000000000001) then
+				value["shark"] = buffer.readu8(incoming_buff, read(1))
+			else
+				value["shark"] = nil
+			end
+			if bit32.btest(bool_1, 0b0000000000000010) then
+				value["dead"] = bit32.btest(bool_1, 0b0000000000000100)
+			else
+				value["dead"] = nil
+			end
+			if bit32.btest(bool_1, 0b0000000000001000) then
+				value["hunger"] = buffer.readu8(incoming_buff, read(1))
+				assert(value["hunger"] >= 0, "value is less than 0!")
+				assert(value["hunger"] <= 100, "value is more than 100!")
+			else
+				value["hunger"] = nil
+			end
+			if bit32.btest(bool_1, 0b0000000000010000) then
+				value["exp"] = buffer.readu8(incoming_buff, read(1))
+				assert(value["exp"] >= 0, "value is less than 0!")
+				assert(value["exp"] <= 100, "value is more than 100!")
+			else
+				value["exp"] = nil
+			end
+			if bit32.btest(bool_1, 0b0000000000100000) then
+				value["level"] = buffer.readu8(incoming_buff, read(1))
+			else
+				value["level"] = nil
+			end
+			debug.profileend()
+			if reliable_events[1][1] then
+				for _, cb in reliable_events[1] do
+					debug.profilebegin("SlotDeltaEvent Callback")
+					task.spawn(cb, value)
+					debug.profileend()
+				end
+			else
+				table.insert(reliable_event_queue[1], value)
+				if #reliable_event_queue[1] > 64 then
+					warn(`[ZAP] {#reliable_event_queue[1]} events in queue for SlotDeltaEvent. Did you forget to attach a listener?`)
+				end
+			end
+		elseif id == 0 then -- PlayerDataEvent
+			debug.profilebegin("PlayerDataEvent Deserialize")
+			local value
+			local bool_2 = buffer.readu8(incoming_buff, read(1))
+			value = {  }
+			value["coins"] = buffer.readu32(incoming_buff, read(4))
+			assert(value["coins"] <= 100000, "value is more than 100000!")
+			value["gems"] = buffer.readu16(incoming_buff, read(2))
+			value["revivetokens"] = buffer.readu8(incoming_buff, read(1))
+			value["slots"] = table.create(3)
+			value["slots"][1] = {  }
+			value["slots"][1]["shark"] = buffer.readu8(incoming_buff, read(1))
+			value["slots"][1]["dead"] = bit32.btest(bool_2, 0b0000000000000001)
+			value["slots"][1]["hunger"] = buffer.readu8(incoming_buff, read(1))
+			assert(value["slots"][1]["hunger"] >= 0, "value is less than 0!")
+			assert(value["slots"][1]["hunger"] <= 100, "value is more than 100!")
+			value["slots"][1]["exp"] = buffer.readu8(incoming_buff, read(1))
+			assert(value["slots"][1]["exp"] >= 0, "value is less than 0!")
+			assert(value["slots"][1]["exp"] <= 100, "value is more than 100!")
+			value["slots"][1]["level"] = buffer.readu8(incoming_buff, read(1))
+			value["slots"][2] = {  }
+			value["slots"][2]["shark"] = buffer.readu8(incoming_buff, read(1))
+			value["slots"][2]["dead"] = bit32.btest(bool_2, 0b0000000000000010)
+			value["slots"][2]["hunger"] = buffer.readu8(incoming_buff, read(1))
+			assert(value["slots"][2]["hunger"] >= 0, "value is less than 0!")
+			assert(value["slots"][2]["hunger"] <= 100, "value is more than 100!")
+			value["slots"][2]["exp"] = buffer.readu8(incoming_buff, read(1))
+			assert(value["slots"][2]["exp"] >= 0, "value is less than 0!")
+			assert(value["slots"][2]["exp"] <= 100, "value is more than 100!")
+			value["slots"][2]["level"] = buffer.readu8(incoming_buff, read(1))
+			value["slots"][3] = {  }
+			value["slots"][3]["shark"] = buffer.readu8(incoming_buff, read(1))
+			value["slots"][3]["dead"] = bit32.btest(bool_2, 0b0000000000000100)
+			value["slots"][3]["hunger"] = buffer.readu8(incoming_buff, read(1))
+			assert(value["slots"][3]["hunger"] >= 0, "value is less than 0!")
+			assert(value["slots"][3]["hunger"] <= 100, "value is more than 100!")
+			value["slots"][3]["exp"] = buffer.readu8(incoming_buff, read(1))
+			assert(value["slots"][3]["exp"] >= 0, "value is less than 0!")
+			assert(value["slots"][3]["exp"] <= 100, "value is more than 100!")
+			value["slots"][3]["level"] = buffer.readu8(incoming_buff, read(1))
 			debug.profileend()
 			if reliable_events[0][1] then
 				for _, cb in reliable_events[0] do
-					debug.profilebegin("PlayerData Callback")
+					debug.profilebegin("PlayerDataEvent Callback")
 					task.spawn(cb, value)
 					debug.profileend()
 				end
 			else
 				table.insert(reliable_event_queue[0], value)
 				if #reliable_event_queue[0] > 64 then
-					warn(`[ZAP] {#reliable_event_queue[0]} events in queue for PlayerData. Did you forget to attach a listener?`)
+					warn(`[ZAP] {#reliable_event_queue[0]} events in queue for PlayerDataEvent. Did you forget to attach a listener?`)
 				end
 			end
 		else
@@ -208,13 +316,42 @@ table.freeze(polling_queues_unreliable)
 
 local returns = {
 	sendEvents = sendEvents,
-	PlayerData = {
+	SlotDeltaEvent = {
+		on = function(callback: (value: ({
+			["shark"]: ((number)?),
+			["dead"]: ((boolean)?),
+			["hunger"]: ((number)?),
+			["exp"]: ((number)?),
+			["level"]: ((number)?),
+		})) -> ())
+			table.insert(reliable_events[1], callback)
+			for _, value in reliable_event_queue[1] do
+				debug.profilebegin("SlotDeltaEvent Callback")
+				task.spawn(callback, value)
+				debug.profileend()
+			end
+			reliable_event_queue[1] = {}
+			return function()
+				table.remove(reliable_events[1], table.find(reliable_events[1], callback))
+			end
+		end,
+	},
+	PlayerDataEvent = {
 		on = function(callback: (value: ({
 			["coins"]: (number),
+			["gems"]: (number),
+			["revivetokens"]: (number),
+			["slots"]: ({ ({
+				["shark"]: (number),
+				["dead"]: (boolean),
+				["hunger"]: (number),
+				["exp"]: (number),
+				["level"]: (number),
+			}) }),
 		})) -> ())
 			table.insert(reliable_events[0], callback)
 			for _, value in reliable_event_queue[0] do
-				debug.profilebegin("PlayerData Callback")
+				debug.profilebegin("PlayerDataEvent Callback")
 				task.spawn(callback, value)
 				debug.profileend()
 			end

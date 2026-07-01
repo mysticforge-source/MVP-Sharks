@@ -134,7 +134,14 @@ if not RunService:IsRunning() then
 	local noop = function() end
 	return table.freeze({
 		sendEvents = noop,
-		PlayerData = table.freeze({
+		SlotDeltaEvent = table.freeze({
+			fire = noop,
+			fireAll = noop,
+			fireExcept = noop,
+			fireList = noop,
+			fireSet = noop
+		}),
+		PlayerDataEvent = table.freeze({
 			fire = noop,
 			fireAll = noop,
 			fireExcept = noop,
@@ -173,6 +180,29 @@ Players.PlayerRemoving:Connect(function(player)
 end)
 export type UserData = ({
 	["coins"]: (number),
+	["gems"]: (number),
+	["revivetokens"]: (number),
+	["slots"]: ({ ({
+		["shark"]: (number),
+		["dead"]: (boolean),
+		["hunger"]: (number),
+		["exp"]: (number),
+		["level"]: (number),
+	}) }),
+})
+export type SharkSlot = ({
+	["shark"]: (number),
+	["dead"]: (boolean),
+	["hunger"]: (number),
+	["exp"]: (number),
+	["level"]: (number),
+})
+export type PartialSharkSlot = ({
+	["shark"]: ((number)?),
+	["dead"]: ((boolean)?),
+	["hunger"]: ((number)?),
+	["exp"]: ((number)?),
+	["level"]: ((number)?),
 })
 
 local function sendEvents()
@@ -200,32 +230,421 @@ table.freeze(polling_queues_unreliable)
 
 local returns = {
 	sendEvents = sendEvents,
-	PlayerData = {
+	SlotDeltaEvent = {
+		fire = function(player: Player, value: ({
+			["shark"]: ((number)?),
+			["dead"]: ((boolean)?),
+			["hunger"]: ((number)?),
+			["exp"]: ((number)?),
+			["level"]: ((number)?),
+		}))
+			debug.profilebegin("SlotDeltaEvent Fire")
+			load_player(player)
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, 1)
+			local bool_1 = 0
+			local bool_1_pos_1 = alloc(1)
+			if value["shark"] ~= nil then
+				bool_1 = bit32.bor(bool_1, 0b0000000000000001)
+				alloc(1)
+				buffer.writeu8(outgoing_buff, outgoing_apos, value["shark"])
+			end
+			if value["dead"] ~= nil then
+				bool_1 = bit32.bor(bool_1, 0b0000000000000010)
+				if value["dead"] then
+					bool_1 = bit32.bor(bool_1, 0b0000000000000100)
+				end
+			end
+			if value["hunger"] ~= nil then
+				bool_1 = bit32.bor(bool_1, 0b0000000000001000)
+				assert(value["hunger"] >= 0, "value is less than 0!")
+				assert(value["hunger"] <= 100, "value is more than 100!")
+				alloc(1)
+				buffer.writeu8(outgoing_buff, outgoing_apos, value["hunger"])
+			end
+			if value["exp"] ~= nil then
+				bool_1 = bit32.bor(bool_1, 0b0000000000010000)
+				assert(value["exp"] >= 0, "value is less than 0!")
+				assert(value["exp"] <= 100, "value is more than 100!")
+				alloc(1)
+				buffer.writeu8(outgoing_buff, outgoing_apos, value["exp"])
+			end
+			if value["level"] ~= nil then
+				bool_1 = bit32.bor(bool_1, 0b0000000000100000)
+				alloc(1)
+				buffer.writeu8(outgoing_buff, outgoing_apos, value["level"])
+			end
+			buffer.writeu8(outgoing_buff, bool_1_pos_1, bool_1)
+			player_map[player] = save()
+			debug.profileend()
+		end,
+		fireAll = function(value: ({
+			["shark"]: ((number)?),
+			["dead"]: ((boolean)?),
+			["hunger"]: ((number)?),
+			["exp"]: ((number)?),
+			["level"]: ((number)?),
+		}))
+			debug.profilebegin("SlotDeltaEvent FireAll")
+			load_empty()
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, 1)
+			local bool_2 = 0
+			local bool_2_pos_1 = alloc(1)
+			if value["shark"] ~= nil then
+				bool_2 = bit32.bor(bool_2, 0b0000000000000001)
+				alloc(1)
+				buffer.writeu8(outgoing_buff, outgoing_apos, value["shark"])
+			end
+			if value["dead"] ~= nil then
+				bool_2 = bit32.bor(bool_2, 0b0000000000000010)
+				if value["dead"] then
+					bool_2 = bit32.bor(bool_2, 0b0000000000000100)
+				end
+			end
+			if value["hunger"] ~= nil then
+				bool_2 = bit32.bor(bool_2, 0b0000000000001000)
+				assert(value["hunger"] >= 0, "value is less than 0!")
+				assert(value["hunger"] <= 100, "value is more than 100!")
+				alloc(1)
+				buffer.writeu8(outgoing_buff, outgoing_apos, value["hunger"])
+			end
+			if value["exp"] ~= nil then
+				bool_2 = bit32.bor(bool_2, 0b0000000000010000)
+				assert(value["exp"] >= 0, "value is less than 0!")
+				assert(value["exp"] <= 100, "value is more than 100!")
+				alloc(1)
+				buffer.writeu8(outgoing_buff, outgoing_apos, value["exp"])
+			end
+			if value["level"] ~= nil then
+				bool_2 = bit32.bor(bool_2, 0b0000000000100000)
+				alloc(1)
+				buffer.writeu8(outgoing_buff, outgoing_apos, value["level"])
+			end
+			buffer.writeu8(outgoing_buff, bool_2_pos_1, bool_2)
+			local buff, used, inst = outgoing_buff, outgoing_used, outgoing_inst
+			for _, player in Players:GetPlayers() do
+				load_player(player)
+				alloc(used)
+				buffer.copy(outgoing_buff, outgoing_apos, buff, 0, used)
+				table.move(inst, 1, #inst, #outgoing_inst + 1, outgoing_inst)
+				player_map[player] = save()
+			end
+			debug.profileend()
+		end,
+		fireExcept = function(except: Player, value: ({
+			["shark"]: ((number)?),
+			["dead"]: ((boolean)?),
+			["hunger"]: ((number)?),
+			["exp"]: ((number)?),
+			["level"]: ((number)?),
+		}))
+			debug.profilebegin("SlotDeltaEvent FireExcept")
+			load_empty()
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, 1)
+			local bool_3 = 0
+			local bool_3_pos_1 = alloc(1)
+			if value["shark"] ~= nil then
+				bool_3 = bit32.bor(bool_3, 0b0000000000000001)
+				alloc(1)
+				buffer.writeu8(outgoing_buff, outgoing_apos, value["shark"])
+			end
+			if value["dead"] ~= nil then
+				bool_3 = bit32.bor(bool_3, 0b0000000000000010)
+				if value["dead"] then
+					bool_3 = bit32.bor(bool_3, 0b0000000000000100)
+				end
+			end
+			if value["hunger"] ~= nil then
+				bool_3 = bit32.bor(bool_3, 0b0000000000001000)
+				assert(value["hunger"] >= 0, "value is less than 0!")
+				assert(value["hunger"] <= 100, "value is more than 100!")
+				alloc(1)
+				buffer.writeu8(outgoing_buff, outgoing_apos, value["hunger"])
+			end
+			if value["exp"] ~= nil then
+				bool_3 = bit32.bor(bool_3, 0b0000000000010000)
+				assert(value["exp"] >= 0, "value is less than 0!")
+				assert(value["exp"] <= 100, "value is more than 100!")
+				alloc(1)
+				buffer.writeu8(outgoing_buff, outgoing_apos, value["exp"])
+			end
+			if value["level"] ~= nil then
+				bool_3 = bit32.bor(bool_3, 0b0000000000100000)
+				alloc(1)
+				buffer.writeu8(outgoing_buff, outgoing_apos, value["level"])
+			end
+			buffer.writeu8(outgoing_buff, bool_3_pos_1, bool_3)
+			local buff, used, inst = outgoing_buff, outgoing_used, outgoing_inst
+			for _, player in Players:GetPlayers() do
+				if player ~= except then
+					load_player(player)
+					alloc(used)
+					buffer.copy(outgoing_buff, outgoing_apos, buff, 0, used)
+					table.move(inst, 1, #inst, #outgoing_inst + 1, outgoing_inst)
+					player_map[player] = save()
+				end
+			end
+			debug.profileend()
+		end,
+		fireList = function(list: { [unknown]: Player }, value: ({
+			["shark"]: ((number)?),
+			["dead"]: ((boolean)?),
+			["hunger"]: ((number)?),
+			["exp"]: ((number)?),
+			["level"]: ((number)?),
+		}))
+			debug.profilebegin("SlotDeltaEvent FireList")
+			load_empty()
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, 1)
+			local bool_4 = 0
+			local bool_4_pos_1 = alloc(1)
+			if value["shark"] ~= nil then
+				bool_4 = bit32.bor(bool_4, 0b0000000000000001)
+				alloc(1)
+				buffer.writeu8(outgoing_buff, outgoing_apos, value["shark"])
+			end
+			if value["dead"] ~= nil then
+				bool_4 = bit32.bor(bool_4, 0b0000000000000010)
+				if value["dead"] then
+					bool_4 = bit32.bor(bool_4, 0b0000000000000100)
+				end
+			end
+			if value["hunger"] ~= nil then
+				bool_4 = bit32.bor(bool_4, 0b0000000000001000)
+				assert(value["hunger"] >= 0, "value is less than 0!")
+				assert(value["hunger"] <= 100, "value is more than 100!")
+				alloc(1)
+				buffer.writeu8(outgoing_buff, outgoing_apos, value["hunger"])
+			end
+			if value["exp"] ~= nil then
+				bool_4 = bit32.bor(bool_4, 0b0000000000010000)
+				assert(value["exp"] >= 0, "value is less than 0!")
+				assert(value["exp"] <= 100, "value is more than 100!")
+				alloc(1)
+				buffer.writeu8(outgoing_buff, outgoing_apos, value["exp"])
+			end
+			if value["level"] ~= nil then
+				bool_4 = bit32.bor(bool_4, 0b0000000000100000)
+				alloc(1)
+				buffer.writeu8(outgoing_buff, outgoing_apos, value["level"])
+			end
+			buffer.writeu8(outgoing_buff, bool_4_pos_1, bool_4)
+			local buff, used, inst = outgoing_buff, outgoing_used, outgoing_inst
+			for _, player in list do
+				load_player(player)
+				alloc(used)
+				buffer.copy(outgoing_buff, outgoing_apos, buff, 0, used)
+				table.move(inst, 1, #inst, #outgoing_inst + 1, outgoing_inst)
+				player_map[player] = save()
+			end
+			debug.profileend()
+		end,
+		fireSet = function(set: { [Player]: any }, value: ({
+			["shark"]: ((number)?),
+			["dead"]: ((boolean)?),
+			["hunger"]: ((number)?),
+			["exp"]: ((number)?),
+			["level"]: ((number)?),
+		}))
+			debug.profilebegin("SlotDeltaEvent FireSet")
+			load_empty()
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, 1)
+			local bool_5 = 0
+			local bool_5_pos_1 = alloc(1)
+			if value["shark"] ~= nil then
+				bool_5 = bit32.bor(bool_5, 0b0000000000000001)
+				alloc(1)
+				buffer.writeu8(outgoing_buff, outgoing_apos, value["shark"])
+			end
+			if value["dead"] ~= nil then
+				bool_5 = bit32.bor(bool_5, 0b0000000000000010)
+				if value["dead"] then
+					bool_5 = bit32.bor(bool_5, 0b0000000000000100)
+				end
+			end
+			if value["hunger"] ~= nil then
+				bool_5 = bit32.bor(bool_5, 0b0000000000001000)
+				assert(value["hunger"] >= 0, "value is less than 0!")
+				assert(value["hunger"] <= 100, "value is more than 100!")
+				alloc(1)
+				buffer.writeu8(outgoing_buff, outgoing_apos, value["hunger"])
+			end
+			if value["exp"] ~= nil then
+				bool_5 = bit32.bor(bool_5, 0b0000000000010000)
+				assert(value["exp"] >= 0, "value is less than 0!")
+				assert(value["exp"] <= 100, "value is more than 100!")
+				alloc(1)
+				buffer.writeu8(outgoing_buff, outgoing_apos, value["exp"])
+			end
+			if value["level"] ~= nil then
+				bool_5 = bit32.bor(bool_5, 0b0000000000100000)
+				alloc(1)
+				buffer.writeu8(outgoing_buff, outgoing_apos, value["level"])
+			end
+			buffer.writeu8(outgoing_buff, bool_5_pos_1, bool_5)
+			local buff, used, inst = outgoing_buff, outgoing_used, outgoing_inst
+			for player in set do
+				load_player(player)
+				alloc(used)
+				buffer.copy(outgoing_buff, outgoing_apos, buff, 0, used)
+				table.move(inst, 1, #inst, #outgoing_inst + 1, outgoing_inst)
+				player_map[player] = save()
+			end
+			debug.profileend()
+		end,
+	},
+	PlayerDataEvent = {
 		fire = function(player: Player, value: ({
 			["coins"]: (number),
+			["gems"]: (number),
+			["revivetokens"]: (number),
+			["slots"]: ({ ({
+				["shark"]: (number),
+				["dead"]: (boolean),
+				["hunger"]: (number),
+				["exp"]: (number),
+				["level"]: (number),
+			}) }),
 		}))
-			debug.profilebegin("PlayerData Fire")
+			debug.profilebegin("PlayerDataEvent Fire")
 			load_player(player)
 			alloc(1)
 			buffer.writeu8(outgoing_buff, outgoing_apos, 0)
-			assert(value["coins"] >= 0, "value is less than 0!")
-			assert(value["coins"] <= 200, "value is more than 200!")
+			local bool_6 = 0
+			local bool_6_pos_1 = alloc(1)
+			assert(value["coins"] <= 100000, "value is more than 100000!")
+			alloc(4)
+			buffer.writeu32(outgoing_buff, outgoing_apos, value["coins"])
+			alloc(2)
+			buffer.writeu16(outgoing_buff, outgoing_apos, value["gems"])
 			alloc(1)
-			buffer.writeu8(outgoing_buff, outgoing_apos, value["coins"])
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["revivetokens"])
+			assert(#value["slots"] == 3, "length is not equal to 3!")
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][1]["shark"])
+			if value["slots"][1]["dead"] then
+				bool_6 = bit32.bor(bool_6, 0b0000000000000001)
+			end
+			assert(value["slots"][1]["hunger"] >= 0, "value is less than 0!")
+			assert(value["slots"][1]["hunger"] <= 100, "value is more than 100!")
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][1]["hunger"])
+			assert(value["slots"][1]["exp"] >= 0, "value is less than 0!")
+			assert(value["slots"][1]["exp"] <= 100, "value is more than 100!")
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][1]["exp"])
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][1]["level"])
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][2]["shark"])
+			if value["slots"][2]["dead"] then
+				bool_6 = bit32.bor(bool_6, 0b0000000000000010)
+			end
+			assert(value["slots"][2]["hunger"] >= 0, "value is less than 0!")
+			assert(value["slots"][2]["hunger"] <= 100, "value is more than 100!")
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][2]["hunger"])
+			assert(value["slots"][2]["exp"] >= 0, "value is less than 0!")
+			assert(value["slots"][2]["exp"] <= 100, "value is more than 100!")
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][2]["exp"])
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][2]["level"])
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][3]["shark"])
+			if value["slots"][3]["dead"] then
+				bool_6 = bit32.bor(bool_6, 0b0000000000000100)
+			end
+			assert(value["slots"][3]["hunger"] >= 0, "value is less than 0!")
+			assert(value["slots"][3]["hunger"] <= 100, "value is more than 100!")
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][3]["hunger"])
+			assert(value["slots"][3]["exp"] >= 0, "value is less than 0!")
+			assert(value["slots"][3]["exp"] <= 100, "value is more than 100!")
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][3]["exp"])
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][3]["level"])
+			buffer.writeu8(outgoing_buff, bool_6_pos_1, bool_6)
 			player_map[player] = save()
 			debug.profileend()
 		end,
 		fireAll = function(value: ({
 			["coins"]: (number),
+			["gems"]: (number),
+			["revivetokens"]: (number),
+			["slots"]: ({ ({
+				["shark"]: (number),
+				["dead"]: (boolean),
+				["hunger"]: (number),
+				["exp"]: (number),
+				["level"]: (number),
+			}) }),
 		}))
-			debug.profilebegin("PlayerData FireAll")
+			debug.profilebegin("PlayerDataEvent FireAll")
 			load_empty()
 			alloc(1)
 			buffer.writeu8(outgoing_buff, outgoing_apos, 0)
-			assert(value["coins"] >= 0, "value is less than 0!")
-			assert(value["coins"] <= 200, "value is more than 200!")
+			local bool_7 = 0
+			local bool_7_pos_1 = alloc(1)
+			assert(value["coins"] <= 100000, "value is more than 100000!")
+			alloc(4)
+			buffer.writeu32(outgoing_buff, outgoing_apos, value["coins"])
+			alloc(2)
+			buffer.writeu16(outgoing_buff, outgoing_apos, value["gems"])
 			alloc(1)
-			buffer.writeu8(outgoing_buff, outgoing_apos, value["coins"])
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["revivetokens"])
+			assert(#value["slots"] == 3, "length is not equal to 3!")
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][1]["shark"])
+			if value["slots"][1]["dead"] then
+				bool_7 = bit32.bor(bool_7, 0b0000000000000001)
+			end
+			assert(value["slots"][1]["hunger"] >= 0, "value is less than 0!")
+			assert(value["slots"][1]["hunger"] <= 100, "value is more than 100!")
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][1]["hunger"])
+			assert(value["slots"][1]["exp"] >= 0, "value is less than 0!")
+			assert(value["slots"][1]["exp"] <= 100, "value is more than 100!")
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][1]["exp"])
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][1]["level"])
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][2]["shark"])
+			if value["slots"][2]["dead"] then
+				bool_7 = bit32.bor(bool_7, 0b0000000000000010)
+			end
+			assert(value["slots"][2]["hunger"] >= 0, "value is less than 0!")
+			assert(value["slots"][2]["hunger"] <= 100, "value is more than 100!")
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][2]["hunger"])
+			assert(value["slots"][2]["exp"] >= 0, "value is less than 0!")
+			assert(value["slots"][2]["exp"] <= 100, "value is more than 100!")
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][2]["exp"])
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][2]["level"])
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][3]["shark"])
+			if value["slots"][3]["dead"] then
+				bool_7 = bit32.bor(bool_7, 0b0000000000000100)
+			end
+			assert(value["slots"][3]["hunger"] >= 0, "value is less than 0!")
+			assert(value["slots"][3]["hunger"] <= 100, "value is more than 100!")
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][3]["hunger"])
+			assert(value["slots"][3]["exp"] >= 0, "value is less than 0!")
+			assert(value["slots"][3]["exp"] <= 100, "value is more than 100!")
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][3]["exp"])
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][3]["level"])
+			buffer.writeu8(outgoing_buff, bool_7_pos_1, bool_7)
 			local buff, used, inst = outgoing_buff, outgoing_used, outgoing_inst
 			for _, player in Players:GetPlayers() do
 				load_player(player)
@@ -238,15 +657,76 @@ local returns = {
 		end,
 		fireExcept = function(except: Player, value: ({
 			["coins"]: (number),
+			["gems"]: (number),
+			["revivetokens"]: (number),
+			["slots"]: ({ ({
+				["shark"]: (number),
+				["dead"]: (boolean),
+				["hunger"]: (number),
+				["exp"]: (number),
+				["level"]: (number),
+			}) }),
 		}))
-			debug.profilebegin("PlayerData FireExcept")
+			debug.profilebegin("PlayerDataEvent FireExcept")
 			load_empty()
 			alloc(1)
 			buffer.writeu8(outgoing_buff, outgoing_apos, 0)
-			assert(value["coins"] >= 0, "value is less than 0!")
-			assert(value["coins"] <= 200, "value is more than 200!")
+			local bool_8 = 0
+			local bool_8_pos_1 = alloc(1)
+			assert(value["coins"] <= 100000, "value is more than 100000!")
+			alloc(4)
+			buffer.writeu32(outgoing_buff, outgoing_apos, value["coins"])
+			alloc(2)
+			buffer.writeu16(outgoing_buff, outgoing_apos, value["gems"])
 			alloc(1)
-			buffer.writeu8(outgoing_buff, outgoing_apos, value["coins"])
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["revivetokens"])
+			assert(#value["slots"] == 3, "length is not equal to 3!")
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][1]["shark"])
+			if value["slots"][1]["dead"] then
+				bool_8 = bit32.bor(bool_8, 0b0000000000000001)
+			end
+			assert(value["slots"][1]["hunger"] >= 0, "value is less than 0!")
+			assert(value["slots"][1]["hunger"] <= 100, "value is more than 100!")
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][1]["hunger"])
+			assert(value["slots"][1]["exp"] >= 0, "value is less than 0!")
+			assert(value["slots"][1]["exp"] <= 100, "value is more than 100!")
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][1]["exp"])
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][1]["level"])
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][2]["shark"])
+			if value["slots"][2]["dead"] then
+				bool_8 = bit32.bor(bool_8, 0b0000000000000010)
+			end
+			assert(value["slots"][2]["hunger"] >= 0, "value is less than 0!")
+			assert(value["slots"][2]["hunger"] <= 100, "value is more than 100!")
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][2]["hunger"])
+			assert(value["slots"][2]["exp"] >= 0, "value is less than 0!")
+			assert(value["slots"][2]["exp"] <= 100, "value is more than 100!")
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][2]["exp"])
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][2]["level"])
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][3]["shark"])
+			if value["slots"][3]["dead"] then
+				bool_8 = bit32.bor(bool_8, 0b0000000000000100)
+			end
+			assert(value["slots"][3]["hunger"] >= 0, "value is less than 0!")
+			assert(value["slots"][3]["hunger"] <= 100, "value is more than 100!")
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][3]["hunger"])
+			assert(value["slots"][3]["exp"] >= 0, "value is less than 0!")
+			assert(value["slots"][3]["exp"] <= 100, "value is more than 100!")
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][3]["exp"])
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][3]["level"])
+			buffer.writeu8(outgoing_buff, bool_8_pos_1, bool_8)
 			local buff, used, inst = outgoing_buff, outgoing_used, outgoing_inst
 			for _, player in Players:GetPlayers() do
 				if player ~= except then
@@ -261,15 +741,76 @@ local returns = {
 		end,
 		fireList = function(list: { [unknown]: Player }, value: ({
 			["coins"]: (number),
+			["gems"]: (number),
+			["revivetokens"]: (number),
+			["slots"]: ({ ({
+				["shark"]: (number),
+				["dead"]: (boolean),
+				["hunger"]: (number),
+				["exp"]: (number),
+				["level"]: (number),
+			}) }),
 		}))
-			debug.profilebegin("PlayerData FireList")
+			debug.profilebegin("PlayerDataEvent FireList")
 			load_empty()
 			alloc(1)
 			buffer.writeu8(outgoing_buff, outgoing_apos, 0)
-			assert(value["coins"] >= 0, "value is less than 0!")
-			assert(value["coins"] <= 200, "value is more than 200!")
+			local bool_9 = 0
+			local bool_9_pos_1 = alloc(1)
+			assert(value["coins"] <= 100000, "value is more than 100000!")
+			alloc(4)
+			buffer.writeu32(outgoing_buff, outgoing_apos, value["coins"])
+			alloc(2)
+			buffer.writeu16(outgoing_buff, outgoing_apos, value["gems"])
 			alloc(1)
-			buffer.writeu8(outgoing_buff, outgoing_apos, value["coins"])
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["revivetokens"])
+			assert(#value["slots"] == 3, "length is not equal to 3!")
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][1]["shark"])
+			if value["slots"][1]["dead"] then
+				bool_9 = bit32.bor(bool_9, 0b0000000000000001)
+			end
+			assert(value["slots"][1]["hunger"] >= 0, "value is less than 0!")
+			assert(value["slots"][1]["hunger"] <= 100, "value is more than 100!")
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][1]["hunger"])
+			assert(value["slots"][1]["exp"] >= 0, "value is less than 0!")
+			assert(value["slots"][1]["exp"] <= 100, "value is more than 100!")
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][1]["exp"])
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][1]["level"])
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][2]["shark"])
+			if value["slots"][2]["dead"] then
+				bool_9 = bit32.bor(bool_9, 0b0000000000000010)
+			end
+			assert(value["slots"][2]["hunger"] >= 0, "value is less than 0!")
+			assert(value["slots"][2]["hunger"] <= 100, "value is more than 100!")
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][2]["hunger"])
+			assert(value["slots"][2]["exp"] >= 0, "value is less than 0!")
+			assert(value["slots"][2]["exp"] <= 100, "value is more than 100!")
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][2]["exp"])
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][2]["level"])
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][3]["shark"])
+			if value["slots"][3]["dead"] then
+				bool_9 = bit32.bor(bool_9, 0b0000000000000100)
+			end
+			assert(value["slots"][3]["hunger"] >= 0, "value is less than 0!")
+			assert(value["slots"][3]["hunger"] <= 100, "value is more than 100!")
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][3]["hunger"])
+			assert(value["slots"][3]["exp"] >= 0, "value is less than 0!")
+			assert(value["slots"][3]["exp"] <= 100, "value is more than 100!")
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][3]["exp"])
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][3]["level"])
+			buffer.writeu8(outgoing_buff, bool_9_pos_1, bool_9)
 			local buff, used, inst = outgoing_buff, outgoing_used, outgoing_inst
 			for _, player in list do
 				load_player(player)
@@ -282,15 +823,76 @@ local returns = {
 		end,
 		fireSet = function(set: { [Player]: any }, value: ({
 			["coins"]: (number),
+			["gems"]: (number),
+			["revivetokens"]: (number),
+			["slots"]: ({ ({
+				["shark"]: (number),
+				["dead"]: (boolean),
+				["hunger"]: (number),
+				["exp"]: (number),
+				["level"]: (number),
+			}) }),
 		}))
-			debug.profilebegin("PlayerData FireSet")
+			debug.profilebegin("PlayerDataEvent FireSet")
 			load_empty()
 			alloc(1)
 			buffer.writeu8(outgoing_buff, outgoing_apos, 0)
-			assert(value["coins"] >= 0, "value is less than 0!")
-			assert(value["coins"] <= 200, "value is more than 200!")
+			local bool_10 = 0
+			local bool_10_pos_1 = alloc(1)
+			assert(value["coins"] <= 100000, "value is more than 100000!")
+			alloc(4)
+			buffer.writeu32(outgoing_buff, outgoing_apos, value["coins"])
+			alloc(2)
+			buffer.writeu16(outgoing_buff, outgoing_apos, value["gems"])
 			alloc(1)
-			buffer.writeu8(outgoing_buff, outgoing_apos, value["coins"])
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["revivetokens"])
+			assert(#value["slots"] == 3, "length is not equal to 3!")
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][1]["shark"])
+			if value["slots"][1]["dead"] then
+				bool_10 = bit32.bor(bool_10, 0b0000000000000001)
+			end
+			assert(value["slots"][1]["hunger"] >= 0, "value is less than 0!")
+			assert(value["slots"][1]["hunger"] <= 100, "value is more than 100!")
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][1]["hunger"])
+			assert(value["slots"][1]["exp"] >= 0, "value is less than 0!")
+			assert(value["slots"][1]["exp"] <= 100, "value is more than 100!")
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][1]["exp"])
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][1]["level"])
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][2]["shark"])
+			if value["slots"][2]["dead"] then
+				bool_10 = bit32.bor(bool_10, 0b0000000000000010)
+			end
+			assert(value["slots"][2]["hunger"] >= 0, "value is less than 0!")
+			assert(value["slots"][2]["hunger"] <= 100, "value is more than 100!")
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][2]["hunger"])
+			assert(value["slots"][2]["exp"] >= 0, "value is less than 0!")
+			assert(value["slots"][2]["exp"] <= 100, "value is more than 100!")
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][2]["exp"])
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][2]["level"])
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][3]["shark"])
+			if value["slots"][3]["dead"] then
+				bool_10 = bit32.bor(bool_10, 0b0000000000000100)
+			end
+			assert(value["slots"][3]["hunger"] >= 0, "value is less than 0!")
+			assert(value["slots"][3]["hunger"] <= 100, "value is more than 100!")
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][3]["hunger"])
+			assert(value["slots"][3]["exp"] >= 0, "value is less than 0!")
+			assert(value["slots"][3]["exp"] <= 100, "value is more than 100!")
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][3]["exp"])
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][3]["level"])
+			buffer.writeu8(outgoing_buff, bool_10_pos_1, bool_10)
 			local buff, used, inst = outgoing_buff, outgoing_used, outgoing_inst
 			for player in set do
 				load_player(player)
