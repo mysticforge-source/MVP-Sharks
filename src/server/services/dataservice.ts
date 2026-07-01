@@ -1,44 +1,63 @@
 import { OnStart, Service } from "@flamework/core";
 import { createCollection, Document } from "@rbxts/lapis";
 import { Players } from "@rbxts/services";
-import { PlayerData, UserData } from "server/network/server";
-import { t } from "@rbxts/t"
+import { PlayerDataEvent, UserData } from "server/network/server";
+import { t } from "@rbxts/t";
 import { serverMaid } from "server/servermaid";
 import { World } from "shared/ecs/world";
 import { UserDataComponent } from "shared/ecs/components";
 import { Entity } from "@rbxts/jecs";
 
+const defaultSharkSlot = {
+	shark: 0,
+	dead: false,
+	hunger: 0,
+	exp: 0,
+	level: 0,
+};
+
 export const defaultUserData: UserData = {
-	coins: 0
-}
+	coins: 0,
+	gems: 0,
+	revivetokens: 0,
+	slots: [defaultSharkSlot, defaultSharkSlot, defaultSharkSlot],
+};
+
+const validateSharkSlot = t.interface({
+	shark: t.numberConstrained(0, 255),
+	dead: t.boolean,
+	hunger: t.numberConstrained(0, 100),
+	exp: t.numberConstrained(0, 100),
+	level: t.numberConstrained(0, 255),
+});
 
 export const validateUserData = t.interface({
-	coins: t.numberConstrained(0, 200)
-})
+	coins: t.numberConstrained(0, 100_000),
+	gems: t.numberConstrained(0, 65_535),
+	revivetokens: t.numberConstrained(0, 255),
+	slots: t.strictArray(validateSharkSlot, validateSharkSlot, validateSharkSlot),
+});
 
 // player --> entity map
-export const PlayerToEntity = new Map<Player, Entity>
+export const PlayerToEntity = new Map<Player, Entity>();
 
 // entity --> player map
-export const EntityToPlayer = new Map<Entity, Player>
+export const EntityToPlayer = new Map<Entity, Player>();
 
 @Service()
 export class DataService implements OnStart {
-	protected Collection = createCollection<UserData>(
-		"PROD_PlayerData",
-		{
-			defaultData: defaultUserData,
-			validate: validateUserData,
-			// migrations: [
-			//     old => {
-			//         old.key = 10;
-			//         return old
-			//     } //v0 -> v1
-			// ]
-		}
-	);
-	protected Sessions = new Map<Player, Document<UserData, true>>
-	protected maid = serverMaid.sub()
+	protected Collection = createCollection<UserData>("PROD_PlayerDataEvent", {
+		defaultData: defaultUserData,
+		validate: validateUserData,
+		// migrations: [
+		//     old => {
+		//         old.key = 10;
+		//         return old
+		//     } //v0 -> v1
+		// ]
+	});
+	protected Sessions = new Map<Player, Document<UserData, true>>();
+	protected maid = serverMaid.sub();
 
 	// private methods
 
@@ -54,7 +73,7 @@ export class DataService implements OnStart {
 		World.set(entity, UserDataComponent, data);
 
 		// send to client
-		PlayerData.fire(player, data);
+		PlayerDataEvent.fire(player, data);
 	}
 
 	// Removes Player and Entity from both Player-Entity maps
@@ -64,25 +83,24 @@ export class DataService implements OnStart {
 		if (entity) {
 			PlayerToEntity.delete(player);
 			EntityToPlayer.delete(entity);
-		};
+		}
 	}
 
 	// Loads the session, adds it to Sessions
 	private async PlayerAdded(player: Player) {
-		this.Collection.load(
-			`User${player.UserId}`, [player.UserId]
-		).then(
-			async ses => {
-				if (!player.Parent) {ses.close().catch(warn); return};
+		this.Collection.load(`User${player.UserId}`, [player.UserId])
+			.then(async (ses) => {
+				if (!player.Parent) {
+					ses.close().catch(warn);
+					return;
+				}
 
 				this.Sessions.set(player, ses);
 				await this.PlayerLoaded(player, ses);
-			}
-		).catch(
-			async err => {
-				player.Kick(`Failed to load data: ${tostring(err)}`)
-			}
-		)
+			})
+			.catch(async (err) => {
+				player.Kick(`Failed to load data: ${tostring(err)}`);
+			});
 	}
 
 	// Closes the session and deletes it from Sessions
@@ -90,14 +108,11 @@ export class DataService implements OnStart {
 		const ses = this.Sessions.get(player);
 		if (ses) {
 			ses.close()
-				.then(
-					async () => {
-						await this.PlayerUnloaded(player, ses);
-						this.Sessions.delete(player)
-					}
-				).catch(
-					async err => warn(`Failed to remove player session data: ${tostring(err)}`)
-				);
+				.then(async () => {
+					await this.PlayerUnloaded(player, ses);
+					this.Sessions.delete(player);
+				})
+				.catch(async (err) => warn(`Failed to remove player session data: ${tostring(err)}`));
 		}
 	}
 
@@ -113,14 +128,20 @@ export class DataService implements OnStart {
 		this.maid.Add(
 			World.changed(UserDataComponent, (entity: Entity, id, value: UserData) => {
 				const player = EntityToPlayer.get(entity);
-				if (!player) { warn("Change occured within data of a player not stored in EntityToPlayer maps"); return };
+				if (!player) {
+					warn("Change occured within data of a player not stored in EntityToPlayer maps");
+					return;
+				}
 
 				const ses = this.Sessions.get(player);
-				if (!ses) { warn("Change occured within data of a player without a stored session!"); return };
+				if (!ses) {
+					warn("Change occured within data of a player without a stored session!");
+					return;
+				}
 
 				ses.write(value);
-				PlayerData.fire(player, value);
-			})
-		)
+				PlayerDataEvent.fire(player, value);
+			}),
+		);
 	}
 }
