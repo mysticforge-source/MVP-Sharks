@@ -132,8 +132,8 @@ if not RunService:IsRunning() then
 	local noop = function() end
 	return table.freeze({
 		sendEvents = noop,
-		SpawnEvent = table.freeze({
-			fire = noop
+		SpawnFunction = table.freeze({
+			call = noop
 		}),
 		SlotDeltaEvent = table.freeze({
 			on = noop
@@ -196,12 +196,14 @@ end
 
 RunService.Heartbeat:Connect(sendEvents)
 
-local reliable_events = table.create(2)
-local reliable_event_queue: { [number]: { any } } = table.create(2)
+local reliable_events = table.create(3)
+local reliable_event_queue: { [number]: { any } } = table.create(3)
+local function_call_id = 0
 reliable_events[1] = {}
 reliable_event_queue[1] = {}
 reliable_events[0] = {}
 reliable_event_queue[0] = {}
+reliable_event_queue[2] = table.create(255)
 reliable.OnClientEvent:Connect(function(buff, inst)
 	debug.profilebegin("Zap Reliable OnClientEvent")
 	incoming_buff = buff
@@ -327,6 +329,23 @@ reliable.OnClientEvent:Connect(function(buff, inst)
 					warn(`[ZAP] {#reliable_event_queue[0]} events in queue for PlayerDataEvent. Did you forget to attach a listener?`)
 				end
 			end
+		elseif id == 2 then -- SpawnFunction
+			debug.profilebegin("SpawnFunction Deserialize")
+			local call_id = buffer.readu8(incoming_buff, read(1))
+			local value
+			local bool_3 = buffer.readu8(incoming_buff, read(1))
+			if bit32.btest(bool_3, 0b0000000000000001) then
+				value = "Success"
+			else
+				value = "Fail"
+			end
+			debug.profileend()
+			local thread = reliable_event_queue[2][call_id]
+			-- When using actors it's possible for multiple Zap clients to exist, but only one called the Zap remote function.
+			if thread then
+				task.spawn(thread, value)
+			end
+			reliable_event_queue[2][call_id] = nil
 		else
 			error("Unknown event id")
 		end
@@ -338,16 +357,26 @@ table.freeze(polling_queues_unreliable)
 
 local returns = {
 	sendEvents = sendEvents,
-	SpawnEvent = {
-		fire = function(value: (number))
-			debug.profilebegin("SpawnEvent Fire")
+	SpawnFunction = {
+		call = function(value: (number)): (("Success" | "Fail"))
+			debug.profilebegin("SpawnFunction Call")
+			function_call_id += 1
+			function_call_id %= 256
+			if reliable_event_queue[2][function_call_id] then
+				function_call_id -= 1
+				error("Zap has more than 256 calls awaiting a response, and therefore this packet has been dropped")
+			end
 			alloc(1)
 			buffer.writeu8(outgoing_buff, outgoing_apos, 0)
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, function_call_id)
 			assert(value >= 0, "value is less than 0!")
 			assert(value <= 2, "value is more than 2!")
 			alloc(1)
 			buffer.writeu8(outgoing_buff, outgoing_apos, value)
+			reliable_event_queue[2][function_call_id] = coroutine.running()
 			debug.profileend()
+			return coroutine.yield()
 		end,
 	},
 	SlotDeltaEvent = {

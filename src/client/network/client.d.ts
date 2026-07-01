@@ -44,8 +44,8 @@ export type SharkSlot = {
 	["level"]: number,
 };
 
-export declare const SpawnEvent: {
-	fire: (value: number) => void;
+export declare const SpawnFunction: {
+	call: (value: number) => "Success" | "Fail";
 };
 export declare const SlotDeltaEvent: {
 	on: (callback: (value: {

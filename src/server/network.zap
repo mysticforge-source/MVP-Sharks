@@ -63,8 +63,8 @@ event SlotDeltaEvent = {
 
 -- SpawnController & SpawnService
 -- Spawns the player (player always has the hitbox)
-event SpawnEvent = {
-    from: Client,
-    type: Reliable,
-    data: u8(0..2), --slot number
+funct SpawnFunction = {
+    call: Async,
+    args: u8(0..2), --slot number
+    rets: (enum { Success, Fail }) --success marks creation of hitbox
 }
