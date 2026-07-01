@@ -178,6 +178,14 @@ end
 Players.PlayerRemoving:Connect(function(player)
 	player_map[player] = nil
 end)
+export type SharkSlot = ({
+	["shark"]: (number),
+	["dead"]: (boolean),
+	["hunger"]: (number),
+	["exp"]: (number),
+	["upgrade"]: (number),
+	["level"]: (number),
+})
 export type UserData = ({
 	["coins"]: (number),
 	["gems"]: (number),
@@ -187,21 +195,16 @@ export type UserData = ({
 		["dead"]: (boolean),
 		["hunger"]: (number),
 		["exp"]: (number),
+		["upgrade"]: (number),
 		["level"]: (number),
 	}) }),
-})
-export type SharkSlot = ({
-	["shark"]: (number),
-	["dead"]: (boolean),
-	["hunger"]: (number),
-	["exp"]: (number),
-	["level"]: (number),
 })
 export type PartialSharkSlot = ({
 	["shark"]: ((number)?),
 	["dead"]: ((boolean)?),
 	["hunger"]: ((number)?),
 	["exp"]: ((number)?),
+	["upgrade"]: ((number)?),
 	["level"]: ((number)?),
 })
 
@@ -236,6 +239,7 @@ local returns = {
 			["dead"]: ((boolean)?),
 			["hunger"]: ((number)?),
 			["exp"]: ((number)?),
+			["upgrade"]: ((number)?),
 			["level"]: ((number)?),
 		}))
 			debug.profilebegin("SlotDeltaEvent Fire")
@@ -269,8 +273,15 @@ local returns = {
 				alloc(1)
 				buffer.writeu8(outgoing_buff, outgoing_apos, value["exp"])
 			end
-			if value["level"] ~= nil then
+			if value["upgrade"] ~= nil then
 				bool_1 = bit32.bor(bool_1, 0b0000000000100000)
+				assert(value["upgrade"] >= 0, "value is less than 0!")
+				assert(value["upgrade"] <= 2, "value is more than 2!")
+				alloc(1)
+				buffer.writeu8(outgoing_buff, outgoing_apos, value["upgrade"])
+			end
+			if value["level"] ~= nil then
+				bool_1 = bit32.bor(bool_1, 0b0000000001000000)
 				alloc(1)
 				buffer.writeu8(outgoing_buff, outgoing_apos, value["level"])
 			end
@@ -283,6 +294,7 @@ local returns = {
 			["dead"]: ((boolean)?),
 			["hunger"]: ((number)?),
 			["exp"]: ((number)?),
+			["upgrade"]: ((number)?),
 			["level"]: ((number)?),
 		}))
 			debug.profilebegin("SlotDeltaEvent FireAll")
@@ -316,8 +328,15 @@ local returns = {
 				alloc(1)
 				buffer.writeu8(outgoing_buff, outgoing_apos, value["exp"])
 			end
-			if value["level"] ~= nil then
+			if value["upgrade"] ~= nil then
 				bool_2 = bit32.bor(bool_2, 0b0000000000100000)
+				assert(value["upgrade"] >= 0, "value is less than 0!")
+				assert(value["upgrade"] <= 2, "value is more than 2!")
+				alloc(1)
+				buffer.writeu8(outgoing_buff, outgoing_apos, value["upgrade"])
+			end
+			if value["level"] ~= nil then
+				bool_2 = bit32.bor(bool_2, 0b0000000001000000)
 				alloc(1)
 				buffer.writeu8(outgoing_buff, outgoing_apos, value["level"])
 			end
@@ -337,6 +356,7 @@ local returns = {
 			["dead"]: ((boolean)?),
 			["hunger"]: ((number)?),
 			["exp"]: ((number)?),
+			["upgrade"]: ((number)?),
 			["level"]: ((number)?),
 		}))
 			debug.profilebegin("SlotDeltaEvent FireExcept")
@@ -370,8 +390,15 @@ local returns = {
 				alloc(1)
 				buffer.writeu8(outgoing_buff, outgoing_apos, value["exp"])
 			end
-			if value["level"] ~= nil then
+			if value["upgrade"] ~= nil then
 				bool_3 = bit32.bor(bool_3, 0b0000000000100000)
+				assert(value["upgrade"] >= 0, "value is less than 0!")
+				assert(value["upgrade"] <= 2, "value is more than 2!")
+				alloc(1)
+				buffer.writeu8(outgoing_buff, outgoing_apos, value["upgrade"])
+			end
+			if value["level"] ~= nil then
+				bool_3 = bit32.bor(bool_3, 0b0000000001000000)
 				alloc(1)
 				buffer.writeu8(outgoing_buff, outgoing_apos, value["level"])
 			end
@@ -393,6 +420,7 @@ local returns = {
 			["dead"]: ((boolean)?),
 			["hunger"]: ((number)?),
 			["exp"]: ((number)?),
+			["upgrade"]: ((number)?),
 			["level"]: ((number)?),
 		}))
 			debug.profilebegin("SlotDeltaEvent FireList")
@@ -426,8 +454,15 @@ local returns = {
 				alloc(1)
 				buffer.writeu8(outgoing_buff, outgoing_apos, value["exp"])
 			end
-			if value["level"] ~= nil then
+			if value["upgrade"] ~= nil then
 				bool_4 = bit32.bor(bool_4, 0b0000000000100000)
+				assert(value["upgrade"] >= 0, "value is less than 0!")
+				assert(value["upgrade"] <= 2, "value is more than 2!")
+				alloc(1)
+				buffer.writeu8(outgoing_buff, outgoing_apos, value["upgrade"])
+			end
+			if value["level"] ~= nil then
+				bool_4 = bit32.bor(bool_4, 0b0000000001000000)
 				alloc(1)
 				buffer.writeu8(outgoing_buff, outgoing_apos, value["level"])
 			end
@@ -447,6 +482,7 @@ local returns = {
 			["dead"]: ((boolean)?),
 			["hunger"]: ((number)?),
 			["exp"]: ((number)?),
+			["upgrade"]: ((number)?),
 			["level"]: ((number)?),
 		}))
 			debug.profilebegin("SlotDeltaEvent FireSet")
@@ -480,8 +516,15 @@ local returns = {
 				alloc(1)
 				buffer.writeu8(outgoing_buff, outgoing_apos, value["exp"])
 			end
-			if value["level"] ~= nil then
+			if value["upgrade"] ~= nil then
 				bool_5 = bit32.bor(bool_5, 0b0000000000100000)
+				assert(value["upgrade"] >= 0, "value is less than 0!")
+				assert(value["upgrade"] <= 2, "value is more than 2!")
+				alloc(1)
+				buffer.writeu8(outgoing_buff, outgoing_apos, value["upgrade"])
+			end
+			if value["level"] ~= nil then
+				bool_5 = bit32.bor(bool_5, 0b0000000001000000)
 				alloc(1)
 				buffer.writeu8(outgoing_buff, outgoing_apos, value["level"])
 			end
@@ -507,6 +550,7 @@ local returns = {
 				["dead"]: (boolean),
 				["hunger"]: (number),
 				["exp"]: (number),
+				["upgrade"]: (number),
 				["level"]: (number),
 			}) }),
 		}))
@@ -537,6 +581,10 @@ local returns = {
 			assert(value["slots"][1]["exp"] <= 100, "value is more than 100!")
 			alloc(1)
 			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][1]["exp"])
+			assert(value["slots"][1]["upgrade"] >= 0, "value is less than 0!")
+			assert(value["slots"][1]["upgrade"] <= 2, "value is more than 2!")
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][1]["upgrade"])
 			alloc(1)
 			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][1]["level"])
 			alloc(1)
@@ -552,6 +600,10 @@ local returns = {
 			assert(value["slots"][2]["exp"] <= 100, "value is more than 100!")
 			alloc(1)
 			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][2]["exp"])
+			assert(value["slots"][2]["upgrade"] >= 0, "value is less than 0!")
+			assert(value["slots"][2]["upgrade"] <= 2, "value is more than 2!")
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][2]["upgrade"])
 			alloc(1)
 			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][2]["level"])
 			alloc(1)
@@ -567,6 +619,10 @@ local returns = {
 			assert(value["slots"][3]["exp"] <= 100, "value is more than 100!")
 			alloc(1)
 			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][3]["exp"])
+			assert(value["slots"][3]["upgrade"] >= 0, "value is less than 0!")
+			assert(value["slots"][3]["upgrade"] <= 2, "value is more than 2!")
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][3]["upgrade"])
 			alloc(1)
 			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][3]["level"])
 			buffer.writeu8(outgoing_buff, bool_6_pos_1, bool_6)
@@ -582,6 +638,7 @@ local returns = {
 				["dead"]: (boolean),
 				["hunger"]: (number),
 				["exp"]: (number),
+				["upgrade"]: (number),
 				["level"]: (number),
 			}) }),
 		}))
@@ -612,6 +669,10 @@ local returns = {
 			assert(value["slots"][1]["exp"] <= 100, "value is more than 100!")
 			alloc(1)
 			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][1]["exp"])
+			assert(value["slots"][1]["upgrade"] >= 0, "value is less than 0!")
+			assert(value["slots"][1]["upgrade"] <= 2, "value is more than 2!")
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][1]["upgrade"])
 			alloc(1)
 			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][1]["level"])
 			alloc(1)
@@ -627,6 +688,10 @@ local returns = {
 			assert(value["slots"][2]["exp"] <= 100, "value is more than 100!")
 			alloc(1)
 			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][2]["exp"])
+			assert(value["slots"][2]["upgrade"] >= 0, "value is less than 0!")
+			assert(value["slots"][2]["upgrade"] <= 2, "value is more than 2!")
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][2]["upgrade"])
 			alloc(1)
 			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][2]["level"])
 			alloc(1)
@@ -642,6 +707,10 @@ local returns = {
 			assert(value["slots"][3]["exp"] <= 100, "value is more than 100!")
 			alloc(1)
 			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][3]["exp"])
+			assert(value["slots"][3]["upgrade"] >= 0, "value is less than 0!")
+			assert(value["slots"][3]["upgrade"] <= 2, "value is more than 2!")
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][3]["upgrade"])
 			alloc(1)
 			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][3]["level"])
 			buffer.writeu8(outgoing_buff, bool_7_pos_1, bool_7)
@@ -664,6 +733,7 @@ local returns = {
 				["dead"]: (boolean),
 				["hunger"]: (number),
 				["exp"]: (number),
+				["upgrade"]: (number),
 				["level"]: (number),
 			}) }),
 		}))
@@ -694,6 +764,10 @@ local returns = {
 			assert(value["slots"][1]["exp"] <= 100, "value is more than 100!")
 			alloc(1)
 			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][1]["exp"])
+			assert(value["slots"][1]["upgrade"] >= 0, "value is less than 0!")
+			assert(value["slots"][1]["upgrade"] <= 2, "value is more than 2!")
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][1]["upgrade"])
 			alloc(1)
 			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][1]["level"])
 			alloc(1)
@@ -709,6 +783,10 @@ local returns = {
 			assert(value["slots"][2]["exp"] <= 100, "value is more than 100!")
 			alloc(1)
 			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][2]["exp"])
+			assert(value["slots"][2]["upgrade"] >= 0, "value is less than 0!")
+			assert(value["slots"][2]["upgrade"] <= 2, "value is more than 2!")
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][2]["upgrade"])
 			alloc(1)
 			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][2]["level"])
 			alloc(1)
@@ -724,6 +802,10 @@ local returns = {
 			assert(value["slots"][3]["exp"] <= 100, "value is more than 100!")
 			alloc(1)
 			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][3]["exp"])
+			assert(value["slots"][3]["upgrade"] >= 0, "value is less than 0!")
+			assert(value["slots"][3]["upgrade"] <= 2, "value is more than 2!")
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][3]["upgrade"])
 			alloc(1)
 			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][3]["level"])
 			buffer.writeu8(outgoing_buff, bool_8_pos_1, bool_8)
@@ -748,6 +830,7 @@ local returns = {
 				["dead"]: (boolean),
 				["hunger"]: (number),
 				["exp"]: (number),
+				["upgrade"]: (number),
 				["level"]: (number),
 			}) }),
 		}))
@@ -778,6 +861,10 @@ local returns = {
 			assert(value["slots"][1]["exp"] <= 100, "value is more than 100!")
 			alloc(1)
 			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][1]["exp"])
+			assert(value["slots"][1]["upgrade"] >= 0, "value is less than 0!")
+			assert(value["slots"][1]["upgrade"] <= 2, "value is more than 2!")
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][1]["upgrade"])
 			alloc(1)
 			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][1]["level"])
 			alloc(1)
@@ -793,6 +880,10 @@ local returns = {
 			assert(value["slots"][2]["exp"] <= 100, "value is more than 100!")
 			alloc(1)
 			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][2]["exp"])
+			assert(value["slots"][2]["upgrade"] >= 0, "value is less than 0!")
+			assert(value["slots"][2]["upgrade"] <= 2, "value is more than 2!")
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][2]["upgrade"])
 			alloc(1)
 			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][2]["level"])
 			alloc(1)
@@ -808,6 +899,10 @@ local returns = {
 			assert(value["slots"][3]["exp"] <= 100, "value is more than 100!")
 			alloc(1)
 			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][3]["exp"])
+			assert(value["slots"][3]["upgrade"] >= 0, "value is less than 0!")
+			assert(value["slots"][3]["upgrade"] <= 2, "value is more than 2!")
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][3]["upgrade"])
 			alloc(1)
 			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][3]["level"])
 			buffer.writeu8(outgoing_buff, bool_9_pos_1, bool_9)
@@ -830,6 +925,7 @@ local returns = {
 				["dead"]: (boolean),
 				["hunger"]: (number),
 				["exp"]: (number),
+				["upgrade"]: (number),
 				["level"]: (number),
 			}) }),
 		}))
@@ -860,6 +956,10 @@ local returns = {
 			assert(value["slots"][1]["exp"] <= 100, "value is more than 100!")
 			alloc(1)
 			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][1]["exp"])
+			assert(value["slots"][1]["upgrade"] >= 0, "value is less than 0!")
+			assert(value["slots"][1]["upgrade"] <= 2, "value is more than 2!")
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][1]["upgrade"])
 			alloc(1)
 			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][1]["level"])
 			alloc(1)
@@ -875,6 +975,10 @@ local returns = {
 			assert(value["slots"][2]["exp"] <= 100, "value is more than 100!")
 			alloc(1)
 			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][2]["exp"])
+			assert(value["slots"][2]["upgrade"] >= 0, "value is less than 0!")
+			assert(value["slots"][2]["upgrade"] <= 2, "value is more than 2!")
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][2]["upgrade"])
 			alloc(1)
 			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][2]["level"])
 			alloc(1)
@@ -890,6 +994,10 @@ local returns = {
 			assert(value["slots"][3]["exp"] <= 100, "value is more than 100!")
 			alloc(1)
 			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][3]["exp"])
+			assert(value["slots"][3]["upgrade"] >= 0, "value is less than 0!")
+			assert(value["slots"][3]["upgrade"] <= 2, "value is more than 2!")
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][3]["upgrade"])
 			alloc(1)
 			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][3]["level"])
 			buffer.writeu8(outgoing_buff, bool_10_pos_1, bool_10)

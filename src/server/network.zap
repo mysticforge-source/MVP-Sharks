@@ -20,6 +20,7 @@ type SharkSlot = struct {
 
     hunger: u8(0..100),
     exp: u8(0..100),
+    upgrade: u8(0..2),
     level: u8,
 }
 
@@ -28,6 +29,7 @@ type PartialSharkSlot = struct {
     dead: boolean?,
     hunger: u8(0..100)?,
     exp: u8(0..100)?,
+    upgrade: u8(0..2)?,
     level: u8?,
 }
 
@@ -57,4 +59,10 @@ event SlotDeltaEvent = {
     from: Server,
     type: Reliable,
     data: PartialSharkSlot
+}
+
+event SpawnEvent = {
+    from: Client,
+    type: Reliable,
+    data: u8(0..2), //slot number
 }
