@@ -61,6 +61,8 @@ event SlotDeltaEvent = {
     data: PartialSharkSlot
 }
 
+-- SpawnController & SpawnService
+-- Spawns the player (player always has the hitbox)
 event SpawnEvent = {
     from: Client,
     type: Reliable,
