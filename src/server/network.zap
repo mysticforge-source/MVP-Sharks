@@ -66,5 +66,5 @@ event SlotDeltaEvent = {
 event SpawnEvent = {
     from: Client,
     type: Reliable,
-    data: u8(0..2), //slot number
+    data: u8(0..2), --slot number
 }

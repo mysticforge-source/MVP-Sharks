@@ -132,6 +132,9 @@ if not RunService:IsRunning() then
 	local noop = function() end
 	return table.freeze({
 		sendEvents = noop,
+		SpawnEvent = table.freeze({
+			fire = noop
+		}),
 		SlotDeltaEvent = table.freeze({
 			on = noop
 		}),
@@ -145,13 +148,13 @@ local remotes = ReplicatedStorage:WaitForChild("ZAP")
 local reliable = remotes:WaitForChild("ZAP_RELIABLE")
 assert(reliable:IsA("RemoteEvent"), "Expected ZAP_RELIABLE to be a RemoteEvent")
 
-export type SharkSlot = ({
-	["shark"]: (number),
-	["dead"]: (boolean),
-	["hunger"]: (number),
-	["exp"]: (number),
-	["upgrade"]: (number),
-	["level"]: (number),
+export type PartialSharkSlot = ({
+	["shark"]: ((number)?),
+	["dead"]: ((boolean)?),
+	["hunger"]: ((number)?),
+	["exp"]: ((number)?),
+	["upgrade"]: ((number)?),
+	["level"]: ((number)?),
 })
 export type UserData = ({
 	["coins"]: (number),
@@ -166,13 +169,13 @@ export type UserData = ({
 		["level"]: (number),
 	}) }),
 })
-export type PartialSharkSlot = ({
-	["shark"]: ((number)?),
-	["dead"]: ((boolean)?),
-	["hunger"]: ((number)?),
-	["exp"]: ((number)?),
-	["upgrade"]: ((number)?),
-	["level"]: ((number)?),
+export type SharkSlot = ({
+	["shark"]: (number),
+	["dead"]: (boolean),
+	["hunger"]: (number),
+	["exp"]: (number),
+	["upgrade"]: (number),
+	["level"]: (number),
 })
 
 local function sendEvents()
@@ -335,6 +338,18 @@ table.freeze(polling_queues_unreliable)
 
 local returns = {
 	sendEvents = sendEvents,
+	SpawnEvent = {
+		fire = function(value: (number))
+			debug.profilebegin("SpawnEvent Fire")
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, 0)
+			assert(value >= 0, "value is less than 0!")
+			assert(value <= 2, "value is more than 2!")
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value)
+			debug.profileend()
+		end,
+	},
 	SlotDeltaEvent = {
 		on = function(callback: (value: ({
 			["shark"]: ((number)?),

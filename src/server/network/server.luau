@@ -134,6 +134,9 @@ if not RunService:IsRunning() then
 	local noop = function() end
 	return table.freeze({
 		sendEvents = noop,
+		SpawnEvent = table.freeze({
+			on = noop
+		}),
 		SlotDeltaEvent = table.freeze({
 			fire = noop,
 			fireAll = noop,
@@ -178,13 +181,13 @@ end
 Players.PlayerRemoving:Connect(function(player)
 	player_map[player] = nil
 end)
-export type SharkSlot = ({
-	["shark"]: (number),
-	["dead"]: (boolean),
-	["hunger"]: (number),
-	["exp"]: (number),
-	["upgrade"]: (number),
-	["level"]: (number),
+export type PartialSharkSlot = ({
+	["shark"]: ((number)?),
+	["dead"]: ((boolean)?),
+	["hunger"]: ((number)?),
+	["exp"]: ((number)?),
+	["upgrade"]: ((number)?),
+	["level"]: ((number)?),
 })
 export type UserData = ({
 	["coins"]: (number),
@@ -199,13 +202,13 @@ export type UserData = ({
 		["level"]: (number),
 	}) }),
 })
-export type PartialSharkSlot = ({
-	["shark"]: ((number)?),
-	["dead"]: ((boolean)?),
-	["hunger"]: ((number)?),
-	["exp"]: ((number)?),
-	["upgrade"]: ((number)?),
-	["level"]: ((number)?),
+export type SharkSlot = ({
+	["shark"]: (number),
+	["dead"]: (boolean),
+	["hunger"]: (number),
+	["exp"]: (number),
+	["upgrade"]: (number),
+	["level"]: (number),
 })
 
 local function sendEvents()
@@ -228,11 +231,48 @@ end
 
 RunService.Heartbeat:Connect(sendEvents)
 
+local reliable_events = table.create(1)
+reliable_events[0] = {}
+reliable.OnServerEvent:Connect(function(player, buff, inst)
+	debug.profilebegin("Zap Reliable OnServerEvent")
+	incoming_buff = buff
+	incoming_inst = inst
+	incoming_read = 0
+	incoming_ipos = 0
+	local len = buffer.len(buff)
+	while incoming_read < len do
+		local id = buffer.readu8(buff, read(1))
+		if id == 0 then -- SpawnEvent
+			debug.profilebegin("SpawnEvent Deserialize")
+			local value
+			value = buffer.readu8(incoming_buff, read(1))
+			assert(value >= 0, "value is less than 0!")
+			assert(value <= 2, "value is more than 2!")
+			debug.profileend()
+			for _, cb in reliable_events[0] do
+				debug.profilebegin("SpawnEvent Callback")
+				task.spawn(cb, player, value)
+				debug.profileend()
+			end
+		else
+			error("Unknown event id")
+		end
+	end
+	debug.profileend()
+end)
 table.freeze(polling_queues_reliable)
 table.freeze(polling_queues_unreliable)
 
 local returns = {
 	sendEvents = sendEvents,
+	SpawnEvent = {
+		on = function(callback: (player: Player, value: (number)) -> ()): () -> ()
+			table.insert(reliable_events[0], callback)
+			return function()
+				table.remove(reliable_events[0], table.find(reliable_events[0], callback))
+			end
+		end,
+	},
 	SlotDeltaEvent = {
 		fire = function(player: Player, value: ({
 			["shark"]: ((number)?),
