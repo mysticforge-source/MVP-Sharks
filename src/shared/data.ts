@@ -1,5 +1,6 @@
 // shared data file
 
+import { ReplicatedStorage } from "@rbxts/services";
 import { SharkSlot } from "./networktypes";
 
 export const version = "0.0.1";
@@ -26,3 +27,7 @@ export const defaultSharkSlotData: SharkSlot = {
 	upgrade: 0,
 	level: 0,
 };
+
+export const idtoshark = [
+	"Reef Shark Medium", // 0
+];
