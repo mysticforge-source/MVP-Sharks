@@ -1,9 +1,10 @@
-import { Controller, OnStart } from "@flamework/core";
 import { clientMaid } from "client/clientmaid";
 import { PlayerDataEvent } from "client/network/client";
-import { coins } from "client/ui/sources";
+import { coins, gems, revivetokens, slots } from "client/ui/sources";
 import { UserDataComponent } from "shared/ecs/components";
 import { World } from "shared/ecs/world";
+
+import { Controller, OnStart } from "@flamework/core";
 
 export const PlayerEntity = World.entity();
 
@@ -12,17 +13,33 @@ export const PlayerEntity = World.entity();
  * Updates PlayerEntity component data on sync event
  */
 export class DataController implements OnStart {
-    protected maid = clientMaid.sub()
+	protected maid = clientMaid.sub();
 
-    public onStart(): void {
-        this.maid.add(
-            PlayerDataEvent.on(data => {
-                World.set(PlayerEntity, UserDataComponent, data);
+	public onStart(): void {
+		this.maid.add(
+			PlayerDataEvent.on((data) => {
+				World.set(PlayerEntity, UserDataComponent, data);
 
-                // update UI sources
+				// update UI sources
+				coins(data.coins);
+				gems(data.gems);
+				revivetokens(data.revivetokens);
 
-                coins(data.coins);
-            })
-        );
-    }
+				// update slot sources
+				for (const [i, slot] of ipairs(data.slots)) {
+					let slotData = slots[i];
+					if (!slotData) {
+						continue;
+					}
+
+					slotData.shark(slot.shark);
+					slotData.dead(slot.dead);
+					slotData.hunger(slot.hunger);
+					slotData.exp(slot.exp);
+					slotData.upgrade(slot.upgrade);
+					slotData.level(slot.level);
+				}
+			}),
+		);
+	}
 }
