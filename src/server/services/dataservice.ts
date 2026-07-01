@@ -1,26 +1,20 @@
+import { PlayerDataEvent, UserData } from "server/network/server";
+import { serverMaid } from "server/servermaid";
+import { defaultSharkSlotData } from "shared/data";
+import { UserDataComponent } from "shared/ecs/components";
+import { World } from "shared/ecs/world";
+
 import { OnStart, Service } from "@flamework/core";
+import { Entity } from "@rbxts/jecs";
 import { createCollection, Document } from "@rbxts/lapis";
 import { Players } from "@rbxts/services";
-import { PlayerDataEvent, UserData } from "server/network/server";
 import { t } from "@rbxts/t";
-import { serverMaid } from "server/servermaid";
-import { World } from "shared/ecs/world";
-import { UserDataComponent } from "shared/ecs/components";
-import { Entity } from "@rbxts/jecs";
-
-const defaultSharkSlot = {
-	shark: 0,
-	dead: false,
-	hunger: 0,
-	exp: 0,
-	level: 0,
-};
 
 export const defaultUserData: UserData = {
 	coins: 0,
 	gems: 0,
 	revivetokens: 0,
-	slots: [defaultSharkSlot, defaultSharkSlot, defaultSharkSlot],
+	slots: [defaultSharkSlotData, defaultSharkSlotData, defaultSharkSlotData],
 };
 
 const validateSharkSlot = t.interface({
@@ -28,6 +22,7 @@ const validateSharkSlot = t.interface({
 	dead: t.boolean,
 	hunger: t.numberConstrained(0, 100),
 	exp: t.numberConstrained(0, 100),
+	upgrade: t.numberConstrained(0, 2),
 	level: t.numberConstrained(0, 255),
 });
 
