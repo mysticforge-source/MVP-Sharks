@@ -5,7 +5,5 @@ import { OnStart, OnTick, Service } from "@flamework/core";
  * Activates ECS systems in order on tick
  */
 export class CycleService implements OnTick {
-    public onTick(dt: number): void {
-        
-    }
+	public onTick(dt: number): void {}
 }
