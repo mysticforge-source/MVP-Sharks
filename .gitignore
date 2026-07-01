@@ -15,4 +15,4 @@ flamework.build
 Packages
 sourcemap.json
 out/tsconfig.tsbuildinfo
-# out
+out
