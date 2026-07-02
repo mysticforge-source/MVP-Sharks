@@ -9,6 +9,7 @@ import { Entity } from "@rbxts/jecs";
 import { createCollection, Document } from "@rbxts/lapis";
 import { Players } from "@rbxts/services";
 import { t } from "@rbxts/t";
+import { merge } from "@rbxts/sift/out/Dictionary";
 
 export const defaultUserData: UserData = {
 	coins: 0,
@@ -58,16 +59,16 @@ export class DataService implements OnStart {
 
 	// Creates player entity, sets it in the Player-Entity maps and gives it the UserDataComponent
 	private async PlayerLoaded(player: Player, ses: Document<UserData>) {
-		// player entity
+		// maps are needed for availability of both, player and their entity
 		const entity = World.entity();
 		PlayerToEntity.set(player, entity);
 		EntityToPlayer.set(entity, player);
 
-		// sets component to session data (validated by Lapis via validateUserData)
+		// source of truth is the player's component
+		// player's session is up to date with their component
 		const data = ses.read();
 		World.set(entity, UserDataComponent, data);
 
-		// send to client
 		PlayerDataEvent.fire(player, data);
 	}
 
@@ -78,18 +79,22 @@ export class DataService implements OnStart {
 		if (entity) {
 			PlayerToEntity.delete(player);
 			EntityToPlayer.delete(entity);
+			World.delete(entity);
 		}
 	}
 
 	// Loads the session, adds it to Sessions
 	private async PlayerAdded(player: Player) {
+		// we can use the session once the collection loads it
 		this.Collection.load(`User${player.UserId}`, [player.UserId])
 			.then(async (ses) => {
+				// player could leave while it was loading
 				if (!player.Parent) {
 					ses.close().catch(warn);
 					return;
 				}
 
+				// we need player's session for long term use
 				this.Sessions.set(player, ses);
 				await this.PlayerLoaded(player, ses);
 			})
@@ -102,6 +107,7 @@ export class DataService implements OnStart {
 	private async PlayerRemoving(player: Player) {
 		const ses = this.Sessions.get(player);
 		if (ses) {
+			// once the session is closed, we can delete player entity
 			ses.close()
 				.then(async () => {
 					await this.PlayerUnloaded(player, ses);
@@ -111,16 +117,46 @@ export class DataService implements OnStart {
 		}
 	}
 
+	// public methods
+
+	// Returns player's entity data
+	public getPlayerData(player: Player): UserData | false {
+		const entity = PlayerToEntity.get(player);
+		if (!entity) return false;
+
+		const data = World.get(entity, UserDataComponent);
+		if (!data) return false;
+
+		return data;
+	}
+
+	// changes player's data
+	public changePlayerData(player: Player, data: Partial<UserData>): void {
+		const entity = PlayerToEntity.get(player);
+		if (!entity) return;
+
+		const olddata = World.get(entity, UserDataComponent);
+		if (!olddata) return;
+
+		World.set(entity, UserDataComponent, merge(olddata, data));
+	}
+
 	// hooks
 
+	// connects to PlayerAdded, PlayerRemoving and updates session on changes
+	// of player's entity data
 	public onStart(): void {
+		// added into dataservice's maid to avoid memory leaks
+		// asynchronous to serve every player joining at once
 		this.maid.on(Players.PlayerAdded, async (Player) => await this.PlayerAdded(Player));
 		this.maid.on(Players.PlayerRemoving, async (Player) => await this.PlayerRemoving(Player));
 
+		// incase some players joined before the service started
 		for (const plr of Players.GetPlayers()) this.PlayerAdded(plr);
 
 		// Connects to changes of player entities, updates session and calls sync event with the player
-		this.maid.Add(
+		// avoiding memory leaks
+		this.maid.add(
 			World.changed(UserDataComponent, (entity: Entity, id, value: UserData) => {
 				const player = EntityToPlayer.get(entity);
 				if (!player) {
@@ -134,6 +170,8 @@ export class DataService implements OnStart {
 					return;
 				}
 
+				// new data is datastored in lapis via this session
+				// client should be up-to-date with all data changes
 				ses.write(value);
 				PlayerDataEvent.fire(player, value);
 			}),
