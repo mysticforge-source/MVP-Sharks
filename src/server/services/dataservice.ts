@@ -135,6 +135,7 @@ export class DataService implements OnStart {
 		const entity = PlayerToEntity.get(player);
 		if (!entity) return;
 
+		// we need old data to merge it with the changes
 		const olddata = World.get(entity, UserDataComponent);
 		if (!olddata) return;
 
