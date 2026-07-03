@@ -26,29 +26,17 @@ export class SpawnService implements OnStart {
 	public onStart(): void {
 		this.maid.add(
 			SpawnFunction.setCallback((player: Player, slot: number) => {
-				// get player entity
-				const entity = PlayerToEntity.get(player);
-				if (!entity) return "Fail";
-
-				// get player data
-				const data = World.get(entity, UserDataComponent);
+				const data = this.dataservice.getPlayerData(player);
 				if (!data) return "Fail";
 
-				// get slot data
-				const slotdata = data.slots[slot];
-				if (!slotdata) return "Fail";
-
-				// get slot shark id
-				const sharkid = slotdata.shark;
+				const sharkid = data.slots[slot]?.shark;
 				if (!sharkid) return "Fail";
 
-				// get shark name
-				const shark = idtoshark[sharkid] as keyof typeof ReplicatedStorage.Hitboxes;
-				if (!shark) return "Fail";
+				const sharkname = idtoshark[sharkid];
+				if (!sharkname) return "Fail";
 
-				// get shark hitbox
-				const sharkhitbox = ReplicatedStorage.Hitboxes[shark];
-				if (!sharkhitbox) return "Fail";
+				const hitbox = this.hitboxservice.createPlayerHitbox(player, sharkname);
+				if (!hitbox) return "Fail";
 
 				return "Success";
 			}),
