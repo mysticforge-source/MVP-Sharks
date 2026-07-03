@@ -48,6 +48,9 @@ export class HitboxService {
 				}
 
 				if (hitbox) {
+					// so the client could find it
+					hitbox.Name = player.Name;
+
 					// so we could get player, having hitbox
 					// or delete it later, if none
 					HitboxToPlayer.set(hitbox, player);

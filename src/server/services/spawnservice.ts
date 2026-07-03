@@ -19,9 +19,6 @@ export class SpawnService implements OnStart {
 		private readonly hitboxservice: HitboxService,
 	) {}
 
-	// summon a hitbox and assign it to the player entity
-	private createHitbox(player: Player) {}
-
 	// connects to the spawn event
 	public onStart(): void {
 		this.maid.add(
