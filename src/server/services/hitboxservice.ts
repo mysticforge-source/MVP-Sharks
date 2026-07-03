@@ -16,10 +16,12 @@ export class HitboxService {
 
 	// clones the hitbox into workspace, does not correlate it with the player
 	public cloneHitbox(name: string): Instance | undefined {
-		let hitbox = ReplicatedStorage.Hitboxes.FindFirstChild(name);
+		let hitbox = ReplicatedStorage.Hitboxes.FindFirstChild(name) as MeshPart;
 
 		if (hitbox && hitbox.IsA("MeshPart")) {
 			hitbox = hitbox.Clone();
+			hitbox.Position = new Vector3(0, 15, 0);
+			hitbox.Anchored = true;
 			hitbox.Parent = Workspace.Shared.Hitboxes;
 		}
 
