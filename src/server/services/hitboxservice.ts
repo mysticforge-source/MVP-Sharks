@@ -20,7 +20,7 @@ export class HitboxService {
 
 		if (hitbox && hitbox.IsA("MeshPart")) {
 			hitbox = hitbox.Clone();
-			hitbox.Parent = Workspace.Hitboxes;
+			hitbox.Parent = Workspace.Shared.Hitboxes;
 		}
 
 		return hitbox;
