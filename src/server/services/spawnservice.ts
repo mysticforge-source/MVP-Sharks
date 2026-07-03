@@ -27,7 +27,7 @@ export class SpawnService implements OnStart {
 				if (!data) return "Fail";
 
 				const sharkid = data.slots[slot]?.shark;
-				if (!sharkid) return "Fail";
+				if (sharkid === undefined) return "Fail";
 
 				const sharkname = idtoshark[sharkid];
 				if (!sharkname) return "Fail";
