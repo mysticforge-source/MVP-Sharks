@@ -22,6 +22,7 @@ export class HitboxService {
 			hitbox = hitbox.Clone();
 			hitbox.Position = new Vector3(0, 15, 0);
 			hitbox.Anchored = true;
+
 			hitbox.Parent = Workspace.Shared.Hitboxes;
 		}
 
