@@ -1,4 +1,11 @@
-interface Workspace extends Model {}
+interface Workspace extends Model {
+	Shared: Folder & {
+		Hitboxes: Folder;
+	};
+	Client: Folder & {
+		Models: Folder;
+	};
+}
 
 interface ReplicatedStorage extends Instance {
 	Hitboxes: Folder & {
