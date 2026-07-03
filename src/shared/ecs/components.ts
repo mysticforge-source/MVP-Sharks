@@ -7,4 +7,7 @@ import { World } from "./world";
 export const UserDataComponent = World.component<UserData>();
 
 // shared components
-export const HealthComponent = World.component<{max: number, current: number}>();
+export const HealthComponent = World.component<{ max: number; current: number }>();
+
+// assigned to player, stores player's hitbox
+export const HitboxComponent = World.component<Instance>();
