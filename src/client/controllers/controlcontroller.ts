@@ -1,11 +1,19 @@
-import { Controller } from "@flamework/core";
+import { Controller, OnInit } from "@flamework/core";
 import { OnInput } from "./inputcontroller";
 import { StandardActionBuilder } from "@rbxts/mechanism";
+import { Players, Workspace } from "@rbxts/services";
 
 @Controller()
-export class ControlController implements OnInput {
+export class ControlController implements OnInput, OnInit {
 	constructor() {}
 	protected hitbox!: MeshPart;
+
+	protected player = Players.LocalPlayer;
+	protected camera!: Camera;
+
+	onInit(): void | Promise<void> {
+		this.camera = Workspace.CurrentCamera ?? (Workspace.WaitForChild("CurrentCamera")! as Camera);
+	}
 
 	public inputs = {
 		forward: new StandardActionBuilder("W"),
@@ -17,5 +25,7 @@ export class ControlController implements OnInput {
 	// begins movement: sets hitbox, attaches camera, binds inputs
 	public begin(hitbox: MeshPart): void {
 		this.hitbox = hitbox;
+
+		this.camera.CameraSubject = this.hitbox;
 	}
 }
