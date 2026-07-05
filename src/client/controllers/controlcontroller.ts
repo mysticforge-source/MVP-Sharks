@@ -27,5 +27,12 @@ export class ControlController implements OnInput, OnInit {
 		this.hitbox = hitbox;
 
 		this.camera.CameraSubject = this.hitbox;
+
+		// add an rotation align
+		const alignrot = new Instance("AlignOrientation");
+		alignrot.Parent = hitbox;
+		alignrot.Attachment0 = new Instance("Attachment", hitbox);
+		alignrot.Attachment1 = new Instance("Attachment", this.camera);
+		alignrot.Responsiveness = 50;
 	}
 }

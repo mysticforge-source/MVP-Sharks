@@ -21,7 +21,7 @@ export class HitboxService {
 		if (hitbox && hitbox.IsA("MeshPart")) {
 			hitbox = hitbox.Clone();
 			hitbox.Position = new Vector3(0, 15, 0);
-			hitbox.Anchored = true;
+			hitbox.Anchored = false;
 
 			hitbox.Parent = Workspace.Shared.Hitboxes;
 		}
@@ -41,7 +41,7 @@ export class HitboxService {
 		// getting shark name, id, spawning hitbox can also fail
 		if (data)
 			try {
-				const hitbox = this.cloneHitbox(sharkname);
+				const hitbox = this.cloneHitbox(sharkname) as MeshPart | undefined;
 
 				// delete the old hitbox, get it from player data
 				const playerEntity = PlayerToEntity.get(player);
@@ -53,6 +53,21 @@ export class HitboxService {
 				if (hitbox) {
 					// so the client could find it
 					hitbox.Name = player.Name;
+
+					// client ownership (observed by anticheatservice)
+					hitbox.SetNetworkOwner(player);
+
+					// make it withstand gravity
+					hitbox.Anchored = false;
+					const centerAttach = new Instance("Attachment", hitbox);
+
+					// a force nullifying the gravity force, F = mg
+					const antigravforce = new Instance("VectorForce");
+					antigravforce.Force = new Vector3(0, hitbox.AssemblyMass * Workspace.Gravity, 0);
+					antigravforce.ApplyAtCenterOfMass = true;
+					antigravforce.Attachment0 = centerAttach;
+					antigravforce.RelativeTo = Enum.ActuatorRelativeTo.World;
+					antigravforce.Parent = hitbox;
 
 					// so we could get player, having hitbox
 					// or delete it later, if none
