@@ -1,5 +1,6 @@
 import { Controller, OnTick } from "@flamework/core";
 import { ControlController } from "./controlcontroller";
+import controlalign from "client/systems/controlalign";
 
 @Controller()
 /*
@@ -8,6 +9,7 @@ import { ControlController } from "./controlcontroller";
 export class CycleController implements OnTick {
 	constructor(private readonly controlcontroller: ControlController) {}
 
+	//
 	protected TICKRATE = 1 / 60;
 	protected t = 0;
 
@@ -20,7 +22,7 @@ export class CycleController implements OnTick {
 
 		for (this.t; this.t >= this.TICKRATE; this.t -= this.TICKRATE) {
 			// run systems in order
-			this.controlcontroller.alignSystem(dt);
+			controlalign(dt, this.controlcontroller);
 		}
 	}
 }
