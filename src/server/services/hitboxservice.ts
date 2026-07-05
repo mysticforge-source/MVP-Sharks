@@ -22,6 +22,7 @@ export class HitboxService {
 			hitbox = hitbox.Clone();
 			hitbox.Position = new Vector3(0, 15, 0);
 			hitbox.Anchored = false;
+			hitbox.Massless = true;
 
 			hitbox.Parent = Workspace.Shared.Hitboxes;
 		}
@@ -54,12 +55,12 @@ export class HitboxService {
 					// so the client could find it
 					hitbox.Name = player.Name;
 
-					// client ownership (observed by anticheatservice)
-					hitbox.SetNetworkOwner(player);
-
 					// make it withstand gravity
 					hitbox.Anchored = false;
 					const centerAttach = new Instance("Attachment", hitbox);
+
+					// TODO: MAKE ATTACHMENTS HERE TO THE ANTICHEATSERVICE
+					// EX "TRACK"
 
 					// a force nullifying the gravity force, F = mg
 					const antigravforce = new Instance("VectorForce");
@@ -68,6 +69,25 @@ export class HitboxService {
 					antigravforce.Attachment0 = centerAttach;
 					antigravforce.RelativeTo = Enum.ActuatorRelativeTo.World;
 					antigravforce.Parent = hitbox;
+
+					// aligning the hitbox with the camera, done in client/systems
+					const alignrotation = new Instance("AlignOrientation");
+					alignrotation.Attachment0 = centerAttach;
+					alignrotation.Responsiveness = 20;
+					alignrotation.MaxTorque = math.huge;
+					alignrotation.Mode = Enum.OrientationAlignmentMode.OneAttachment;
+					alignrotation.Parent = hitbox;
+
+					// moving the hitbox, done in client/systems
+					const positionvel = new Instance("LinearVelocity");
+					positionvel.Attachment0 = centerAttach;
+					positionvel.RelativeTo = Enum.ActuatorRelativeTo.Attachment0;
+					positionvel.MaxForce = math.huge;
+					positionvel.VectorVelocity = Vector3.zero;
+					positionvel.Parent = hitbox;
+
+					// client ownership (observed by anticheatservice)
+					hitbox.SetNetworkOwner(player);
 
 					// so we could get player, having hitbox
 					// or delete it later, if none
