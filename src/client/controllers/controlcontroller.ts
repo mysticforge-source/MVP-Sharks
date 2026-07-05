@@ -10,8 +10,8 @@ export class ControlController implements OnInput, OnInit {
 
 	protected player = Players.LocalPlayer;
 
-	protected alignrotation!: AlignOrientation;
-	protected camera!: Camera;
+	public alignrotation!: AlignOrientation;
+	public camera!: Camera;
 
 	onInit(): void | Promise<void> {
 		this.camera = Workspace.CurrentCamera ?? (Workspace.WaitForChild("CurrentCamera")! as Camera);
@@ -37,13 +37,5 @@ export class ControlController implements OnInput, OnInit {
 		this.alignrotation.Attachment1 = new Instance("Attachment", this.camera);
 		this.alignrotation.Responsiveness = 20;
 		this.alignrotation.Mode = Enum.OrientationAlignmentMode.OneAttachment;
-	}
-
-	// systems
-
-	public alignSystem(dt: number) {
-		if (this.alignrotation) {
-			this.alignrotation.CFrame = this.camera.CFrame;
-		}
 	}
 }
