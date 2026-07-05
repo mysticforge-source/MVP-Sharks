@@ -35,6 +35,7 @@ export class SpawnController implements OnStart {
 		const hitbox = this.getHitbox()!;
 		warn(hitbox);
 
-		this.controlcontroller.begin(hitbox);
+		// it definitely is a meshpart with an attachment
+		this.controlcontroller.begin(hitbox as any);
 	}
 }

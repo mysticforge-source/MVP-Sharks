@@ -9,6 +9,8 @@ export class ControlController implements OnInput, OnInit {
 	protected hitbox!: MeshPart;
 
 	protected player = Players.LocalPlayer;
+
+	protected alignrotation!: AlignOrientation;
 	protected camera!: Camera;
 
 	onInit(): void | Promise<void> {
@@ -23,16 +25,25 @@ export class ControlController implements OnInput, OnInit {
 	};
 
 	// begins movement: sets hitbox, attaches camera, binds inputs
-	public begin(hitbox: MeshPart): void {
+	public begin(hitbox: MeshPart & { Attachment: Attachment }): void {
 		this.hitbox = hitbox;
 
 		this.camera.CameraSubject = this.hitbox;
 
 		// add an rotation align
-		const alignrot = new Instance("AlignOrientation");
-		alignrot.Parent = hitbox;
-		alignrot.Attachment0 = new Instance("Attachment", hitbox);
-		alignrot.Attachment1 = new Instance("Attachment", this.camera);
-		alignrot.Responsiveness = 50;
+		this.alignrotation = new Instance("AlignOrientation");
+		this.alignrotation.Parent = hitbox;
+		this.alignrotation.Attachment0 = hitbox.Attachment;
+		this.alignrotation.Attachment1 = new Instance("Attachment", this.camera);
+		this.alignrotation.Responsiveness = 20;
+		this.alignrotation.Mode = Enum.OrientationAlignmentMode.OneAttachment;
+	}
+
+	// systems
+
+	public alignSystem(dt: number) {
+		if (this.alignrotation) {
+			this.alignrotation.CFrame = this.camera.CFrame;
+		}
 	}
 }
