@@ -81,7 +81,7 @@ export class HitboxService {
 					// moving the hitbox, done in client/systems
 					const positionvel = new Instance("LinearVelocity");
 					positionvel.Attachment0 = centerAttach;
-					positionvel.RelativeTo = Enum.ActuatorRelativeTo.Attachment0;
+					positionvel.RelativeTo = Enum.ActuatorRelativeTo.World;
 					positionvel.MaxForce = math.huge;
 					positionvel.VectorVelocity = Vector3.zero;
 					positionvel.Parent = hitbox;
