@@ -13,6 +13,9 @@ export = (dt: number, controlcontroller: ControlController) => {
 
 		// velocity
 		// hitbox moves relative to the camera
-		controlcontroller.positionvel.VectorVelocity = cameraCF.VectorToWorldSpace(controlcontroller.movementVelocity);
+		controlcontroller.movementVelocitySpring.step(dt);
+		controlcontroller.positionvel.VectorVelocity = cameraCF.VectorToWorldSpace(
+			controlcontroller.movementVelocitySpring.getPosition(),
+		);
 	}
 };
