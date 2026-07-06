@@ -5,6 +5,7 @@ import { StandardActionBuilder } from "@rbxts/mechanism";
 import { Players, Workspace } from "@rbxts/services";
 
 import { InputController, OnInput } from "./inputcontroller";
+import { createSpring } from "@rbxts/ripple";
 
 // to avoid server reseting network owner when stopping
 const zerovec = new Vector3(0, 0.01, 0);
@@ -20,10 +21,15 @@ export class ControlController implements OnInput, OnInit {
 	public positionvel!: LinearVelocity;
 	public camera!: Camera;
 
+	public movementSpeed = 25;
 	public movementDirection: Vector3 = zerovec;
-	public movementVelocity: Vector3 = zerovec;
-
-	public movementSpeed = 17;
+	public movementVelocity = zerovec;
+	public movementVelocitySpring = createSpring(zerovec, {
+		tension: 300,
+		friction: 50,
+		impulse: new Vector3(this.movementSpeed * 2, this.movementSpeed * 2, this.movementSpeed * 2),
+		velocity: new Vector3(this.movementSpeed, this.movementSpeed, this.movementSpeed),
+	});
 
 	protected maid = clientMaid.sub();
 
@@ -70,7 +76,9 @@ export class ControlController implements OnInput, OnInit {
 
 		velocity = velocity.mul(this.movementSpeed);
 
-		this.movementVelocity = velocity; //this.hitbox.CFrame.VectorToWorldSpace(velocity);
+		// lerp the velocity via spring for drifting
+		this.movementVelocity = velocity;
+		this.movementVelocitySpring.setGoal(velocity); //this.hitbox.CFrame.VectorToWorldSpace(velocity);
 
 		//if (velocity.Magnitude === 0) this.movementVelocity = zerovec;
 		//this.positionvel.VectorVelocity = this.movementVelocity;
