@@ -73,11 +73,6 @@ export class ControlController implements OnInput, OnInit {
 		this.movementVelocity = velocity; //this.hitbox.CFrame.VectorToWorldSpace(velocity);
 
 		//if (velocity.Magnitude === 0) this.movementVelocity = zerovec;
-
-		//TODO: make the movement relative to camera, by making linearvelocity
-		// relative to the world, and the force relative to the camera
-		// updated in a new system binded to tick
-
 		//this.positionvel.VectorVelocity = this.movementVelocity;
 	}
 
