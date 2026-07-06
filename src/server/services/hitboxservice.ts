@@ -73,8 +73,8 @@ export class HitboxService {
 					// aligning the hitbox with the camera, done in client/systems
 					const alignrotation = new Instance("AlignOrientation");
 					alignrotation.Attachment0 = centerAttach;
-					alignrotation.Responsiveness = 20;
-					alignrotation.MaxTorque = math.huge;
+					alignrotation.Responsiveness = 15;
+					//alignrotation.MaxTorque = math.huge;
 					alignrotation.Mode = Enum.OrientationAlignmentMode.OneAttachment;
 					alignrotation.Parent = hitbox;
 
@@ -82,7 +82,7 @@ export class HitboxService {
 					const positionvel = new Instance("LinearVelocity");
 					positionvel.Attachment0 = centerAttach;
 					positionvel.RelativeTo = Enum.ActuatorRelativeTo.World;
-					positionvel.MaxForce = math.huge;
+					positionvel.MaxForce = 5e3; //math.huge;
 					positionvel.VectorVelocity = Vector3.zero;
 					positionvel.Parent = hitbox;
 
