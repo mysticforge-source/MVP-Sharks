@@ -21,7 +21,7 @@ export class ControlController implements OnInput, OnInit {
 	public camera!: Camera;
 
 	public movementDirection: Vector3 = zerovec;
-	protected movementVelocity: Vector3 = zerovec;
+	public movementVelocity: Vector3 = zerovec;
 
 	public movementSpeed = 17;
 
@@ -36,8 +36,6 @@ export class ControlController implements OnInput, OnInit {
 		backward: new StandardActionBuilder("S").setProcessed(false),
 		left: new StandardActionBuilder("A").setProcessed(false),
 		right: new StandardActionBuilder("D").setProcessed(false),
-		up: new StandardActionBuilder("E").setProcessed(false),
-		down: new StandardActionBuilder("Q").setProcessed(false),
 	};
 
 	// movement vectors added and removed from the movement direction
@@ -53,17 +51,16 @@ export class ControlController implements OnInput, OnInit {
 
 	protected addDirection(direction: keyof typeof this.movementvectors) {
 		this.movementDirection = this.movementDirection.add(this.movementvectors[direction]);
-		this.directionChanged();
+		this.updateVelocity();
 	}
 
 	protected subDirection(direction: keyof typeof this.movementvectors) {
 		this.movementDirection = this.movementDirection.sub(this.movementvectors[direction]);
-		this.directionChanged();
+		this.updateVelocity();
 	}
 
-	protected directionChanged() {
-		warn("direction changed");
-
+	// recalculates linearvelocity and updates it
+	protected updateVelocity() {
 		// normalizing to avoid diagonal speedup
 
 		let velocity = this.movementDirection;
@@ -81,7 +78,7 @@ export class ControlController implements OnInput, OnInit {
 		// relative to the world, and the force relative to the camera
 		// updated in a new system binded to tick
 
-		this.positionvel.VectorVelocity = this.movementVelocity;
+		//this.positionvel.VectorVelocity = this.movementVelocity;
 	}
 
 	// begins movement: sets hitbox, attaches camera, binds inputs
