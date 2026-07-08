@@ -6,6 +6,9 @@ import Signal from "@rbxts/lemon-signal";
 import { clientMaid } from "client/clientmaid";
 
 @Controller()
+/**
+ * Controls the localplayer spawning hitbox
+ */
 export class SpawnController implements OnStart {
 	constructor(private readonly controlcontroller: ControlController) {}
 	protected player = Players.LocalPlayer;
@@ -41,6 +44,12 @@ export class SpawnController implements OnStart {
 	}
 
 	public onStart(): void {
+		// connect signals
+		this.maid.on(Workspace.Shared.Hitboxes.ChildAdded, (child: Model) => {
+			warn("CHILD ADDED");
+			this.HitboxAdded.Fire(child);
+		});
+
 		task.wait(5);
 		// for testing
 		const res = SpawnFunction.call(0);
@@ -51,10 +60,5 @@ export class SpawnController implements OnStart {
 
 		// it definitely is a meshpart with an attachment
 		this.controlcontroller.begin(hitbox as any);
-
-		// connect signals
-		this.maid.on(Workspace.Shared.Hitboxes.ChildAdded, (child: Model) => {
-			this.HitboxAdded.Fire(child);
-		});
 	}
 }
