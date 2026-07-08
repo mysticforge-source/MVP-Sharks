@@ -55,6 +55,14 @@ export class HitboxService {
 					// so the client could find it
 					hitbox.Name = player.Name;
 
+					// so the client could attach the right model
+					// HACK: we could use Zap for this, instead of connecting to childAdded
+					// and sharing values like this
+					const sharkView = new Instance("IntValue");
+					sharkView.Value = idtoshark.indexOf(sharkname);
+					sharkView.Name = "SharkViewValue";
+					sharkView.Parent = hitbox;
+
 					// make it withstand gravity
 					hitbox.Anchored = false;
 					const centerAttach = new Instance("Attachment", hitbox);
