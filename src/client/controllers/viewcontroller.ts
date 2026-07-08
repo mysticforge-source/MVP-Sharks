@@ -1,7 +1,8 @@
 import { Controller, OnStart } from "@flamework/core";
-import { ReplicatedStorage, Workspace } from "@rbxts/services";
+import { Players, ReplicatedStorage, Workspace } from "@rbxts/services";
 import { clientMaid } from "client/clientmaid";
 import { SpawnController } from "./spawncontroller";
+import { idtoshark } from "shared/data";
 
 @Controller()
 /**
@@ -22,25 +23,31 @@ export class ViewController implements OnStart {
 
 	/** Adds alignposition into the model, positions it in the workspace */
 	public attachModel(
-		hitbox: Model & { ViewAttachment: Attachment },
+		hitbox: MeshPart & { ViewAttachment: Attachment },
 		model: Model & { Attachment: Attachment },
 	): void {
 		const attach = hitbox.ViewAttachment;
 
-		// configure the model to be able to follow the hitbox
-		const followpos = new Instance("AlignPosition");
-		followpos.Mode = Enum.PositionAlignmentMode.TwoAttachment;
-		followpos.Attachment0 = model.Attachment;
-		followpos.Attachment1 = attach;
-		followpos.MaxForce = math.huge;
-		followpos.Responsiveness = 50;
+		// TODO: make the model anchored,
+		// make a new interface Shark for storing a shark and its hitbox
+		// make an array, make a system that moves sharks to their hitbox cframes
+		// every render
 
-		followpos.Parent = model;
+		warn("NEW MODEL");
 
-		model.Parent = Workspace;
+		model.PrimaryPart?.PivotTo(hitbox.GetPivot());
+		model.PrimaryPart!.CFrame = hitbox.CFrame;
+		model.Parent = Workspace.Client.Models;
 	}
 
 	public onStart(): void {
-		this.maid.on(this.spawncontroller.HitboxAdded, (model: Model) => {});
+		this.maid.on(
+			this.spawncontroller.HitboxAdded,
+			(hitbox: MeshPart & { ViewAttachment: Attachment; SharkViewValue: IntValue }) => {
+				const sharkName = idtoshark[hitbox.SharkViewValue.Value];
+				const model = this.cloneModel(sharkName) as Model & { Attachment: Attachment };
+				this.attachModel(hitbox, model);
+			},
+		);
 	}
 }
