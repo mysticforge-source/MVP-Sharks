@@ -1,12 +1,15 @@
-import { Controller, OnTick } from "@flamework/core";
+import controlsys from "client/systems/controlsys";
+import viewsys from "client/systems/viewsys";
+
+import { Controller, OnRender, OnTick } from "@flamework/core";
+
 import { ControlController } from "./controlcontroller";
-import controlalign from "client/systems/controlalign";
 
 @Controller()
 /*
  * Activates ECS systems in order
  */
-export class CycleController implements OnTick {
+export class CycleController implements OnTick, OnRender {
 	constructor(private readonly controlcontroller: ControlController) {}
 
 	//
@@ -22,7 +25,12 @@ export class CycleController implements OnTick {
 
 		for (this.t; this.t >= this.TICKRATE; this.t -= this.TICKRATE) {
 			// run systems in order
-			controlalign(dt, this.controlcontroller);
+			controlsys(dt, this.controlcontroller);
 		}
+	}
+
+	public onRender(dt: number): void {
+		// run render systems in order
+		viewsys(dt);
 	}
 }
