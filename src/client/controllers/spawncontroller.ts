@@ -11,6 +11,7 @@ import { clientMaid } from "client/clientmaid";
  */
 export class SpawnController implements OnStart {
 	constructor(private readonly controlcontroller: ControlController) {}
+
 	protected player = Players.LocalPlayer;
 	protected maid = clientMaid.sub();
 
