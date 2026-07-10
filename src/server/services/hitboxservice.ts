@@ -20,7 +20,8 @@ export class HitboxService {
 
 		if (hitbox && hitbox.IsA("MeshPart")) {
 			hitbox = hitbox.Clone();
-			hitbox.Position = new Vector3(0, 15, 0);
+			hitbox.Transparency = 1;
+			hitbox.Position = new Vector3(0, 35, 0);
 			hitbox.Anchored = false;
 			hitbox.Massless = true;
 
