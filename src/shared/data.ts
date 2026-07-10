@@ -31,3 +31,7 @@ export const defaultSharkSlotData: SharkSlot = {
 export const idtoshark = [
 	"Reef Shark Medium", // 0
 ];
+
+export const sharkcosts = [
+	100, //0
+];
