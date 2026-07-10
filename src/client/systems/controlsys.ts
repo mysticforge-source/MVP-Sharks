@@ -1,8 +1,7 @@
 import { ControlController } from "client/controllers/controlcontroller";
 
 // runs every frame (60hz)
-// aligns the hitbox orientation with the camera,
-//
+// aligns the hitbox orientation with the camera
 export = (dt: number, controlcontroller: ControlController) => {
 	if (controlcontroller.alignrotation) {
 		const cameraCF = controlcontroller.camera.CFrame;
