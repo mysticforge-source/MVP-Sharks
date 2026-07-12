@@ -35,3 +35,8 @@ export const idtoshark = [
 export const sharkcosts = [
 	100, //0
 ];
+
+export const animdata = {
+	UniversalIdle: "134716316716783",
+	UniversalAttack: "116268079065083",
+};
