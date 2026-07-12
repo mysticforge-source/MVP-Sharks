@@ -19,10 +19,10 @@ export class LoadingController implements OnInit {
 		for (const shark of ReplicatedStorage.Models.GetChildren() as SharkModel[]) {
 			// keep created animations inside of the shark models
 			// for accessibility
-			for (let animName in animdata) {
+			for (let [animName, animId] of pairs(animdata)) {
 				const newAnim = new Instance("Animation");
 				newAnim.Name = animName;
-				newAnim.AnimationId = animdata[animName as keyof typeof animdata];
+				newAnim.AnimationId = animId;
 				newAnim.Parent = shark;
 
 				this.loadedData.ModelAnims[animName] = shark.AnimationController.Animator.LoadAnimation(newAnim);
