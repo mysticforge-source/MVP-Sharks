@@ -24,11 +24,10 @@
 		"incremental": true,
 		"tsBuildInfoFile": "out/tsconfig.tsbuildinfo",
 
-		"plugins": [
-			{ "transform": "rbxts-transformer-flamework" }
-		]
+		"plugins": [{ "transform": "rbxts-transformer-flamework" }],
 
 		//"ignoreDeprecations": "5.0"
+		"esModuleInterop": true
 	},
-	"include": ["src/**/*"],
+	"include": ["src/**/*"]
 }
