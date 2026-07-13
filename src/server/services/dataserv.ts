@@ -31,7 +31,11 @@ export const validateUserData = t.interface({
 	coins: t.numberConstrained(0, 100_000),
 	gems: t.numberConstrained(0, 65_535),
 	revivetokens: t.numberConstrained(0, 255),
-	slots: t.strictArray(validateSharkSlot, validateSharkSlot, validateSharkSlot),
+	slots: t.strictArray(
+		validateSharkSlot,
+		validateSharkSlot,
+		validateSharkSlot,
+	),
 });
 
 // player --> entity map
@@ -73,7 +77,7 @@ export class DataService implements OnStart {
 	}
 
 	// Removes Player and Entity from both Player-Entity maps
-	private async PlayerUnloaded(player: Player, ses: Document<UserData>) {
+	private async PlayerUnloaded(player: Player) {
 		const entity = PlayerToEntity.get(player);
 
 		if (entity) {
@@ -110,10 +114,14 @@ export class DataService implements OnStart {
 			// once the session is closed, we can delete player entity
 			ses.close()
 				.then(async () => {
-					await this.PlayerUnloaded(player, ses);
+					await this.PlayerUnloaded(player);
 					this.Sessions.delete(player);
 				})
-				.catch(async (err) => warn(`Failed to remove player session data: ${tostring(err)}`));
+				.catch(async (err) =>
+					warn(
+						`Failed to remove player session data: ${tostring(err)}`,
+					),
+				);
 		}
 	}
 
@@ -149,8 +157,14 @@ export class DataService implements OnStart {
 	public onStart(): void {
 		// added into dataservice's maid to avoid memory leaks
 		// asynchronous to serve every player joining at once
-		this.maid.on(Players.PlayerAdded, async (Player) => await this.PlayerAdded(Player));
-		this.maid.on(Players.PlayerRemoving, async (Player) => await this.PlayerRemoving(Player));
+		this.maid.on(
+			Players.PlayerAdded,
+			async (Player) => await this.PlayerAdded(Player),
+		);
+		this.maid.on(
+			Players.PlayerRemoving,
+			async (Player) => await this.PlayerRemoving(Player),
+		);
 
 		// incase some players joined before the service started
 		for (const plr of Players.GetPlayers()) this.PlayerAdded(plr);
@@ -158,24 +172,31 @@ export class DataService implements OnStart {
 		// Connects to changes of player entities, updates session and calls sync event with the player
 		// avoiding memory leaks
 		this.maid.add(
-			World.changed(UserDataComponent, (entity: Entity, id, value: UserData) => {
-				const player = EntityToPlayer.get(entity);
-				if (!player) {
-					warn("Change occured within data of a player not stored in EntityToPlayer maps");
-					return;
-				}
+			World.changed(
+				UserDataComponent,
+				(entity: Entity, id, value: UserData) => {
+					const player = EntityToPlayer.get(entity);
+					if (!player) {
+						warn(
+							"Change occured within data of a player not stored in EntityToPlayer maps",
+						);
+						return;
+					}
 
-				const ses = this.Sessions.get(player);
-				if (!ses) {
-					warn("Change occured within data of a player without a stored session!");
-					return;
-				}
+					const ses = this.Sessions.get(player);
+					if (!ses) {
+						warn(
+							"Change occured within data of a player without a stored session!",
+						);
+						return;
+					}
 
-				// new data is datastored in lapis via this session
-				// client should be up-to-date with all data changes
-				ses.write(value);
-				PlayerDataEvent.fire(player, value);
-			}),
+					// new data is datastored in lapis via this session
+					// client should be up-to-date with all data changes
+					ses.write(value);
+					PlayerDataEvent.fire(player, value);
+				},
+			),
 		);
 	}
 }
