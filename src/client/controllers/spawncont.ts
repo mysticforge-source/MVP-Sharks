@@ -1,6 +1,6 @@
 import { Controller, OnStart } from "@flamework/core";
 import { SpawnFunction } from "client/network/client";
-import { ControlController } from "./controlcontroller";
+import { ControlController } from "./controlcont";
 import { Players, Workspace } from "@rbxts/services";
 import Signal from "@rbxts/lemon-signal";
 import { clientMaid } from "client/clientmaid";

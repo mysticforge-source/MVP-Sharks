@@ -1,4 +1,4 @@
-import { ControlController } from "client/controllers/controlcontroller";
+import { ControlController } from "client/controllers/controlcont";
 
 // runs every frame (60hz)
 // aligns the hitbox orientation with the camera

@@ -1,11 +1,11 @@
 import { Controller, OnStart } from "@flamework/core";
 import { Players, ReplicatedStorage, Workspace } from "@rbxts/services";
 import { clientMaid } from "client/clientmaid";
-import { SpawnController } from "./spawncontroller";
+import { SpawnController } from "./spawncont";
 import { idtoshark } from "shared/data";
 import { World } from "shared/ecs/world";
 import { SharkViewComponent } from "client/state/components";
-import { InputController, OnInput } from "./inputcontroller";
+import { InputController, OnInput } from "./inputcont";
 import { CompositeActionBuilder, StandardActionBuilder } from "@rbxts/mechanism";
 import { HitboxesVisible } from "client/state/viewstate";
 import viewlog from "client/logic/viewlog";

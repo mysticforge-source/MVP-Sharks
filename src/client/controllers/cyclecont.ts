@@ -3,7 +3,7 @@ import viewsys from "client/systems/viewsys";
 
 import { Controller, OnRender, OnTick } from "@flamework/core";
 
-import { ControlController } from "./controlcontroller";
+import { ControlController } from "./controlcont";
 
 @Controller()
 /*
