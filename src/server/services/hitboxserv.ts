@@ -1,6 +1,6 @@
 import { Service } from "@flamework/core";
 import { ReplicatedStorage, Workspace } from "@rbxts/services";
-import { DataService, PlayerToEntity } from "./dataservice";
+import { DataService, PlayerToEntity } from "./dataserv";
 import { idtoshark } from "shared/data";
 import { World } from "shared/ecs/world";
 import { HitboxComponent } from "shared/ecs/components";

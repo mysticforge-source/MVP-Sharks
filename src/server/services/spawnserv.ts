@@ -5,10 +5,10 @@ import { World } from "shared/ecs/world";
 
 import { OnStart, Service } from "@flamework/core";
 
-import { DataService, PlayerToEntity } from "./dataservice";
+import { DataService, PlayerToEntity } from "./dataserv";
 import { idtoshark } from "shared/data";
 import { ReplicatedStorage } from "@rbxts/services";
-import { HitboxService } from "./hitboxservice";
+import { HitboxService } from "./hitboxserv";
 
 @Service()
 export class SpawnService implements OnStart {
