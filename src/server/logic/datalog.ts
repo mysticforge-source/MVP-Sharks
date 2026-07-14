@@ -1,7 +1,6 @@
 import { Entity, World } from "@rbxts/jecs";
-import { Document } from "@rbxts/lapis";
 import { func, table } from "shared/logic/logictypes";
-import { UserData } from "shared/networktypes";
+import { mock } from "shared/logic/mocktypes";
 
 export default class<DataType extends table> {
 	constructor(
@@ -12,9 +11,14 @@ export default class<DataType extends table> {
 		private PlayerToEntity: Map<Player, Entity>,
 		private EntityToPlayer: Map<Entity, Player>,
 
-		private PlayerDataEvent: { fire: func },
+		private PlayerDataEvent: mock.Event,
 
+		private Sessions?: Map<Player, mock.Document<DataType, true>>,
 		private Collection?: table,
+
+		private cache = {
+			Sessions: undefined,
+		},
 	) {}
 
 	// PRIVATE LOGIC
@@ -37,15 +41,17 @@ export default class<DataType extends table> {
 		this.PlayerDataEvent.fire(player, data);
 	}
 
-	/** Returns the collection, warns if it wasn't created yet */
+	/** Returns the collection, errors if it wasn't created yet */
 	private getCollection() {
-		if (!this.Collection) error("Create the Collection first!");
+		if (!this.Collection) throw error("Create the Collection first!");
 		return this.Collection;
 		// TODO: finish creating collection, also other plug in methods of dataservice
 		// fully update dataservice to only connect
 	}
 
 	// PUBLIC LOGIC
+
+	public createCollection() {}
 
 	/** Returns player's data */
 	public getPlayerData(player: Player) {
@@ -65,7 +71,7 @@ export default class<DataType extends table> {
 		}
 	}
 
-	// PLUG-IN CONSTRUCTS
+	// PLUG-IN STUFF
 
 	/** Removes the player's data from maps and state */
 	public PlayerUnloaded(player: Player) {
@@ -79,7 +85,7 @@ export default class<DataType extends table> {
 	}
 
 	/** Creates player entity, adds data, sends it to the client */
-	public PlayerLoaded(player: Player, ses: Document<DataType>) {
+	public PlayerLoaded(player: Player, ses: mock.Document<DataType>) {
 		// maps are needed for availability of both, player and their entity
 		this.createPlayerEntity(player);
 
