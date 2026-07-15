@@ -1,6 +1,6 @@
 // file containing mocked types for use in logic files
 
-import { Collection } from "@rbxts/lapis";
+import Lapis, { Collection, Document } from "@rbxts/lapis";
 import { func } from "./logictypes";
 
 export namespace mock {
@@ -27,4 +27,12 @@ export namespace mock {
 			},
 		): Collection<T>;
 	};
+}
+
+namespace actual {
+	type ADocument<T extends object> = Document<T, true>;
+
+	type ACollection<T extends object> = Collection<T, true>;
+
+	type ALapis = typeof Lapis;
 }
