@@ -110,27 +110,40 @@ export default class {
 		return this.openSessions.get(player);
 	}
 
-	/** Sets player's data to data, updates the state and fires it to client */
-	public setPlayerData(player: Player, data: UserData) {
+	/** Mutates player data without firing it to the client */
+	public mutatePlayerData(player: Player, data: UserData) {
 		const entity = this.getPlayerEntity(player);
-
 		if (entity) {
 			this.world.set(entity, this.UserDataComponent, data);
-			/** Update it in the session */
-			const ses = this.getPlayerSession(player);
-			if (ses) {
-				ses.write(data);
-			} else {
-				warn("Player session does not exist");
-				// TODO: think about this and renovate dataservice
-			}
-
-			/** Fire changes to client */
-			this.fireDataEvent(player, data);
+			return true;
 		}
+		return false;
 	}
 
-	public mutatePlayerData(player: Player, data: UserData) {}
+	/** Sets player's Lapis session data */
+	public mutatePlayerSession(player: Player, data: UserData): boolean {
+		const ses = this.getPlayerSession(player);
+
+		if (ses) {
+			ses.write(data);
+			return true;
+		}
+		return false;
+	}
+
+	/** Sets player's data to data, updates the state and fires it to client */
+	public setPlayerData(player: Player, data: UserData) {
+		/** set state data */
+		if (!this.mutatePlayerData(player, data))
+			warn("Player state does not exist!");
+
+		/** set session data */
+		if (!this.mutatePlayerSession(player, data))
+			warn("Player session does not exist!");
+
+		/** fire changes to client */
+		this.fireDataEvent(player, data);
+	}
 
 	// PLUG-IN STUFF
 
@@ -154,6 +167,8 @@ export default class {
 		// player's session is up to date with their component
 		const data = ses.read();
 		this.setPlayerData(player, data);
+
+		this.openSessions.set(player, ses);
 
 		this.fireDataEvent(player, data);
 	}
