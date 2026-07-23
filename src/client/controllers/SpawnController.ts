@@ -1,6 +1,6 @@
 import { Controller, OnStart } from "@flamework/core";
 import { SpawnFunction } from "client/network/client";
-import { ControlController } from "./controlcont";
+import { MovementController } from "./MovementController";
 import { Players, Workspace } from "@rbxts/services";
 import Signal from "@rbxts/lemon-signal";
 import { clientMaid } from "client/clientmaid";
@@ -10,7 +10,7 @@ import { clientMaid } from "client/clientmaid";
  * Controls the localplayer spawning hitbox
  */
 export class SpawnController implements OnStart {
-	constructor(private readonly controlcontroller: ControlController) {}
+	constructor(private readonly MovementController: MovementController) {}
 
 	protected player = Players.LocalPlayer;
 	protected maid = clientMaid.sub();
@@ -19,7 +19,9 @@ export class SpawnController implements OnStart {
 
 	/** Finds localplayer hitbox in workspace */
 	public getHitbox(): MeshPart | undefined {
-		const hitbox = Workspace.Shared.Hitboxes.FindFirstChild(this.player.Name) as MeshPart | undefined;
+		const hitbox = Workspace.Shared.Hitboxes.FindFirstChild(
+			this.player.Name,
+		) as MeshPart | undefined;
 		return hitbox;
 	}
 
@@ -40,7 +42,7 @@ export class SpawnController implements OnStart {
 	public async Spawn(slot: number) {
 		const hitbox = await this.SpawnHitbox(slot);
 		if (hitbox) {
-			this.controlcontroller.begin(hitbox as any);
+			this.MovementController.begin(hitbox as any);
 		}
 	}
 
@@ -60,6 +62,6 @@ export class SpawnController implements OnStart {
 		warn(hitbox);
 
 		// it definitely is a meshpart with an attachment
-		this.controlcontroller.begin(hitbox as any);
+		this.MovementController.begin(hitbox as any);
 	}
 }

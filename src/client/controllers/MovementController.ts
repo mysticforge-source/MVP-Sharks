@@ -4,16 +4,14 @@ import { Controller, OnInit } from "@flamework/core";
 import { StandardActionBuilder } from "@rbxts/mechanism";
 import { Players, Workspace } from "@rbxts/services";
 
-import { InputController, OnInput } from "./inputcont";
 import { createSpring } from "@rbxts/ripple";
+import InputTools from "shared/utils/inputTools";
 
 // to avoid server reseting network owner when stopping
 const zerovec = new Vector3(0, 0.01, 0);
 
 @Controller()
-export class MovementController implements OnInput, OnInit {
-	constructor(private readonly inputcontroller: InputController) {}
-
+export class MovementController implements OnInit {
 	protected hitbox!: MeshPart;
 	protected player = Players.LocalPlayer;
 
@@ -122,6 +120,6 @@ export class MovementController implements OnInput, OnInit {
 			);
 		}
 
-		this.inputcontroller.bindAll(this);
+		InputTools.bindAll(this.inputs);
 	}
 }
