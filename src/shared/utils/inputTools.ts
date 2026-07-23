@@ -9,8 +9,8 @@ interface inputs {
 namespace InputTools {
 	export const inputManager = new InputManager();
 
-	export const bind = inputManager.bind;
-	export const unbind = inputManager.unbind;
+	export const bind = (action: BaseAction) => inputManager.bind(action);
+	export const unbind = (action: BaseAction) => inputManager.unbind(action);
 	/** Bind all inputs */
 	export const bindAll = (inputs: inputs) => {
 		for (let [_, action] of pairs(inputs)) {
