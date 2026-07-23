@@ -11,7 +11,7 @@ import { createSpring } from "@rbxts/ripple";
 const zerovec = new Vector3(0, 0.01, 0);
 
 @Controller()
-export class ControlController implements OnInput, OnInit {
+export class MovementController implements OnInput, OnInit {
 	constructor(private readonly inputcontroller: InputController) {}
 
 	protected hitbox!: MeshPart;
@@ -27,14 +27,24 @@ export class ControlController implements OnInput, OnInit {
 	public movementVelocitySpring = createSpring(zerovec, {
 		tension: 300,
 		friction: 50,
-		impulse: new Vector3(this.movementSpeed * 2, this.movementSpeed * 2, this.movementSpeed * 2),
-		velocity: new Vector3(this.movementSpeed, this.movementSpeed, this.movementSpeed),
+		impulse: new Vector3(
+			this.movementSpeed * 2,
+			this.movementSpeed * 2,
+			this.movementSpeed * 2,
+		),
+		velocity: new Vector3(
+			this.movementSpeed,
+			this.movementSpeed,
+			this.movementSpeed,
+		),
 	});
 
 	protected maid = clientMaid.sub();
 
 	onInit() {
-		this.camera = Workspace.CurrentCamera ?? (Workspace.WaitForChild("CurrentCamera")! as Camera);
+		this.camera =
+			Workspace.CurrentCamera ??
+			(Workspace.WaitForChild("CurrentCamera")! as Camera);
 	}
 
 	public inputs = {
@@ -56,12 +66,16 @@ export class ControlController implements OnInput, OnInit {
 	};
 
 	protected addDirection(direction: keyof typeof this.movementvectors) {
-		this.movementDirection = this.movementDirection.add(this.movementvectors[direction]);
+		this.movementDirection = this.movementDirection.add(
+			this.movementvectors[direction],
+		);
 		this.updateVelocity();
 	}
 
 	protected subDirection(direction: keyof typeof this.movementvectors) {
-		this.movementDirection = this.movementDirection.sub(this.movementvectors[direction]);
+		this.movementDirection = this.movementDirection.sub(
+			this.movementvectors[direction],
+		);
 		this.updateVelocity();
 	}
 
@@ -91,15 +105,21 @@ export class ControlController implements OnInput, OnInit {
 		this.camera.CameraSubject = this.hitbox;
 
 		// for the camera to rotate the hitbox
-		this.alignrotation = hitbox.WaitForChild("AlignOrientation") as AlignOrientation;
+		this.alignrotation = hitbox.WaitForChild(
+			"AlignOrientation",
+		) as AlignOrientation;
 
 		// for the inputs to move the hitbox
-		this.positionvel = hitbox.WaitForChild("LinearVelocity") as LinearVelocity;
+		this.positionvel = hitbox.WaitForChild(
+			"LinearVelocity",
+		) as LinearVelocity;
 
 		// bind inputs
 		for (const [direction, action] of pairs(this.inputs)) {
 			this.maid.on(action.activated, () => this.addDirection(direction));
-			this.maid.on(action.deactivated, () => this.subDirection(direction));
+			this.maid.on(action.deactivated, () =>
+				this.subDirection(direction),
+			);
 		}
 
 		this.inputcontroller.bindAll(this);

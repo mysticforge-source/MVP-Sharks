@@ -3,14 +3,14 @@ import viewsys from "client/systems/viewsys";
 
 import { Controller, OnRender, OnTick } from "@flamework/core";
 
-import { ControlController } from "./controlcont";
+import { MovementController } from "./MovementController";
 
 @Controller()
 /*
  * Activates ECS systems in order
  */
 export class CycleController implements OnTick, OnRender {
-	constructor(private readonly controlcontroller: ControlController) {}
+	constructor(private readonly MovementController: MovementController) {}
 
 	//
 	protected TICKRATE = 1 / 60;
@@ -25,7 +25,7 @@ export class CycleController implements OnTick, OnRender {
 
 		for (this.t; this.t >= this.TICKRATE; this.t -= this.TICKRATE) {
 			// run systems in order
-			controlsys(dt, this.controlcontroller);
+			controlsys(dt, this.MovementController);
 		}
 	}
 
