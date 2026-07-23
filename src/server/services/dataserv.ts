@@ -38,15 +38,15 @@ export const validateUserData = t.interface({
 	),
 });
 
-// player --> entity map
+/** get the entity state of this player */
 export const PlayerToEntity = new Map<Player, Entity>();
 
-// entity --> player map
+/** get the player owner of this entity */
 export const EntityToPlayer = new Map<Entity, Player>();
 
 @Service()
 export class DataService implements OnStart {
-	protected Collection = createCollection<UserData>("PROD_PlayerDataEvent", {
+	protected Collection = createCollection<UserData>("PROD_PlayerData", {
 		defaultData: defaultUserData,
 		validate: validateUserData,
 		// migrations: [
@@ -61,36 +61,10 @@ export class DataService implements OnStart {
 
 	// private methods
 
-	// Creates player entity, sets it in the Player-Entity maps and gives it the UserDataComponent
-	private async PlayerLoaded(player: Player, ses: Document<UserData>) {
-		// maps are needed for availability of both, player and their entity
-		const entity = World.entity();
-		PlayerToEntity.set(player, entity);
-		EntityToPlayer.set(entity, player);
-
-		// source of truth is the player's component
-		// player's session is up to date with their component
-		const data = ses.read();
-		World.set(entity, UserDataComponent, data);
-
-		PlayerDataEvent.fire(player, data);
-	}
-
-	// Removes Player and Entity from both Player-Entity maps
-	private async PlayerUnloaded(player: Player) {
-		const entity = PlayerToEntity.get(player);
-
-		if (entity) {
-			PlayerToEntity.delete(player);
-			EntityToPlayer.delete(entity);
-			World.delete(entity);
-		}
-	}
-
 	// Loads the session, adds it to Sessions
 	private async PlayerAdded(player: Player) {
 		// we can use the session once the collection loads it
-		this.Collection.load(`User${player.UserId}`, [player.UserId])
+		await this.Collection.load(`User${player.UserId}`, [player.UserId])
 			.then(async (ses) => {
 				// player could leave while it was loading
 				if (!player.Parent) {
@@ -98,9 +72,22 @@ export class DataService implements OnStart {
 					return;
 				}
 
+				//::: PLAYER LOADED
+
 				// we need player's session for long term use
 				this.Sessions.set(player, ses);
-				await this.PlayerLoaded(player, ses);
+
+				// maps are needed for availability of both, player and their entity
+				const entity = World.entity();
+				PlayerToEntity.set(player, entity);
+				EntityToPlayer.set(entity, player);
+
+				// source of truth is the player's component
+				// player's session is up to date with their component
+				const data = ses.read();
+				World.set(entity, UserDataComponent, data);
+
+				PlayerDataEvent.fire(player, data);
 			})
 			.catch(async (err) => {
 				player.Kick(`Failed to load data: ${tostring(err)}`);
@@ -114,7 +101,13 @@ export class DataService implements OnStart {
 			// once the session is closed, we can delete player entity
 			ses.close()
 				.then(async () => {
-					await this.PlayerUnloaded(player);
+					const entity = PlayerToEntity.get(player);
+
+					if (entity) {
+						PlayerToEntity.delete(player);
+						EntityToPlayer.delete(entity);
+						World.delete(entity);
+					}
 					this.Sessions.delete(player);
 				})
 				.catch(async (err) =>
