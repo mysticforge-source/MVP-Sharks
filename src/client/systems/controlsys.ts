@@ -1,20 +1,21 @@
-import { ControlController } from "client/controllers/controlcont";
+import { MovementController } from "client/controllers/MovementController";
 
 // runs every frame (60hz)
 // aligns the hitbox orientation with the camera
-export = (dt: number, controlcontroller: ControlController) => {
-	if (controlcontroller.alignrotation) {
-		const cameraCF = controlcontroller.camera.CFrame;
+export = (dt: number, MovementController: MovementController) => {
+	if (MovementController.alignrotation) {
+		const cameraCF = MovementController.camera.CFrame;
 
 		// orientation
 		// hitbox is aligned to the camera
-		controlcontroller.alignrotation.CFrame = cameraCF;
+		MovementController.alignrotation.CFrame = cameraCF;
 
 		// velocity
 		// hitbox moves relative to the camera
-		controlcontroller.movementVelocitySpring.step(dt);
-		controlcontroller.positionvel.VectorVelocity = cameraCF.VectorToWorldSpace(
-			controlcontroller.movementVelocitySpring.getPosition(),
-		);
+		MovementController.movementVelocitySpring.step(dt);
+		MovementController.positionvel.VectorVelocity =
+			cameraCF.VectorToWorldSpace(
+				MovementController.movementVelocitySpring.getPosition(),
+			);
 	}
 };
