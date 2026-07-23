@@ -1,14 +1,19 @@
-import { Controller, OnStart } from "@flamework/core";
-import { Players, ReplicatedStorage, Workspace } from "@rbxts/services";
 import { clientMaid } from "client/clientmaid";
-import { SpawnController } from "./spawncont";
+import viewlog from "client/logic/viewlog";
+import { SharkViewComponent } from "client/state/components";
+import { HitboxesVisible } from "client/state/viewstate";
 import { idtoshark } from "shared/data";
 import { World } from "shared/ecs/world";
-import { SharkViewComponent } from "client/state/components";
-import { InputController, OnInput } from "./inputcont";
-import { CompositeActionBuilder, StandardActionBuilder } from "@rbxts/mechanism";
-import { HitboxesVisible } from "client/state/viewstate";
-import viewlog from "client/logic/viewlog";
+
+import { Controller, OnStart } from "@flamework/core";
+import {
+	CompositeActionBuilder,
+	StandardActionBuilder,
+} from "@rbxts/mechanism";
+import { Players, ReplicatedStorage, Workspace } from "@rbxts/services";
+
+import { SpawnController } from "./SpawnController";
+import InputTools from "shared/utils/inputTools";
 
 export type Shark = {
 	sharkModel: Model;
@@ -24,17 +29,17 @@ export type Hitbox = MeshPart & {
 /**
  * Attaches models to hitboxservice's hitboxes
  */
-export class ViewController implements OnInput, OnStart {
-	constructor(
-		private readonly spawncontroller: SpawnController,
-		private readonly inputcontroller: InputController,
-	) {}
+export class ViewController implements OnStart {
+	constructor(private readonly spawncontroller: SpawnController) {}
 
 	protected viewLogic = new viewlog();
 	protected maid = clientMaid.sub();
 
 	public inputs = {
-		ToggleHitboxes: new CompositeActionBuilder("LeftControl", "H").setTiming(1),
+		ToggleHitboxes: new CompositeActionBuilder(
+			"LeftControl",
+			"H",
+		).setTiming(1),
 	};
 
 	/** Gets and clones the model from Models */
@@ -51,7 +56,9 @@ export class ViewController implements OnInput, OnStart {
 	 */
 	public HitboxAttached(hitbox: Hitbox) {
 		const sharkName = idtoshark[hitbox.SharkViewValue.Value];
-		const model = this.cloneModel(sharkName) as Model & { Attachment: Attachment };
+		const model = this.cloneModel(sharkName) as Model & {
+			Attachment: Attachment;
+		};
 
 		model.Parent = Workspace.Client.Models;
 
@@ -66,7 +73,9 @@ export class ViewController implements OnInput, OnStart {
 	}
 
 	public onStart(): void {
-		this.maid.on(this.spawncontroller.HitboxAdded, (h) => this.HitboxAttached(h));
+		this.maid.on(this.spawncontroller.HitboxAdded, (h) =>
+			this.HitboxAttached(h),
+		);
 
 		this.inputs.ToggleHitboxes.activated.Connect(() => {
 			print("111");
@@ -74,6 +83,6 @@ export class ViewController implements OnInput, OnStart {
 			this.viewLogic.updateHitboxesVisibility();
 		});
 
-		this.inputcontroller.bindAll(this);
+		InputTools.bindAll(this.inputs);
 	}
 }
