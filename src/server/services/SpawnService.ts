@@ -5,10 +5,10 @@ import { World } from "shared/ecs/world";
 
 import { OnStart, Service } from "@flamework/core";
 
-import { DataService, PlayerToEntity } from "./dataserv";
+import { DataService, PlayerToEntity } from "./DataService";
 import { idtoshark } from "shared/data";
 import { ReplicatedStorage } from "@rbxts/services";
-import { HitboxService } from "./hitboxserv";
+import { HitboxService } from "./HitboxService";
 
 @Service()
 export class SpawnService implements OnStart {
@@ -32,7 +32,10 @@ export class SpawnService implements OnStart {
 				const sharkname = idtoshark[sharkid];
 				if (!sharkname) return "Fail";
 
-				const hitbox = this.hitboxservice.createPlayerHitbox(player, sharkname);
+				const hitbox = this.hitboxservice.createPlayerHitbox(
+					player,
+					sharkname,
+				);
 				if (!hitbox) return "Fail";
 
 				return "Success";

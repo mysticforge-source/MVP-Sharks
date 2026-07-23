@@ -1,6 +1,6 @@
 import { Service } from "@flamework/core";
 import { ReplicatedStorage, Workspace } from "@rbxts/services";
-import { DataService, PlayerToEntity } from "./dataserv";
+import { DataService, PlayerToEntity } from "./DataService";
 import { idtoshark } from "shared/data";
 import { World } from "shared/ecs/world";
 import { HitboxComponent } from "shared/ecs/components";
@@ -16,7 +16,9 @@ export class HitboxService {
 
 	// clones the hitbox into workspace, does not correlate it with the player
 	public cloneHitbox(name: string): Instance | undefined {
-		let hitbox = ReplicatedStorage.Hitboxes.FindFirstChild(name) as MeshPart;
+		let hitbox = ReplicatedStorage.Hitboxes.FindFirstChild(
+			name,
+		) as MeshPart;
 
 		if (hitbox && hitbox.IsA("MeshPart")) {
 			hitbox = hitbox.Clone();
@@ -36,14 +38,19 @@ export class HitboxService {
 	 * deletes old hitbox, stores the new hitbox in HitboxComponent
 	 * and HitboxToPlayer
 	 */
-	public createPlayerHitbox(player: Player, sharkname: string): Instance | undefined {
+	public createPlayerHitbox(
+		player: Player,
+		sharkname: string,
+	): Instance | undefined {
 		const data = this.dataservice.getPlayerData(player);
 
 		// getting data may fail
 		// getting shark name, id, spawning hitbox can also fail
 		if (data)
 			try {
-				const hitbox = this.cloneHitbox(sharkname) as MeshPart | undefined;
+				const hitbox = this.cloneHitbox(sharkname) as
+					| MeshPart
+					| undefined;
 
 				// delete the old hitbox, get it from player data
 				const playerEntity = PlayerToEntity.get(player);
@@ -73,7 +80,11 @@ export class HitboxService {
 
 					// a force nullifying the gravity force, F = mg
 					const antigravforce = new Instance("VectorForce");
-					antigravforce.Force = new Vector3(0, hitbox.AssemblyMass * Workspace.Gravity, 0);
+					antigravforce.Force = new Vector3(
+						0,
+						hitbox.AssemblyMass * Workspace.Gravity,
+						0,
+					);
 					antigravforce.ApplyAtCenterOfMass = true;
 					antigravforce.Attachment0 = centerAttach;
 					antigravforce.RelativeTo = Enum.ActuatorRelativeTo.World;
@@ -84,7 +95,8 @@ export class HitboxService {
 					alignrotation.Attachment0 = centerAttach;
 					alignrotation.Responsiveness = 15;
 					//alignrotation.MaxTorque = math.huge;
-					alignrotation.Mode = Enum.OrientationAlignmentMode.OneAttachment;
+					alignrotation.Mode =
+						Enum.OrientationAlignmentMode.OneAttachment;
 					alignrotation.Parent = hitbox;
 
 					// moving the hitbox, done in client/systems
@@ -103,7 +115,8 @@ export class HitboxService {
 					HitboxToPlayer.set(hitbox, player);
 
 					// so we could get hitbox, having player
-					if (playerEntity) World.set(playerEntity, HitboxComponent, hitbox);
+					if (playerEntity)
+						World.set(playerEntity, HitboxComponent, hitbox);
 
 					return hitbox;
 				}
