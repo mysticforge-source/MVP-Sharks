@@ -1,5 +1,5 @@
 import { Workspace } from "@rbxts/services";
-import { Hitbox } from "client/controllers/viewcont";
+import { Hitbox } from "client/controllers/ViewController";
 import { HitboxesVisible } from "client/state/viewstate";
 
 export default class {

@@ -1,4 +1,4 @@
-import viewmodelattach from "client/logic/viewlog";
+import viewmodelattach from "client/logic/ViewLogic";
 import { SharkViewComponent } from "client/state/components";
 import { World } from "shared/ecs/world";
 

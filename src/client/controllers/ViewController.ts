@@ -1,5 +1,5 @@
 import { clientMaid } from "client/clientmaid";
-import viewlog from "client/logic/viewlog";
+import viewlog from "client/logic/ViewLogic";
 import { SharkViewComponent } from "client/state/components";
 import { HitboxesVisible } from "client/state/viewstate";
 import { idtoshark } from "shared/data";
