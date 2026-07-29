@@ -3,7 +3,6 @@ import Vide from '@rbxts/vide';
 import Listcontainer from '../components/listcontainer';
 import Titlebutton from '../components/titlebutton';
 import { Menu } from '../sources';
-import { text } from '../text';
 import { css } from '../theme';
 
 declare interface Props {
@@ -28,7 +27,7 @@ export = (
 			<uiaspectratioconstraint />
 			
 			<Titlebutton
-				text={text.en.Play}
+				text={"Play"}
 
 				activated={() => {
 					Menu("GAME")
@@ -36,7 +35,7 @@ export = (
 			/>
 
 			<Titlebutton
-				text={text.en.Shop}
+				text={"Shop"}
 
 				activated={() => {
 					Menu("Shop")
@@ -44,7 +43,7 @@ export = (
 			/>
 
 			<Titlebutton
-				text={text.en.Settings}
+				text={"Settings"}
 
 				activated={() => {
 					Menu("Settings")

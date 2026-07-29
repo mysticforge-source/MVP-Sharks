@@ -1,5 +1,4 @@
 import { clientMaid } from "client/clientmaid";
-import viewlog from "client/logic/ViewLogic";
 import { SharkViewComponent } from "client/state/components";
 import { HitboxesVisible } from "client/state/viewstate";
 import { idtoshark } from "shared/data";
@@ -32,7 +31,6 @@ export type Hitbox = MeshPart & {
 export class ViewController implements OnStart {
 	constructor(private readonly spawncontroller: SpawnController) {}
 
-	protected viewLogic = new viewlog();
 	protected maid = clientMaid.sub();
 
 	public inputs = {
@@ -80,7 +78,9 @@ export class ViewController implements OnStart {
 		this.inputs.ToggleHitboxes.activated.Connect(() => {
 			print("111");
 			HitboxesVisible(!HitboxesVisible());
-			this.viewLogic.updateHitboxesVisibility();
+			for (const hitbox of Workspace.Shared.Hitboxes.GetChildren() as MeshPart[]) {
+				hitbox.Transparency = HitboxesVisible() ? 0 : 1;
+			}
 		});
 
 		InputTools.bindAll(this.inputs);
