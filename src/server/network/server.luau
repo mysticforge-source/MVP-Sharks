@@ -181,14 +181,6 @@ end
 Players.PlayerRemoving:Connect(function(player)
 	player_map[player] = nil
 end)
-export type PartialSharkSlot = ({
-	["shark"]: ((number)?),
-	["dead"]: ((boolean)?),
-	["hunger"]: ((number)?),
-	["exp"]: ((number)?),
-	["upgrade"]: ((number)?),
-	["level"]: ((number)?),
-})
 export type UserData = ({
 	["coins"]: (number),
 	["gems"]: (number),
@@ -209,6 +201,14 @@ export type SharkSlot = ({
 	["exp"]: (number),
 	["upgrade"]: (number),
 	["level"]: (number),
+})
+export type PartialSharkSlot = ({
+	["shark"]: ((number)?),
+	["dead"]: ((boolean)?),
+	["hunger"]: ((number)?),
+	["exp"]: ((number)?),
+	["upgrade"]: ((number)?),
+	["level"]: ((number)?),
 })
 
 local function sendEvents()

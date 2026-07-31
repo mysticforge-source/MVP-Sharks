@@ -148,14 +148,6 @@ local remotes = ReplicatedStorage:WaitForChild("ZAP")
 local reliable = remotes:WaitForChild("ZAP_RELIABLE")
 assert(reliable:IsA("RemoteEvent"), "Expected ZAP_RELIABLE to be a RemoteEvent")
 
-export type PartialSharkSlot = ({
-	["shark"]: ((number)?),
-	["dead"]: ((boolean)?),
-	["hunger"]: ((number)?),
-	["exp"]: ((number)?),
-	["upgrade"]: ((number)?),
-	["level"]: ((number)?),
-})
 export type UserData = ({
 	["coins"]: (number),
 	["gems"]: (number),
@@ -176,6 +168,14 @@ export type SharkSlot = ({
 	["exp"]: (number),
 	["upgrade"]: (number),
 	["level"]: (number),
+})
+export type PartialSharkSlot = ({
+	["shark"]: ((number)?),
+	["dead"]: ((boolean)?),
+	["hunger"]: ((number)?),
+	["exp"]: ((number)?),
+	["upgrade"]: ((number)?),
+	["level"]: ((number)?),
 })
 
 local function sendEvents()
