@@ -1,4 +1,4 @@
-// Some tools regarding input
+/* some tools regarding input */
 
 import { BaseAction, InputManager } from "@rbxts/mechanism";
 
@@ -11,13 +11,13 @@ namespace InputTools {
 
 	export const bind = (action: BaseAction) => inputManager.bind(action);
 	export const unbind = (action: BaseAction) => inputManager.unbind(action);
-	/** Bind all inputs */
+	/* bind all inputs */
 	export const bindAll = (inputs: inputs) => {
 		for (let [_, action] of pairs(inputs)) {
 			inputManager.bind(action);
 		}
 	};
-	/** Unbind all inputs */
+	/* unbind all inputs */
 	export const unbindAll = (inputs: inputs) => {
 		for (let [_, action] of pairs(inputs)) {
 			inputManager.unbind(action);

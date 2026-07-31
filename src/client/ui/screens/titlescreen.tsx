@@ -1,3 +1,8 @@
+/*
+ * title screen ui
+ * shows when menu is set to title
+ */
+
 import Vide from '@rbxts/vide';
 
 import Listcontainer from '../components/listcontainer';

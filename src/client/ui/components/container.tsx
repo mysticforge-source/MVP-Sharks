@@ -1,3 +1,5 @@
+/* container frame component */
+
 import Vide from '@rbxts/vide';
 
 import { attr, css } from '../theme';

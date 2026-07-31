@@ -1,3 +1,5 @@
+/* title screen button component */
+
 import Vide from "@rbxts/vide"
 import { css } from "../theme"
 

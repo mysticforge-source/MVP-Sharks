@@ -1,4 +1,4 @@
-// Client source of truth for UI Vide sources
+/* client source of truth for ui vide sources */
 
 import { defaultSharkSlotData } from "shared/data";
 import { SharkSlot } from "shared/networktypes";

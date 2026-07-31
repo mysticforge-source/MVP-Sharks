@@ -1,13 +1,13 @@
-// ECS Components used by both client and server
+/* ecs components used by both client and server */
 
 import { UserData } from "shared/networktypes";
 import { World } from "./world";
 
-// user data component
+/* user data component */
 export const UserDataComponent = World.component<UserData>();
 
-// shared components
+/* shared components */
 export const HealthComponent = World.component<{ max: number; current: number }>();
 
-// assigned to player, stores player's hitbox
+/* assigned to player, stores player's hitbox */
 export const HitboxComponent = World.component<Instance>();

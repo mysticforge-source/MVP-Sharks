@@ -1,20 +1,20 @@
-// bridge between JECS and Vide
+/* bridge between jecs and vide */
 
 import { Maid } from "@rbxts/better-maid";
 import { Entity } from "@rbxts/jecs";
 import { source } from "@rbxts/vide";
 import { World } from "shared/ecs/world";
 
-// a source that stores a component's value, up-to-date
+/* a source that stores a component's value, up-to-date */
 export const sourceComp = (maid: Maid, entity: Entity, component: Entity) => {
-    const newSource = source(World.get(entity, component));
+	const newSource = source(World.get(entity, component));
 
-    maid.Add(
-        World.changed(component, (ent, id, newvalue) => {
-            if (ent !== entity) return;
-            newSource(newvalue);
-        })
-    );
+	maid.Add(
+		World.changed(component, (ent, id, newvalue) => {
+			if (ent !== entity) return;
+			newSource(newvalue);
+		}),
+	);
 
-    return newSource;
-}
+	return newSource;
+};

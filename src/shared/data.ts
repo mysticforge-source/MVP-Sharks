@@ -1,4 +1,4 @@
-// shared data file
+/* shared data file */
 
 import { ReplicatedStorage } from "@rbxts/services";
 import { SharkSlot } from "./networktypes";
