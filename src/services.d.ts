@@ -5,14 +5,28 @@ interface Workspace extends Model {
 	Client: Folder & {
 		Models: Folder;
 	};
+
+	ServerAuthority: Model & {
+		Data: Configuration;
+	};
 }
 
-interface ReplicatedStorage extends Instance {
+interface ServerStorage extends Instance {
 	Hitboxes: Folder & {
 		["Reef Shark Medium"]: MeshPart & {
 			ViewAttachment: Attachment;
 		};
 	};
+	Input: Folder & {
+		SharkContext: InputContext & {
+			Movement: InputAction & {
+				InputBinding: InputBinding;
+			};
+		};
+	};
+}
+
+interface ReplicatedStorage extends Instance {
 	Models: Folder & {
 		["Reef Shark Medium"]: Model & {
 			AnimationController: AnimationController & {
