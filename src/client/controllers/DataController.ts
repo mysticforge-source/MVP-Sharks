@@ -1,3 +1,8 @@
+/*
+ * updates playerentity component data on sync event
+ * maps network data to UI sources and ecs components
+ */
+
 import { clientMaid } from "client/clientmaid";
 import { PlayerDataEvent } from "client/network/client";
 import { coins, gems, revivetokens, slots } from "client/ui/sources";
@@ -9,9 +14,6 @@ import { Controller, OnStart } from "@flamework/core";
 export const PlayerEntity = World.entity();
 
 @Controller()
-/*
- * Updates PlayerEntity component data on sync event
- */
 export class DataController implements OnStart {
 	protected maid = clientMaid.sub();
 
@@ -20,7 +22,7 @@ export class DataController implements OnStart {
 			PlayerDataEvent.on((data) => {
 				World.set(PlayerEntity, UserDataComponent, data);
 
-				// update UI sources
+				// update ui sources
 				coins(data.coins);
 				gems(data.gems);
 				revivetokens(data.revivetokens);
