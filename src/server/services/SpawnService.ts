@@ -7,7 +7,6 @@ import { OnStart, Service } from "@flamework/core";
 
 import { DataService, PlayerToEntity } from "./DataService";
 import { idtoshark } from "shared/data";
-import { ReplicatedStorage } from "@rbxts/services";
 import { HitboxService } from "./HitboxService";
 
 @Service()
@@ -19,7 +18,7 @@ export class SpawnService implements OnStart {
 		private readonly hitboxservice: HitboxService,
 	) {}
 
-	// connects to the spawn event
+	/* connects to the spawn event */
 	public onStart(): void {
 		this.maid.add(
 			SpawnFunction.setCallback((player: Player, slot: number) => {
@@ -32,10 +31,7 @@ export class SpawnService implements OnStart {
 				const sharkname = idtoshark[sharkid];
 				if (!sharkname) return "Fail";
 
-				const hitbox = this.hitboxservice.createPlayerHitbox(
-					player,
-					sharkname,
-				);
+				const hitbox = this.hitboxservice.createPlayerHitbox(player, sharkname);
 				if (!hitbox) return "Fail";
 
 				return "Success";

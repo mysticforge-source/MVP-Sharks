@@ -6,8 +6,9 @@ import Signal from "@rbxts/lemon-signal";
 import { clientMaid } from "client/clientmaid";
 
 @Controller()
-/**
- * Controls the localplayer spawning hitbox
+/*
+ * controls the localplayer spawning hitbox
+ * hitboxes are in workspace.serverauthority
  */
 export class SpawnController implements OnStart {
 	constructor(private readonly MovementController: MovementController) {}
@@ -17,15 +18,19 @@ export class SpawnController implements OnStart {
 
 	public HitboxAdded = new Signal<Model>();
 
-	/** Finds localplayer hitbox in workspace */
+	/* returns the serverauthority folder */
+	private getAuthorityFolder(): Instance {
+		return Workspace.FindFirstChild("ServerAuthority") ?? Workspace;
+	}
+
+	/* finds localplayer hitbox in serverauthority */
 	public getHitbox(): MeshPart | undefined {
-		const hitbox = Workspace.Shared.Hitboxes.FindFirstChild(
-			this.player.Name,
-		) as MeshPart | undefined;
+		const authorityFolder = this.getAuthorityFolder();
+		const hitbox = authorityFolder.FindFirstChild(this.player.Name) as MeshPart | undefined;
 		return hitbox;
 	}
 
-	/** Retries multiple times to spawn the hitbox, sends a maximum of 2 calls */
+	/* retries multiple times to spawn the hitbox */
 	public async SpawnHitbox(slot: number): Promise<MeshPart | undefined> {
 		let res = SpawnFunction.call(0);
 		if (res === "Fail") {
@@ -38,7 +43,7 @@ export class SpawnController implements OnStart {
 		return this.getHitbox();
 	}
 
-	/** Spawns the localplayer's hitbox and begins control */
+	/* spawns the localplayer's hitbox and begins control */
 	public async Spawn(slot: number) {
 		const hitbox = await this.SpawnHitbox(slot);
 		if (hitbox) {
@@ -47,21 +52,23 @@ export class SpawnController implements OnStart {
 	}
 
 	public onStart(): void {
-		// connect signals
-		this.maid.on(Workspace.Shared.Hitboxes.ChildAdded, (child: Model) => {
-			warn("CHILD ADDED");
+		// connect signals for hitbox addition to serverauthority
+		const authorityFolder = this.getAuthorityFolder();
+		this.maid.on(authorityFolder.ChildAdded, (child: Model) => {
+			warn("[SpawnController] CHILD ADDED to ServerAuthority");
 			this.HitboxAdded.Fire(child);
 		});
 
 		task.wait(5);
 		// for testing
 		const res = SpawnFunction.call(0);
-		warn(`result: ${res}`);
+		warn(`[SpawnController] Spawn result: ${res}`);
 
-		const hitbox = this.getHitbox()!;
+		const hitbox = this.getHitbox();
 		warn(hitbox);
 
-		// it definitely is a meshpart with an attachment
-		this.MovementController.begin(hitbox as any);
+		if (hitbox) {
+			this.MovementController.begin(hitbox as any);
+		}
 	}
 }

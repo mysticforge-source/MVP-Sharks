@@ -22,6 +22,9 @@ interface ServerStorage extends Instance {
 			Movement: InputAction & {
 				InputBinding: InputBinding;
 			};
+			Rotation: InputAction & {
+				InputBinding: InputBinding;
+			};
 		};
 	};
 }

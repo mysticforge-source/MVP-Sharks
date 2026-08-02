@@ -5,10 +5,7 @@ import { idtoshark } from "shared/data";
 import { World } from "shared/ecs/world";
 
 import { Controller, OnStart } from "@flamework/core";
-import {
-	CompositeActionBuilder,
-	StandardActionBuilder,
-} from "@rbxts/mechanism";
+import { CompositeActionBuilder, StandardActionBuilder } from "@rbxts/mechanism";
 import { Players, ReplicatedStorage, Workspace } from "@rbxts/services";
 
 import { SpawnController } from "./SpawnController";
@@ -25,22 +22,17 @@ export type Hitbox = MeshPart & {
 };
 
 @Controller()
-/**
- * Attaches models to hitboxservice's hitboxes
- */
+/* attaches models to hitboxservice's hitboxes */
 export class ViewController implements OnStart {
 	constructor(private readonly spawncontroller: SpawnController) {}
 
 	protected maid = clientMaid.sub();
 
 	public inputs = {
-		ToggleHitboxes: new CompositeActionBuilder(
-			"LeftControl",
-			"H",
-		).setTiming(1),
+		ToggleHitboxes: new CompositeActionBuilder("LeftControl", "H").setTiming(1),
 	};
 
-	/** Gets and clones the model from Models */
+	/* gets and clones the model from models */
 	public cloneModel(name: string): Model | undefined {
 		const model = ReplicatedStorage.Models.FindFirstChild(name);
 		if (model) {
@@ -48,10 +40,7 @@ export class ViewController implements OnStart {
 		}
 	}
 
-	/**
-	 * Connected to spawncontroller.HitboxAdded
-	 * <br>Creates the shark's entity, attaching it to the view system
-	 */
+	/* connected to spawncontroller.hitboxadded, creates the shark entity */
 	public HitboxAttached(hitbox: Hitbox) {
 		const sharkName = idtoshark[hitbox.SharkViewValue.Value];
 		const model = this.cloneModel(sharkName) as Model & {
@@ -71,15 +60,18 @@ export class ViewController implements OnStart {
 	}
 
 	public onStart(): void {
-		this.maid.on(this.spawncontroller.HitboxAdded, (h) =>
-			this.HitboxAttached(h),
-		);
+		this.maid.on(this.spawncontroller.HitboxAdded, (h) => this.HitboxAttached(h));
 
 		this.inputs.ToggleHitboxes.activated.Connect(() => {
 			print("111");
 			HitboxesVisible(!HitboxesVisible());
-			for (const hitbox of Workspace.Shared.Hitboxes.GetChildren() as MeshPart[]) {
-				hitbox.Transparency = HitboxesVisible() ? 0 : 1;
+			const authorityFolder = Workspace.FindFirstChild("ServerAuthority");
+			if (authorityFolder) {
+				for (const hitbox of authorityFolder.GetChildren() as MeshPart[]) {
+					if (hitbox.IsA("BasePart")) {
+						hitbox.Transparency = HitboxesVisible() ? 0 : 1;
+					}
+				}
 			}
 		});
 

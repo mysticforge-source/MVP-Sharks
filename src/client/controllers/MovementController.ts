@@ -1,125 +1,62 @@
+/*
+ * client-side input capture and prediction
+ * captures hardware input, writes attributes, runs local prediction
+ */
+
 import { clientMaid } from "client/clientmaid";
 
 import { Controller, OnInit } from "@flamework/core";
-import { StandardActionBuilder } from "@rbxts/mechanism";
-import { Players, Workspace } from "@rbxts/services";
+import { Players, RunService, Workspace } from "@rbxts/services";
 
-import { createSpring } from "@rbxts/ripple";
-import InputTools from "shared/utils/inputTools";
-
-// to avoid server reseting network owner when stopping
-const zerovec = new Vector3(0, 0.01, 0);
+import { RegisterPlayer, Simulate } from "shared/logic/GameSimulation";
 
 @Controller()
 export class MovementController implements OnInit {
-	protected hitbox!: MeshPart;
-	protected player = Players.LocalPlayer;
+	private hitbox: MeshPart | undefined;
 
-	public alignrotation!: AlignOrientation;
-	public positionvel!: LinearVelocity;
-	public camera!: Camera;
+	private player = Players.LocalPlayer;
+	private camera!: Camera;
 
-	public movementSpeed = 25;
-	public movementDirection: Vector3 = zerovec;
-	public movementVelocity = zerovec;
-	public movementVelocitySpring = createSpring(zerovec, {
-		tension: 300,
-		friction: 50,
-		impulse: new Vector3(
-			this.movementSpeed * 2,
-			this.movementSpeed * 2,
-			this.movementSpeed * 2,
-		),
-		velocity: new Vector3(
-			this.movementSpeed,
-			this.movementSpeed,
-			this.movementSpeed,
-		),
-	});
+	private rotBinding!: InputBinding;
 
-	protected maid = clientMaid.sub();
+	private maid = clientMaid.sub();
 
-	onInit() {
+	/* returns the current hitbox for client-side prediction */
+	public getHitbox(): MeshPart | undefined {
+		return this.hitbox;
+	}
+
+	public onInit(): void {
 		this.camera =
-			Workspace.CurrentCamera ??
-			(Workspace.WaitForChild("CurrentCamera")! as Camera);
+			Workspace.CurrentCamera ?? (Workspace.WaitForChild("CurrentCamera")! as Camera);
 	}
 
-	public inputs = {
-		forward: new StandardActionBuilder("W").setProcessed(false),
-		backward: new StandardActionBuilder("S").setProcessed(false),
-		left: new StandardActionBuilder("A").setProcessed(false),
-		right: new StandardActionBuilder("D").setProcessed(false),
-	};
-
-	// movement vectors added and removed from the movement direction
-	// upon presses of inputs
-	public movementvectors = {
-		forward: new Vector3(0, 0, -1),
-		backward: new Vector3(0, 0, 1),
-		left: new Vector3(-1, 0, 0),
-		right: new Vector3(1, 0, 0),
-		up: new Vector3(0, 1, 0),
-		down: new Vector3(0, -1, 0),
-	};
-
-	protected addDirection(direction: keyof typeof this.movementvectors) {
-		this.movementDirection = this.movementDirection.add(
-			this.movementvectors[direction],
-		);
-		this.updateVelocity();
-	}
-
-	protected subDirection(direction: keyof typeof this.movementvectors) {
-		this.movementDirection = this.movementDirection.sub(
-			this.movementvectors[direction],
-		);
-		this.updateVelocity();
-	}
-
-	// recalculates linearvelocity and updates it
-	protected updateVelocity() {
-		// normalizing to avoid diagonal speedup
-
-		let velocity = this.movementDirection;
-
-		if (velocity.Magnitude > zerovec.Magnitude) velocity = velocity.Unit;
-		else velocity = zerovec;
-
-		velocity = velocity.mul(this.movementSpeed);
-
-		// lerp the velocity via spring for drifting
-		this.movementVelocity = velocity;
-		this.movementVelocitySpring.setGoal(velocity); //this.hitbox.CFrame.VectorToWorldSpace(velocity);
-
-		//if (velocity.Magnitude === 0) this.movementVelocity = zerovec;
-		//this.positionvel.VectorVelocity = this.movementVelocity;
-	}
-
-	// begins movement: sets hitbox, attaches camera, binds inputs
-	public begin(hitbox: MeshPart & { Attachment: Attachment }): void {
+	/* begins movement: writes camera cframe each frame and runs local prediction */
+	public begin(hitbox: MeshPart): void {
 		this.hitbox = hitbox;
-
 		this.camera.CameraSubject = this.hitbox;
 
-		// for the camera to rotate the hitbox
-		this.alignrotation = hitbox.WaitForChild(
-			"AlignOrientation",
-		) as AlignOrientation;
+		// cache input binding reference
+		const inputFolder = this.player.WaitForChild("Input") as Model;
+		const rotAction = inputFolder
+			.FindFirstChild("SharkContext")!
+			.FindFirstChild("Rotation") as InputAction;
+		this.rotBinding = rotAction.FindFirstChild("InputBinding") as InputBinding;
 
-		// for the inputs to move the hitbox
-		this.positionvel = hitbox.WaitForChild(
-			"LinearVelocity",
-		) as LinearVelocity;
+		// register local player for client-side prediction
+		RegisterPlayer(this.player, hitbox);
 
-		// bind inputs
-		for (const [direction, action] of pairs(this.inputs)) {
-			this.maid.on(action.activated, () => this.addDirection(direction));
-			this.maid.on(action.deactivated, () =>
-				this.subDirection(direction),
-			);
-		}
+		// bind to simulation for rotation input and local prediction
+		this.maid.add(
+			RunService.BindToSimulation((simulationStep) => {
+				if (!this.hitbox) return;
 
-		InputTools.bindAll(this.inputs);
+				// fire rotation input with camera look vector
+				this.rotBinding.Fire(this.camera.CFrame.LookVector);
+
+				// run centralized simulation for local player prediction
+				Simulate(simulationStep);
+			}, Enum.StepFrequency.Hz60),
+		);
 	}
 }
