@@ -5,7 +5,7 @@
 
 import Vide from '@rbxts/vide';
 
-import Listcontainer from '../components/listcontainer';
+import Container from '../components/container';
 import Titlebutton from '../components/titlebutton';
 import { Menu } from '../sources';
 import { css } from '../theme';
@@ -25,10 +25,17 @@ export = (
 
 		Enabled={enabled}
 	>
-		<Listcontainer
+		<Container
 			Position={UDim2.fromScale(.5, .6)}
 			Size={UDim2.fromScale(.2, .3)}
 		>
+			<uilistlayout 
+				FillDirection={"Vertical"}
+				SortOrder={"LayoutOrder"}
+				VerticalFlex={"SpaceEvenly"}
+				HorizontalFlex={"SpaceAround"}
+				Padding={new UDim(0.1, 0)}
+			/>
 			<uiaspectratioconstraint />
 			
 			<Titlebutton
@@ -54,6 +61,6 @@ export = (
 					Menu("Settings")
 				}}
 			/>
-		</Listcontainer>
+		</Container>
 	</screengui>
 )

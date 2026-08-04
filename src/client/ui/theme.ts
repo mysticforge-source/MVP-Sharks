@@ -11,7 +11,8 @@ export const css = {
 		TextScaled: true,
 
 		Position: UDim2.fromScale(0.5, 0.5),
-		Size: UDim2.fromScale(0.3, 0.045),
+		Size: UDim2.fromScale(1, 0.2),
+		BackgroundTransparency: 0,
 
 		BackgroundColor3: Color3.fromRGB(166, 224, 242),
 	} as css.textbutton,

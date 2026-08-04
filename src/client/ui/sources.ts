@@ -33,4 +33,4 @@ export const slots = [createSharkSlot(), createSharkSlot(), createSharkSlot()];
 export const currentslot = slots[0];
 
 // UI sources
-export const Menu = source<"Title" | "Slot" | "Shop" | "Sharks" | "Settings" | "GAME">("Title");
+export const Menu = source<"Title" | "Slot" | "Shop" | "Sharks" | "Settings" | "GAME">("GAME");
