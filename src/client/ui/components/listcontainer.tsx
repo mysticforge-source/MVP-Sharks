@@ -9,5 +9,6 @@ export = (props: css.frame) => (
         {...props}
     >
         <uilistlayout {...css.listcontainerlayout} />
+        {props.children}
     </Container>
 )

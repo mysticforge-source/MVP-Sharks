@@ -2,6 +2,6 @@
 
 import Vide from "@rbxts/vide";
 
-export const Aspect = ({ aspectRatio }: { aspectRatio: number }) => (
-	<uiaspectratioconstraint AspectRatio={aspectRatio} />
+export const Aspect = ({ ratio }: { ratio: number }) => (
+	<uiaspectratioconstraint AspectRatio={ratio} />
 );
