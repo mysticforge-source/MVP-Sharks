@@ -5,7 +5,7 @@
 
 import { clientMaid } from "client/clientmaid";
 import { PlayerDataEvent } from "client/network/client";
-import { coins, gems, revivetokens, slots } from "client/ui/sources";
+import { coins, sharkcoins, revivetokens, slots } from "client/ui/sources";
 import { UserDataComponent } from "shared/ecs/components";
 import { World } from "shared/ecs/world";
 
@@ -24,7 +24,7 @@ export class DataController implements OnStart {
 
 				// update ui sources
 				coins(data.coins);
-				gems(data.gems);
+				sharkcoins(data.gems);
 				revivetokens(data.revivetokens);
 
 				// update slot sources

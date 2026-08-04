@@ -4,6 +4,21 @@ import { Corner } from "../components/corner";
 import { ScaleUDim, ScaleUDim2 } from "shared/utils/scale";
 import { Aspect } from "../components/aspect";
 import Container from "../components/container";
+import {
+	coins,
+	combattimer,
+	exp,
+	hp,
+	hunger,
+	incombat,
+	level,
+	maxexp,
+	maxhp,
+	maxhunger,
+	revivetokens,
+	sharkcoins,
+	title,
+} from "../sources";
 
 declare interface Props {
 	enabled?: Vide.Derivable<boolean>;
@@ -41,10 +56,13 @@ export = ({ enabled = true }: Props) => {
 						Transparency={() =>
 							new NumberSequence([
 								new NumberSequenceKeypoint(0, 0),
-								new NumberSequenceKeypoint(0.49, 0),
-								new NumberSequenceKeypoint(0.5, 1),
+								new NumberSequenceKeypoint(hp() / maxhp(), 0),
+								/* if the hp=maxhp this keypoint is identical to the 1.0 one */
+								hp() < maxhp()
+									? new NumberSequenceKeypoint(hp() / maxhp() + 0.01, 1)
+									: undefined,
 								new NumberSequenceKeypoint(1, 1),
-							])
+							] as NumberSequenceKeypoint[])
 						}
 					/>
 				</frame>
@@ -67,7 +85,7 @@ export = ({ enabled = true }: Props) => {
 					BackgroundTransparency={1}
 					AnchorPoint={new Vector2(0.5, 0.5)}
 					ZIndex={2}
-					Text="50/100"
+					Text={() => `${hp()}/${maxhp()}`}
 					Font="GothamBold"
 					TextColor3={Color3.fromRGB(255, 255, 255)}
 					TextScaled={true}
@@ -103,10 +121,12 @@ export = ({ enabled = true }: Props) => {
 						Transparency={() =>
 							new NumberSequence([
 								new NumberSequenceKeypoint(0, 0),
-								new NumberSequenceKeypoint(0.49, 0),
-								new NumberSequenceKeypoint(0.5, 1),
+								new NumberSequenceKeypoint(hunger() / maxhunger(), 0),
+								hunger() < maxhunger()
+									? new NumberSequenceKeypoint(hunger() / maxhunger() + 0.01, 1)
+									: undefined,
 								new NumberSequenceKeypoint(1, 1),
-							])
+							] as NumberSequenceKeypoint[])
 						}
 					/>
 				</frame>
@@ -129,7 +149,7 @@ export = ({ enabled = true }: Props) => {
 					BackgroundTransparency={1}
 					AnchorPoint={new Vector2(0.5, 0.5)}
 					ZIndex={2}
-					Text="50/100"
+					Text={() => `${hunger()}/${maxhunger()}`}
 					Font="GothamBold"
 					TextColor3={Color3.fromRGB(255, 255, 255)}
 					TextScaled={true}
@@ -165,10 +185,12 @@ export = ({ enabled = true }: Props) => {
 						Transparency={() =>
 							new NumberSequence([
 								new NumberSequenceKeypoint(0, 0),
-								new NumberSequenceKeypoint(0.49, 0),
-								new NumberSequenceKeypoint(0.5, 1),
+								new NumberSequenceKeypoint(exp() / maxexp(), 0),
+								exp() < maxexp()
+									? new NumberSequenceKeypoint(exp() / maxexp() + 0.01, 1)
+									: undefined,
 								new NumberSequenceKeypoint(1, 1),
-							])
+							] as NumberSequenceKeypoint[])
 						}
 					/>
 				</frame>
@@ -191,7 +213,7 @@ export = ({ enabled = true }: Props) => {
 					BackgroundTransparency={1}
 					AnchorPoint={new Vector2(0.5, 0.5)}
 					ZIndex={2}
-					Text="500/1000"
+					Text={() => `${exp()}/${maxexp()}`}
 					Font="GothamBold"
 					TextColor3={Color3.fromRGB(255, 255, 255)}
 					TextScaled={true}
@@ -205,7 +227,7 @@ export = ({ enabled = true }: Props) => {
 				BackgroundTransparency={1}
 				AnchorPoint={new Vector2(0.5, 1)}
 				ZIndex={2}
-				Text={`<i>Level</i> <font face = 'GothamBlack'>${15}</font>`}
+				Text={() => `<i>Level</i> <font face = 'GothamBlack'>${level()}</font>`}
 				RichText={true}
 				Font="GothamMedium"
 				TextColor3={Color3.fromRGB(255, 255, 255)}
@@ -219,7 +241,7 @@ export = ({ enabled = true }: Props) => {
 				BackgroundTransparency={1}
 				AnchorPoint={new Vector2(0.5, 1)}
 				ZIndex={2}
-				Text={`${"Juvenile"}`}
+				Text={() => `${title()}`}
 				RichText={true}
 				Font="GothamBold"
 				TextColor3={Color3.fromRGB(255, 255, 255)}
@@ -227,26 +249,111 @@ export = ({ enabled = true }: Props) => {
 			/>
 
 			{/* Top Bar */}
-			<Container Size={ScaleUDim2(0.4, 0.12)}>
+			<Container
+				Size={ScaleUDim2(0.4, 0.05)}
+				Position={ScaleUDim2(0.99, 0.01)}
+				AnchorPoint={new Vector2(1, 0)}
+			>
+				<Aspect ratio={18} />
 				<uilistlayout
 					HorizontalAlignment="Center"
 					VerticalAlignment="Center"
-					Padding={ScaleUDim(0.01)}
+					FillDirection={"Horizontal"}
+					Padding={ScaleUDim(0.03)}
 					SortOrder="LayoutOrder"
 				/>
 				{/* Coins */}
 				<frame
-					Size={ScaleUDim2(0.3, 1)}
-					Position={ScaleUDim2(0.5, 0.01)}
+					Size={ScaleUDim2(0.25, 1)}
 					ZIndex={1}
 					BackgroundColor3={Color3.fromRGB(0, 0, 0)}
 					AnchorPoint={new Vector2(0.5, 0)}
 				>
-					<Aspect ratio={7} />
+					<Aspect ratio={6} />
 					<Corner scale={0.2} />
+
+					{/* Coin Label */}
+					<textlabel
+						Size={ScaleUDim2(1, 1)}
+						Position={ScaleUDim2(0.5, 0.5)}
+						BackgroundTransparency={1}
+						AnchorPoint={new Vector2(0.5, 0.5)}
+						ZIndex={2}
+						Text={() => `${coins()}`}
+						RichText={true}
+						Font="GothamBold"
+						TextColor3={Color3.fromRGB(232, 196, 77)}
+						TextScaled={true}
+					/>
 				</frame>
+
+				{/* Shark Coins */}
+				<frame
+					Size={ScaleUDim2(0.25, 1)}
+					ZIndex={1}
+					BackgroundColor3={Color3.fromRGB(0, 0, 0)}
+					AnchorPoint={new Vector2(0.5, 0)}
+				>
+					<Aspect ratio={6} />
+					<Corner scale={0.2} />
+
+					{/* Shark Coin Label */}
+					<textlabel
+						Size={ScaleUDim2(1, 1)}
+						Position={ScaleUDim2(0.5, 0.5)}
+						BackgroundTransparency={1}
+						AnchorPoint={new Vector2(0.5, 0.5)}
+						ZIndex={2}
+						Text={() => `${sharkcoins()}`}
+						RichText={true}
+						Font="GothamBold"
+						TextColor3={Color3.fromRGB(74, 224, 130)}
+						TextScaled={true}
+					/>
+				</frame>
+
+				{/* Revive Tokens */}
+				<frame
+					Size={ScaleUDim2(0.25, 1)}
+					ZIndex={1}
+					BackgroundColor3={Color3.fromRGB(0, 0, 0)}
+					AnchorPoint={new Vector2(0.5, 0)}
+				>
+					<Aspect ratio={6} />
+					<Corner scale={0.2} />
+
+					{/* Shark Coin Label */}
+					<textlabel
+						Size={ScaleUDim2(1, 1)}
+						Position={ScaleUDim2(0.5, 0.5)}
+						BackgroundTransparency={1}
+						AnchorPoint={new Vector2(0.5, 0.5)}
+						ZIndex={2}
+						Text={() => `${revivetokens()}`}
+						RichText={true}
+						Font="GothamBold"
+						TextColor3={Color3.fromRGB(224, 74, 82)}
+						TextScaled={true}
+					/>
+				</frame>
+
 				{/* TODO: finish phase 1, make the topbar */}
 			</Container>
+
+			{/* Combat timer */}
+			<textlabel
+				Size={ScaleUDim2(0.5, 0.057)}
+				Position={ScaleUDim2(0.5, 0.4)}
+				BackgroundTransparency={1}
+				AnchorPoint={new Vector2(0.5, 1)}
+				ZIndex={2}
+				Text={() => `IN COMBAT\n<font face = 'GothamBlack'>${combattimer()}</font>s`}
+				RichText={true}
+				Font="GothamMedium"
+				TextColor3={Color3.fromRGB(240, 28, 28)}
+				TextScaled={true}
+				Visible={() => incombat()}
+			/>
 		</screengui>
 	);
 };
