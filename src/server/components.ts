@@ -13,6 +13,6 @@ export interface SystemHelper {
 export const SystemHelperComponent = World.component<SystemHelper>();
 
 export const SystemHelperData: SystemHelper = {
-	hungertime: -10,
-	hpdraintime: -10,
+	hungertime: 0,
+	hpdraintime: 0,
 };
