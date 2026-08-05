@@ -18,15 +18,20 @@ import { merge } from "@rbxts/sift/out/Dictionary";
 const defaultSharkSlotData: SharkSlot = {
 	shark: 0,
 	dead: false,
+
 	hunger: 0,
+	maxhunger: 100,
+
 	exp: 0,
+	maxexp: 100,
+
 	upgrade: 0,
 	level: 0,
 };
 
 export const defaultUserData: UserData = {
 	coins: 0,
-	gems: 0,
+	sharkcoins: 0,
 	revivetokens: 0,
 	slots: [defaultSharkSlotData, defaultSharkSlotData, defaultSharkSlotData],
 };
@@ -34,15 +39,20 @@ export const defaultUserData: UserData = {
 const validateSharkSlot = t.interface({
 	shark: t.numberConstrained(0, 255),
 	dead: t.boolean,
+
 	hunger: t.numberConstrained(0, 100),
+	maxhunger: t.numberConstrained(0, 100),
+
 	exp: t.numberConstrained(0, 100),
+	maxexp: t.numberConstrained(0, 100),
+
 	upgrade: t.numberConstrained(0, 2),
 	level: t.numberConstrained(0, 255),
 });
 
 export const validateUserData = t.interface({
 	coins: t.numberConstrained(0, 100_000),
-	gems: t.numberConstrained(0, 65_535),
+	sharkcoins: t.numberConstrained(0, 65_535),
 	revivetokens: t.numberConstrained(0, 255),
 	slots: t.strictArray(validateSharkSlot, validateSharkSlot, validateSharkSlot),
 });
