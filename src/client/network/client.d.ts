@@ -2,27 +2,33 @@
 export declare const sendEvents: () => void
 export type UserData = {
 	["coins"]: number,
-	["gems"]: number,
+	["sharkcoins"]: number,
 	["revivetokens"]: number,
 	["slots"]: [{
 		["shark"]: number,
 		["dead"]: boolean,
 		["hunger"]: number,
+		["maxhunger"]: number,
 		["exp"]: number,
+		["maxexp"]: number,
 		["upgrade"]: number,
 		["level"]: number,
 	}, {
 		["shark"]: number,
 		["dead"]: boolean,
 		["hunger"]: number,
+		["maxhunger"]: number,
 		["exp"]: number,
+		["maxexp"]: number,
 		["upgrade"]: number,
 		["level"]: number,
 	}, {
 		["shark"]: number,
 		["dead"]: boolean,
 		["hunger"]: number,
+		["maxhunger"]: number,
 		["exp"]: number,
+		["maxexp"]: number,
 		["upgrade"]: number,
 		["level"]: number,
 	}],
@@ -31,56 +37,46 @@ export type SharkSlot = {
 	["shark"]: number,
 	["dead"]: boolean,
 	["hunger"]: number,
+	["maxhunger"]: number,
 	["exp"]: number,
+	["maxexp"]: number,
 	["upgrade"]: number,
 	["level"]: number,
-};
-export type PartialSharkSlot = {
-	["shark"]?: number | undefined,
-	["dead"]?: boolean | undefined,
-	["hunger"]?: number | undefined,
-	["exp"]?: number | undefined,
-	["upgrade"]?: number | undefined,
-	["level"]?: number | undefined,
 };
 
 export declare const SpawnFunction: {
 	call: (value: number) => "Success" | "Fail";
 };
-export declare const SlotDeltaEvent: {
-	on: (callback: (value: {
-		["shark"]?: number | undefined,
-		["dead"]?: boolean | undefined,
-		["hunger"]?: number | undefined,
-		["exp"]?: number | undefined,
-		["upgrade"]?: number | undefined,
-		["level"]?: number | undefined,
-	}) => void) => () => void;
-};
 export declare const PlayerDataEvent: {
 	on: (callback: (value: {
 		["coins"]: number,
-		["gems"]: number,
+		["sharkcoins"]: number,
 		["revivetokens"]: number,
 		["slots"]: [{
 			["shark"]: number,
 			["dead"]: boolean,
 			["hunger"]: number,
+			["maxhunger"]: number,
 			["exp"]: number,
+			["maxexp"]: number,
 			["upgrade"]: number,
 			["level"]: number,
 		}, {
 			["shark"]: number,
 			["dead"]: boolean,
 			["hunger"]: number,
+			["maxhunger"]: number,
 			["exp"]: number,
+			["maxexp"]: number,
 			["upgrade"]: number,
 			["level"]: number,
 		}, {
 			["shark"]: number,
 			["dead"]: boolean,
 			["hunger"]: number,
+			["maxhunger"]: number,
 			["exp"]: number,
+			["maxexp"]: number,
 			["upgrade"]: number,
 			["level"]: number,
 		}],

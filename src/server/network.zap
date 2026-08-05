@@ -14,23 +14,22 @@ opt include_profile_labels = true
 -- ====================================================================================
 -- TYPES
 
+--[[
+    Player in-game data and data of shark slots
+]]
 type SharkSlot = struct { 
     shark: u8,
     dead: boolean,
 
     hunger: u8(0..100),
+    maxhunger: u8(0..100),
+
     exp: u8(0..100),
+    maxexp: u8(0..100),
+
     upgrade: u8(0..2),
     level: u8,
-}
-
-type PartialSharkSlot = struct { 
-    shark: u8?,
-    dead: boolean?,
-    hunger: u8(0..100)?,
-    exp: u8(0..100)?,
-    upgrade: u8(0..2)?,
-    level: u8?,
+    -- title is from shared
 }
 
 --[[
@@ -39,7 +38,7 @@ type PartialSharkSlot = struct {
 type UserData = struct {
     -- sharkcoins
     coins: u32(..100000), --100,000; 4,294,967,295
-    gems: u16, --65,535
+    sharkcoins: u16, --65,535
     revivetokens: u8,
 
     -- zap uses luau-based indexing so 0..3 is 3 elements
@@ -53,12 +52,6 @@ event PlayerDataEvent = {
     from: Server,
     type: Reliable,
     data: UserData
-}
-
-event SlotDeltaEvent = {
-    from: Server,
-    type: Reliable,
-    data: PartialSharkSlot
 }
 
 -- SpawnController & SpawnService
