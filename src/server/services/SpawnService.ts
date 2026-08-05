@@ -42,8 +42,7 @@ export class SpawnService implements OnStart {
 					return "Fail";
 				}
 
-				World.set(entity, PlayComponent, data.slots[slot]);
-				World.set(entity, SystemHelperComponent, SystemHelperData);
+				this.dataservice.RegisterSpawnPlayer(player, slot);
 
 				return "Success";
 			}),
