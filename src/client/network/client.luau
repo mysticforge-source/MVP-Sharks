@@ -145,6 +145,18 @@ local remotes = ReplicatedStorage:WaitForChild("ZAP")
 local reliable = remotes:WaitForChild("ZAP_RELIABLE")
 assert(reliable:IsA("RemoteEvent"), "Expected ZAP_RELIABLE to be a RemoteEvent")
 
+export type SharkSlot = ({
+	["shark"]: (number),
+	["dead"]: (boolean),
+	["hp"]: (number),
+	["maxhp"]: (number),
+	["hunger"]: (number),
+	["maxhunger"]: (number),
+	["exp"]: (number),
+	["maxexp"]: (number),
+	["upgrade"]: (number),
+	["level"]: (number),
+})
 export type UserData = ({
 	["coins"]: (number),
 	["sharkcoins"]: (number),
@@ -152,6 +164,8 @@ export type UserData = ({
 	["slots"]: ({ ({
 		["shark"]: (number),
 		["dead"]: (boolean),
+		["hp"]: (number),
+		["maxhp"]: (number),
 		["hunger"]: (number),
 		["maxhunger"]: (number),
 		["exp"]: (number),
@@ -159,16 +173,6 @@ export type UserData = ({
 		["upgrade"]: (number),
 		["level"]: (number),
 	}) }),
-})
-export type SharkSlot = ({
-	["shark"]: (number),
-	["dead"]: (boolean),
-	["hunger"]: (number),
-	["maxhunger"]: (number),
-	["exp"]: (number),
-	["maxexp"]: (number),
-	["upgrade"]: (number),
-	["level"]: (number),
 })
 
 local function sendEvents()
@@ -217,6 +221,12 @@ reliable.OnClientEvent:Connect(function(buff, inst)
 			value["slots"][1] = {  }
 			value["slots"][1]["shark"] = buffer.readu8(incoming_buff, read(1))
 			value["slots"][1]["dead"] = bit32.btest(bool_1, 0b0000000000000001)
+			value["slots"][1]["hp"] = buffer.readu8(incoming_buff, read(1))
+			assert(value["slots"][1]["hp"] >= 0, "value is less than 0!")
+			assert(value["slots"][1]["hp"] <= 100, "value is more than 100!")
+			value["slots"][1]["maxhp"] = buffer.readu8(incoming_buff, read(1))
+			assert(value["slots"][1]["maxhp"] >= 0, "value is less than 0!")
+			assert(value["slots"][1]["maxhp"] <= 100, "value is more than 100!")
 			value["slots"][1]["hunger"] = buffer.readu8(incoming_buff, read(1))
 			assert(value["slots"][1]["hunger"] >= 0, "value is less than 0!")
 			assert(value["slots"][1]["hunger"] <= 100, "value is more than 100!")
@@ -236,6 +246,12 @@ reliable.OnClientEvent:Connect(function(buff, inst)
 			value["slots"][2] = {  }
 			value["slots"][2]["shark"] = buffer.readu8(incoming_buff, read(1))
 			value["slots"][2]["dead"] = bit32.btest(bool_1, 0b0000000000000010)
+			value["slots"][2]["hp"] = buffer.readu8(incoming_buff, read(1))
+			assert(value["slots"][2]["hp"] >= 0, "value is less than 0!")
+			assert(value["slots"][2]["hp"] <= 100, "value is more than 100!")
+			value["slots"][2]["maxhp"] = buffer.readu8(incoming_buff, read(1))
+			assert(value["slots"][2]["maxhp"] >= 0, "value is less than 0!")
+			assert(value["slots"][2]["maxhp"] <= 100, "value is more than 100!")
 			value["slots"][2]["hunger"] = buffer.readu8(incoming_buff, read(1))
 			assert(value["slots"][2]["hunger"] >= 0, "value is less than 0!")
 			assert(value["slots"][2]["hunger"] <= 100, "value is more than 100!")
@@ -255,6 +271,12 @@ reliable.OnClientEvent:Connect(function(buff, inst)
 			value["slots"][3] = {  }
 			value["slots"][3]["shark"] = buffer.readu8(incoming_buff, read(1))
 			value["slots"][3]["dead"] = bit32.btest(bool_1, 0b0000000000000100)
+			value["slots"][3]["hp"] = buffer.readu8(incoming_buff, read(1))
+			assert(value["slots"][3]["hp"] >= 0, "value is less than 0!")
+			assert(value["slots"][3]["hp"] <= 100, "value is more than 100!")
+			value["slots"][3]["maxhp"] = buffer.readu8(incoming_buff, read(1))
+			assert(value["slots"][3]["maxhp"] >= 0, "value is less than 0!")
+			assert(value["slots"][3]["maxhp"] <= 100, "value is more than 100!")
 			value["slots"][3]["hunger"] = buffer.readu8(incoming_buff, read(1))
 			assert(value["slots"][3]["hunger"] >= 0, "value is less than 0!")
 			assert(value["slots"][3]["hunger"] <= 100, "value is more than 100!")
@@ -342,6 +364,8 @@ local returns = {
 			["slots"]: ({ ({
 				["shark"]: (number),
 				["dead"]: (boolean),
+				["hp"]: (number),
+				["maxhp"]: (number),
 				["hunger"]: (number),
 				["maxhunger"]: (number),
 				["exp"]: (number),
