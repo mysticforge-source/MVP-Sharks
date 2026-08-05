@@ -21,6 +21,9 @@ type SharkSlot = struct {
     shark: u8,
     dead: boolean,
 
+    hp: u8(0..100),
+    maxhp: u8(0..100),
+
     hunger: u8(0..100),
     maxhunger: u8(0..100),
 

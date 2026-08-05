@@ -19,6 +19,9 @@ const defaultSharkSlotData: SharkSlot = {
 	shark: 0,
 	dead: false,
 
+	hp: 100,
+	maxhp: 100,
+
 	hunger: 0,
 	maxhunger: 100,
 
@@ -39,6 +42,9 @@ export const defaultUserData: UserData = {
 const validateSharkSlot = t.interface({
 	shark: t.numberConstrained(0, 255),
 	dead: t.boolean,
+
+	hp: t.numberConstrained(0, 100),
+	maxhp: t.numberConstrained(0, 100),
 
 	hunger: t.numberConstrained(0, 100),
 	maxhunger: t.numberConstrained(0, 100),
