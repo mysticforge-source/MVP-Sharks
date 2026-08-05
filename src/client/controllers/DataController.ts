@@ -4,8 +4,21 @@
  */
 
 import { clientMaid } from "client/clientmaid";
-import { PlayerDataEvent } from "client/network/client";
-import { coins, sharkcoins, revivetokens, slots } from "client/ui/sources";
+import { IngameDataEvent, PlayerDataEvent } from "client/network/client";
+import {
+	coins,
+	sharkcoins,
+	revivetokens,
+	slots,
+	hp,
+	hunger,
+	maxhp,
+	maxhunger,
+	exp,
+	maxexp,
+	upgrade,
+	level,
+} from "client/ui/sources";
 import { UserDataComponent } from "shared/ecs/components";
 import { World } from "shared/ecs/world";
 
@@ -36,11 +49,30 @@ export class DataController implements OnStart {
 
 					slotData.shark(slot.shark);
 					slotData.dead(slot.dead);
+					slotData.hp(slot.hp);
+					slotData.maxhp(slot.maxhp);
 					slotData.hunger(slot.hunger);
+					slotData.maxhunger(slot.maxhunger);
 					slotData.exp(slot.exp);
+					slotData.maxexp(slot.maxexp);
 					slotData.upgrade(slot.upgrade);
 					slotData.level(slot.level);
 				}
+			}),
+		);
+
+		// update HUD sources
+		this.maid.add(
+			IngameDataEvent.on((data) => {
+				// update ui sources
+				hp(data.hp);
+				maxhp(data.maxhp);
+				hunger(data.hunger);
+				maxhunger(data.maxhunger);
+				exp(data.exp);
+				maxexp(data.maxexp);
+				upgrade(data.upgrade);
+				level(data.level);
 			}),
 		);
 	}
