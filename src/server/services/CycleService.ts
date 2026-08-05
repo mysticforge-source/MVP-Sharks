@@ -1,17 +1,31 @@
-import { OnStart, Service } from "@flamework/core";
+import { OnStart, OnTick, Service } from "@flamework/core";
 import { RunService } from "@rbxts/services";
+import hunger from "server/systems/hunger";
 import { Simulate } from "shared/logic/GameSimulation";
 
 @Service()
 /*
- * runs the centralized server-authority simulation at 60hz via bindtosimulation
- * iterates all registered players, processes input, applies physics
+ * runs the server-authority simulation at 60hz
+ * runs ECS systems onTick with lag compensation at 20hz
  */
-export class CycleService implements OnStart {
+export class CycleService implements OnStart, OnTick {
+	public ECS_HZ: number = 20;
+	public t: number = 0;
+
 	public onStart(): void {
 		// bind to physics simulation step at 60hz, the authoritative game loop
 		RunService.BindToSimulation((step: number) => {
 			Simulate(step);
 		}, Enum.StepFrequency.Hz60);
+	}
+
+	public onTick(dt: number): void {
+		this.t += dt;
+
+		// run systems in order, compensate lag
+		for (this.t; this.t >= this.ECS_HZ; this.t -= this.ECS_HZ) {
+			// drain hunger
+			hunger(dt);
+		}
 	}
 }

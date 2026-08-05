@@ -8,7 +8,7 @@ import { OnStart, Service } from "@flamework/core";
 import { DataService, PlayerToEntity } from "./DataService";
 import { idtoshark } from "shared/data";
 import { HitboxService } from "./HitboxService";
-import { PlayComponent } from "server/components";
+import { PlayComponent, SystemHelperComponent, SystemHelperData } from "server/components";
 
 @Service()
 export class SpawnService implements OnStart {
@@ -43,6 +43,7 @@ export class SpawnService implements OnStart {
 				}
 
 				World.set(entity, PlayComponent, data.slots[slot]);
+				World.set(entity, SystemHelperComponent, SystemHelperData);
 
 				return "Success";
 			}),
