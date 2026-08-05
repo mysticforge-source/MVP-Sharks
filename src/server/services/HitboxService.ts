@@ -30,7 +30,7 @@ export class HitboxService implements OnStart {
 	/*
 	 * destroys player hitbox and cleans up state
 	 */
-	private destroyPlayerHitbox(player: Player): void {
+	public destroyPlayerHitbox(player: Player): void {
 		const entity = PlayerToEntity.get(player);
 		if (entity) {
 			const hitbox = World.get(entity, HitboxComponent);

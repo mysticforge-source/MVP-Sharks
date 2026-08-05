@@ -8,6 +8,7 @@ import { OnStart, Service } from "@flamework/core";
 import { DataService, PlayerToEntity } from "./DataService";
 import { idtoshark } from "shared/data";
 import { HitboxService } from "./HitboxService";
+import { PlayComponent } from "server/components";
 
 @Service()
 export class SpawnService implements OnStart {
@@ -33,6 +34,15 @@ export class SpawnService implements OnStart {
 
 				const hitbox = this.hitboxservice.createPlayerHitbox(player, sharkname);
 				if (!hitbox) return "Fail";
+
+				// assign the player play data
+				const entity = PlayerToEntity.get(player);
+				if (!entity) {
+					this.hitboxservice.destroyPlayerHitbox(player);
+					return "Fail";
+				}
+
+				World.set(entity, PlayComponent, data.slots[slot]);
 
 				return "Success";
 			}),
