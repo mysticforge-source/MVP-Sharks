@@ -144,6 +144,13 @@ if not RunService:IsRunning() then
 			fireList = noop,
 			fireSet = noop
 		}),
+		IngameDataEvent = table.freeze({
+			fire = noop,
+			fireAll = noop,
+			fireExcept = noop,
+			fireList = noop,
+			fireSet = noop
+		}),
 	}) :: Events
 end
 
@@ -174,18 +181,6 @@ end
 Players.PlayerRemoving:Connect(function(player)
 	player_map[player] = nil
 end)
-export type SharkSlot = ({
-	["shark"]: (number),
-	["dead"]: (boolean),
-	["hp"]: (number),
-	["maxhp"]: (number),
-	["hunger"]: (number),
-	["maxhunger"]: (number),
-	["exp"]: (number),
-	["maxexp"]: (number),
-	["upgrade"]: (number),
-	["level"]: (number),
-})
 export type UserData = ({
 	["coins"]: (number),
 	["sharkcoins"]: (number),
@@ -202,6 +197,18 @@ export type UserData = ({
 		["upgrade"]: (number),
 		["level"]: (number),
 	}) }),
+})
+export type SharkSlot = ({
+	["shark"]: (number),
+	["dead"]: (boolean),
+	["hp"]: (number),
+	["maxhp"]: (number),
+	["hunger"]: (number),
+	["maxhunger"]: (number),
+	["exp"]: (number),
+	["maxexp"]: (number),
+	["upgrade"]: (number),
+	["level"]: (number),
 })
 
 local function sendEvents()
@@ -247,7 +254,7 @@ reliable.OnServerEvent:Connect(function(player, buff, inst)
 					local ret_1 = reliable_events[0](player_2, value_1)
 					load_player(player_2)
 					alloc(1)
-					buffer.writeu8(outgoing_buff, outgoing_apos, 1)
+					buffer.writeu8(outgoing_buff, outgoing_apos, 2)
 					alloc(1)
 					buffer.writeu8(outgoing_buff, outgoing_apos, call_id_2)
 					local bool_1 = 0
@@ -1003,6 +1010,323 @@ local returns = {
 			alloc(1)
 			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][3]["level"])
 			buffer.writeu8(outgoing_buff, bool_6_pos_1, bool_6)
+			local buff, used, inst = outgoing_buff, outgoing_used, outgoing_inst
+			for player in set do
+				load_player(player)
+				alloc(used)
+				buffer.copy(outgoing_buff, outgoing_apos, buff, 0, used)
+				table.move(inst, 1, #inst, #outgoing_inst + 1, outgoing_inst)
+				player_map[player] = save()
+			end
+			debug.profileend()
+		end,
+	},
+	IngameDataEvent = {
+		fire = function(player: Player, value: ({
+			["shark"]: (number),
+			["dead"]: (boolean),
+			["hp"]: (number),
+			["maxhp"]: (number),
+			["hunger"]: (number),
+			["maxhunger"]: (number),
+			["exp"]: (number),
+			["maxexp"]: (number),
+			["upgrade"]: (number),
+			["level"]: (number),
+		}))
+			debug.profilebegin("IngameDataEvent Fire")
+			load_player(player)
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, 1)
+			local bool_7 = 0
+			local bool_7_pos_1 = alloc(1)
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["shark"])
+			if value["dead"] then
+				bool_7 = bit32.bor(bool_7, 0b0000000000000001)
+			end
+			assert(value["hp"] >= 0, "value is less than 0!")
+			assert(value["hp"] <= 100, "value is more than 100!")
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["hp"])
+			assert(value["maxhp"] >= 0, "value is less than 0!")
+			assert(value["maxhp"] <= 100, "value is more than 100!")
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["maxhp"])
+			assert(value["hunger"] >= 0, "value is less than 0!")
+			assert(value["hunger"] <= 100, "value is more than 100!")
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["hunger"])
+			assert(value["maxhunger"] >= 0, "value is less than 0!")
+			assert(value["maxhunger"] <= 100, "value is more than 100!")
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["maxhunger"])
+			assert(value["exp"] >= 0, "value is less than 0!")
+			assert(value["exp"] <= 100, "value is more than 100!")
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["exp"])
+			assert(value["maxexp"] >= 0, "value is less than 0!")
+			assert(value["maxexp"] <= 100, "value is more than 100!")
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["maxexp"])
+			assert(value["upgrade"] >= 0, "value is less than 0!")
+			assert(value["upgrade"] <= 2, "value is more than 2!")
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["upgrade"])
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["level"])
+			buffer.writeu8(outgoing_buff, bool_7_pos_1, bool_7)
+			player_map[player] = save()
+			debug.profileend()
+		end,
+		fireAll = function(value: ({
+			["shark"]: (number),
+			["dead"]: (boolean),
+			["hp"]: (number),
+			["maxhp"]: (number),
+			["hunger"]: (number),
+			["maxhunger"]: (number),
+			["exp"]: (number),
+			["maxexp"]: (number),
+			["upgrade"]: (number),
+			["level"]: (number),
+		}))
+			debug.profilebegin("IngameDataEvent FireAll")
+			load_empty()
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, 1)
+			local bool_8 = 0
+			local bool_8_pos_1 = alloc(1)
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["shark"])
+			if value["dead"] then
+				bool_8 = bit32.bor(bool_8, 0b0000000000000001)
+			end
+			assert(value["hp"] >= 0, "value is less than 0!")
+			assert(value["hp"] <= 100, "value is more than 100!")
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["hp"])
+			assert(value["maxhp"] >= 0, "value is less than 0!")
+			assert(value["maxhp"] <= 100, "value is more than 100!")
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["maxhp"])
+			assert(value["hunger"] >= 0, "value is less than 0!")
+			assert(value["hunger"] <= 100, "value is more than 100!")
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["hunger"])
+			assert(value["maxhunger"] >= 0, "value is less than 0!")
+			assert(value["maxhunger"] <= 100, "value is more than 100!")
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["maxhunger"])
+			assert(value["exp"] >= 0, "value is less than 0!")
+			assert(value["exp"] <= 100, "value is more than 100!")
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["exp"])
+			assert(value["maxexp"] >= 0, "value is less than 0!")
+			assert(value["maxexp"] <= 100, "value is more than 100!")
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["maxexp"])
+			assert(value["upgrade"] >= 0, "value is less than 0!")
+			assert(value["upgrade"] <= 2, "value is more than 2!")
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["upgrade"])
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["level"])
+			buffer.writeu8(outgoing_buff, bool_8_pos_1, bool_8)
+			local buff, used, inst = outgoing_buff, outgoing_used, outgoing_inst
+			for _, player in Players:GetPlayers() do
+				load_player(player)
+				alloc(used)
+				buffer.copy(outgoing_buff, outgoing_apos, buff, 0, used)
+				table.move(inst, 1, #inst, #outgoing_inst + 1, outgoing_inst)
+				player_map[player] = save()
+			end
+			debug.profileend()
+		end,
+		fireExcept = function(except: Player, value: ({
+			["shark"]: (number),
+			["dead"]: (boolean),
+			["hp"]: (number),
+			["maxhp"]: (number),
+			["hunger"]: (number),
+			["maxhunger"]: (number),
+			["exp"]: (number),
+			["maxexp"]: (number),
+			["upgrade"]: (number),
+			["level"]: (number),
+		}))
+			debug.profilebegin("IngameDataEvent FireExcept")
+			load_empty()
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, 1)
+			local bool_9 = 0
+			local bool_9_pos_1 = alloc(1)
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["shark"])
+			if value["dead"] then
+				bool_9 = bit32.bor(bool_9, 0b0000000000000001)
+			end
+			assert(value["hp"] >= 0, "value is less than 0!")
+			assert(value["hp"] <= 100, "value is more than 100!")
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["hp"])
+			assert(value["maxhp"] >= 0, "value is less than 0!")
+			assert(value["maxhp"] <= 100, "value is more than 100!")
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["maxhp"])
+			assert(value["hunger"] >= 0, "value is less than 0!")
+			assert(value["hunger"] <= 100, "value is more than 100!")
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["hunger"])
+			assert(value["maxhunger"] >= 0, "value is less than 0!")
+			assert(value["maxhunger"] <= 100, "value is more than 100!")
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["maxhunger"])
+			assert(value["exp"] >= 0, "value is less than 0!")
+			assert(value["exp"] <= 100, "value is more than 100!")
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["exp"])
+			assert(value["maxexp"] >= 0, "value is less than 0!")
+			assert(value["maxexp"] <= 100, "value is more than 100!")
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["maxexp"])
+			assert(value["upgrade"] >= 0, "value is less than 0!")
+			assert(value["upgrade"] <= 2, "value is more than 2!")
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["upgrade"])
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["level"])
+			buffer.writeu8(outgoing_buff, bool_9_pos_1, bool_9)
+			local buff, used, inst = outgoing_buff, outgoing_used, outgoing_inst
+			for _, player in Players:GetPlayers() do
+				if player ~= except then
+					load_player(player)
+					alloc(used)
+					buffer.copy(outgoing_buff, outgoing_apos, buff, 0, used)
+					table.move(inst, 1, #inst, #outgoing_inst + 1, outgoing_inst)
+					player_map[player] = save()
+				end
+			end
+			debug.profileend()
+		end,
+		fireList = function(list: { [unknown]: Player }, value: ({
+			["shark"]: (number),
+			["dead"]: (boolean),
+			["hp"]: (number),
+			["maxhp"]: (number),
+			["hunger"]: (number),
+			["maxhunger"]: (number),
+			["exp"]: (number),
+			["maxexp"]: (number),
+			["upgrade"]: (number),
+			["level"]: (number),
+		}))
+			debug.profilebegin("IngameDataEvent FireList")
+			load_empty()
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, 1)
+			local bool_10 = 0
+			local bool_10_pos_1 = alloc(1)
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["shark"])
+			if value["dead"] then
+				bool_10 = bit32.bor(bool_10, 0b0000000000000001)
+			end
+			assert(value["hp"] >= 0, "value is less than 0!")
+			assert(value["hp"] <= 100, "value is more than 100!")
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["hp"])
+			assert(value["maxhp"] >= 0, "value is less than 0!")
+			assert(value["maxhp"] <= 100, "value is more than 100!")
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["maxhp"])
+			assert(value["hunger"] >= 0, "value is less than 0!")
+			assert(value["hunger"] <= 100, "value is more than 100!")
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["hunger"])
+			assert(value["maxhunger"] >= 0, "value is less than 0!")
+			assert(value["maxhunger"] <= 100, "value is more than 100!")
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["maxhunger"])
+			assert(value["exp"] >= 0, "value is less than 0!")
+			assert(value["exp"] <= 100, "value is more than 100!")
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["exp"])
+			assert(value["maxexp"] >= 0, "value is less than 0!")
+			assert(value["maxexp"] <= 100, "value is more than 100!")
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["maxexp"])
+			assert(value["upgrade"] >= 0, "value is less than 0!")
+			assert(value["upgrade"] <= 2, "value is more than 2!")
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["upgrade"])
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["level"])
+			buffer.writeu8(outgoing_buff, bool_10_pos_1, bool_10)
+			local buff, used, inst = outgoing_buff, outgoing_used, outgoing_inst
+			for _, player in list do
+				load_player(player)
+				alloc(used)
+				buffer.copy(outgoing_buff, outgoing_apos, buff, 0, used)
+				table.move(inst, 1, #inst, #outgoing_inst + 1, outgoing_inst)
+				player_map[player] = save()
+			end
+			debug.profileend()
+		end,
+		fireSet = function(set: { [Player]: any }, value: ({
+			["shark"]: (number),
+			["dead"]: (boolean),
+			["hp"]: (number),
+			["maxhp"]: (number),
+			["hunger"]: (number),
+			["maxhunger"]: (number),
+			["exp"]: (number),
+			["maxexp"]: (number),
+			["upgrade"]: (number),
+			["level"]: (number),
+		}))
+			debug.profilebegin("IngameDataEvent FireSet")
+			load_empty()
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, 1)
+			local bool_11 = 0
+			local bool_11_pos_1 = alloc(1)
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["shark"])
+			if value["dead"] then
+				bool_11 = bit32.bor(bool_11, 0b0000000000000001)
+			end
+			assert(value["hp"] >= 0, "value is less than 0!")
+			assert(value["hp"] <= 100, "value is more than 100!")
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["hp"])
+			assert(value["maxhp"] >= 0, "value is less than 0!")
+			assert(value["maxhp"] <= 100, "value is more than 100!")
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["maxhp"])
+			assert(value["hunger"] >= 0, "value is less than 0!")
+			assert(value["hunger"] <= 100, "value is more than 100!")
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["hunger"])
+			assert(value["maxhunger"] >= 0, "value is less than 0!")
+			assert(value["maxhunger"] <= 100, "value is more than 100!")
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["maxhunger"])
+			assert(value["exp"] >= 0, "value is less than 0!")
+			assert(value["exp"] <= 100, "value is more than 100!")
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["exp"])
+			assert(value["maxexp"] >= 0, "value is less than 0!")
+			assert(value["maxexp"] <= 100, "value is more than 100!")
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["maxexp"])
+			assert(value["upgrade"] >= 0, "value is less than 0!")
+			assert(value["upgrade"] <= 2, "value is more than 2!")
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["upgrade"])
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["level"])
+			buffer.writeu8(outgoing_buff, bool_11_pos_1, bool_11)
 			local buff, used, inst = outgoing_buff, outgoing_used, outgoing_inst
 			for player in set do
 				load_player(player)

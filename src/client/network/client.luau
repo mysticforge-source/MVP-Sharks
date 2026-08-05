@@ -138,6 +138,9 @@ if not RunService:IsRunning() then
 		PlayerDataEvent = table.freeze({
 			on = noop
 		}),
+		IngameDataEvent = table.freeze({
+			on = noop
+		}),
 	}) :: Events
 end
 local remotes = ReplicatedStorage:WaitForChild("ZAP")
@@ -145,18 +148,6 @@ local remotes = ReplicatedStorage:WaitForChild("ZAP")
 local reliable = remotes:WaitForChild("ZAP_RELIABLE")
 assert(reliable:IsA("RemoteEvent"), "Expected ZAP_RELIABLE to be a RemoteEvent")
 
-export type SharkSlot = ({
-	["shark"]: (number),
-	["dead"]: (boolean),
-	["hp"]: (number),
-	["maxhp"]: (number),
-	["hunger"]: (number),
-	["maxhunger"]: (number),
-	["exp"]: (number),
-	["maxexp"]: (number),
-	["upgrade"]: (number),
-	["level"]: (number),
-})
 export type UserData = ({
 	["coins"]: (number),
 	["sharkcoins"]: (number),
@@ -173,6 +164,18 @@ export type UserData = ({
 		["upgrade"]: (number),
 		["level"]: (number),
 	}) }),
+})
+export type SharkSlot = ({
+	["shark"]: (number),
+	["dead"]: (boolean),
+	["hp"]: (number),
+	["maxhp"]: (number),
+	["hunger"]: (number),
+	["maxhunger"]: (number),
+	["exp"]: (number),
+	["maxexp"]: (number),
+	["upgrade"]: (number),
+	["level"]: (number),
 })
 
 local function sendEvents()
@@ -193,12 +196,14 @@ end
 
 RunService.Heartbeat:Connect(sendEvents)
 
-local reliable_events = table.create(2)
-local reliable_event_queue: { [number]: { any } } = table.create(2)
+local reliable_events = table.create(3)
+local reliable_event_queue: { [number]: { any } } = table.create(3)
 local function_call_id = 0
 reliable_events[0] = {}
 reliable_event_queue[0] = {}
-reliable_event_queue[1] = table.create(255)
+reliable_events[1] = {}
+reliable_event_queue[1] = {}
+reliable_event_queue[2] = table.create(255)
 reliable.OnClientEvent:Connect(function(buff, inst)
 	debug.profilebegin("Zap Reliable OnClientEvent")
 	incoming_buff = buff
@@ -306,23 +311,65 @@ reliable.OnClientEvent:Connect(function(buff, inst)
 					warn(`[ZAP] {#reliable_event_queue[0]} events in queue for PlayerDataEvent. Did you forget to attach a listener?`)
 				end
 			end
-		elseif id == 1 then -- SpawnFunction
+		elseif id == 1 then -- IngameDataEvent
+			debug.profilebegin("IngameDataEvent Deserialize")
+			local value
+			local bool_2 = buffer.readu8(incoming_buff, read(1))
+			value = {  }
+			value["shark"] = buffer.readu8(incoming_buff, read(1))
+			value["dead"] = bit32.btest(bool_2, 0b0000000000000001)
+			value["hp"] = buffer.readu8(incoming_buff, read(1))
+			assert(value["hp"] >= 0, "value is less than 0!")
+			assert(value["hp"] <= 100, "value is more than 100!")
+			value["maxhp"] = buffer.readu8(incoming_buff, read(1))
+			assert(value["maxhp"] >= 0, "value is less than 0!")
+			assert(value["maxhp"] <= 100, "value is more than 100!")
+			value["hunger"] = buffer.readu8(incoming_buff, read(1))
+			assert(value["hunger"] >= 0, "value is less than 0!")
+			assert(value["hunger"] <= 100, "value is more than 100!")
+			value["maxhunger"] = buffer.readu8(incoming_buff, read(1))
+			assert(value["maxhunger"] >= 0, "value is less than 0!")
+			assert(value["maxhunger"] <= 100, "value is more than 100!")
+			value["exp"] = buffer.readu8(incoming_buff, read(1))
+			assert(value["exp"] >= 0, "value is less than 0!")
+			assert(value["exp"] <= 100, "value is more than 100!")
+			value["maxexp"] = buffer.readu8(incoming_buff, read(1))
+			assert(value["maxexp"] >= 0, "value is less than 0!")
+			assert(value["maxexp"] <= 100, "value is more than 100!")
+			value["upgrade"] = buffer.readu8(incoming_buff, read(1))
+			assert(value["upgrade"] >= 0, "value is less than 0!")
+			assert(value["upgrade"] <= 2, "value is more than 2!")
+			value["level"] = buffer.readu8(incoming_buff, read(1))
+			debug.profileend()
+			if reliable_events[1][1] then
+				for _, cb in reliable_events[1] do
+					debug.profilebegin("IngameDataEvent Callback")
+					task.spawn(cb, value)
+					debug.profileend()
+				end
+			else
+				table.insert(reliable_event_queue[1], value)
+				if #reliable_event_queue[1] > 64 then
+					warn(`[ZAP] {#reliable_event_queue[1]} events in queue for IngameDataEvent. Did you forget to attach a listener?`)
+				end
+			end
+		elseif id == 2 then -- SpawnFunction
 			debug.profilebegin("SpawnFunction Deserialize")
 			local call_id = buffer.readu8(incoming_buff, read(1))
 			local value
-			local bool_2 = buffer.readu8(incoming_buff, read(1))
-			if bit32.btest(bool_2, 0b0000000000000001) then
+			local bool_3 = buffer.readu8(incoming_buff, read(1))
+			if bit32.btest(bool_3, 0b0000000000000001) then
 				value = "Success"
 			else
 				value = "Fail"
 			end
 			debug.profileend()
-			local thread = reliable_event_queue[1][call_id]
+			local thread = reliable_event_queue[2][call_id]
 			-- When using actors it's possible for multiple Zap clients to exist, but only one called the Zap remote function.
 			if thread then
 				task.spawn(thread, value)
 			end
-			reliable_event_queue[1][call_id] = nil
+			reliable_event_queue[2][call_id] = nil
 		else
 			error("Unknown event id")
 		end
@@ -339,7 +386,7 @@ local returns = {
 			debug.profilebegin("SpawnFunction Call")
 			function_call_id += 1
 			function_call_id %= 256
-			if reliable_event_queue[1][function_call_id] then
+			if reliable_event_queue[2][function_call_id] then
 				function_call_id -= 1
 				error("Zap has more than 256 calls awaiting a response, and therefore this packet has been dropped")
 			end
@@ -351,7 +398,7 @@ local returns = {
 			assert(value <= 2, "value is more than 2!")
 			alloc(1)
 			buffer.writeu8(outgoing_buff, outgoing_apos, value)
-			reliable_event_queue[1][function_call_id] = coroutine.running()
+			reliable_event_queue[2][function_call_id] = coroutine.running()
 			debug.profileend()
 			return coroutine.yield()
 		end,
@@ -383,6 +430,31 @@ local returns = {
 			reliable_event_queue[0] = {}
 			return function()
 				table.remove(reliable_events[0], table.find(reliable_events[0], callback))
+			end
+		end,
+	},
+	IngameDataEvent = {
+		on = function(callback: (value: ({
+			["shark"]: (number),
+			["dead"]: (boolean),
+			["hp"]: (number),
+			["maxhp"]: (number),
+			["hunger"]: (number),
+			["maxhunger"]: (number),
+			["exp"]: (number),
+			["maxexp"]: (number),
+			["upgrade"]: (number),
+			["level"]: (number),
+		})) -> ())
+			table.insert(reliable_events[1], callback)
+			for _, value in reliable_event_queue[1] do
+				debug.profilebegin("IngameDataEvent Callback")
+				task.spawn(callback, value)
+				debug.profileend()
+			end
+			reliable_event_queue[1] = {}
+			return function()
+				table.remove(reliable_events[1], table.find(reliable_events[1], callback))
 			end
 		end,
 	},

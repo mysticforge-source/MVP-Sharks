@@ -57,6 +57,13 @@ event PlayerDataEvent = {
     data: UserData
 }
 
+-- Minimizing
+event IngameDataEvent = {
+    from: Server,
+    type: Reliable,
+    data: SharkSlot
+}
+
 -- SpawnController & SpawnService
 -- Spawns the player (player always has the hitbox)
 funct SpawnFunction = {
