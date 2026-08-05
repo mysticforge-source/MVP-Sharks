@@ -19,15 +19,6 @@ export const agelevelcaps = [
 
 export const ageleveltitles = ["Baby", "Juvenile", "Teen", "Adult", "Elder"];
 
-export const defaultSharkSlotData: SharkSlot = {
-	shark: 0,
-	dead: false,
-	hunger: 0,
-	exp: 0,
-	upgrade: 0,
-	level: 0,
-};
-
 export const idtoshark = [
 	"Reef Shark Medium", // 0
 ];

@@ -1,8 +1,5 @@
 /* client source of truth for ui vide sources */
 
-import { defaultSharkSlotData } from "shared/data";
-import { SharkSlot } from "shared/networktypes";
-
 import { source } from "@rbxts/vide";
 
 // data: values
@@ -17,22 +14,17 @@ export const exp = source<number>(0);
 export const maxexp = source<number>(100);
 export const hunger = source<number>(100);
 export const maxhunger = source<number>(100);
-
-// data: shark slots
-export const createSharkSource = () => source<number>(defaultSharkSlotData.shark);
-export const createDeadSource = () => source<boolean>(defaultSharkSlotData.dead);
-export const createHungerSource = () => source<number>(defaultSharkSlotData.hunger);
-export const createExpSource = () => source<number>(defaultSharkSlotData.exp);
-export const createUpgradeSource = () => source<number>(defaultSharkSlotData.upgrade);
-export const createLevelSource = () => source<number>(defaultSharkSlotData.level);
+export const upgrade = source<number>(0);
 
 export const createSharkSlot = () => ({
-	shark: createSharkSource(),
-	dead: createDeadSource(),
-	hunger: createHungerSource(),
-	exp: createExpSource(),
-	upgrade: createUpgradeSource(),
-	level: createLevelSource(),
+	shark: source(0),
+	dead: source(false),
+	hunger: source(100),
+	maxhunger: source(100),
+	exp: source(0),
+	maxexp: source(100),
+	upgrade: source(0),
+	level: source(0),
 });
 
 export const slots = [createSharkSlot(), createSharkSlot(), createSharkSlot()];

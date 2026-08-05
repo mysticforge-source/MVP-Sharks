@@ -24,7 +24,7 @@ export class DataController implements OnStart {
 
 				// update ui sources
 				coins(data.coins);
-				sharkcoins(data.gems);
+				sharkcoins(data.sharkcoins);
 				revivetokens(data.revivetokens);
 
 				// update slot sources
