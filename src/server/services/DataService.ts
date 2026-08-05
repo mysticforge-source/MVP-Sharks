@@ -3,7 +3,7 @@
  * uses lapis for datastores and maps players to jecs entities
  */
 
-import { PlayerDataEvent, SharkSlot, UserData } from "server/network/server";
+import { IngameDataEvent, PlayerDataEvent, SharkSlot, UserData } from "server/network/server";
 import { serverMaid } from "server/servermaid";
 import { UserDataComponent } from "shared/ecs/components";
 import { World } from "shared/ecs/world";
@@ -14,6 +14,8 @@ import { createCollection, Document } from "@rbxts/lapis";
 import { Players } from "@rbxts/services";
 import { t } from "@rbxts/t";
 import { merge } from "@rbxts/sift/out/Dictionary";
+import { PlayComponent, SystemHelperComponent, SystemHelperData } from "server/components";
+import Sift from "@rbxts/sift";
 
 const defaultSharkSlotData: SharkSlot = {
 	shark: 0,
@@ -22,7 +24,7 @@ const defaultSharkSlotData: SharkSlot = {
 	hp: 100,
 	maxhp: 100,
 
-	hunger: 0,
+	hunger: 100,
 	maxhunger: 100,
 
 	exp: 0,
@@ -66,11 +68,19 @@ export const validateUserData = t.interface({
 export const PlayerToEntity = new Map<Player, Entity>(); // entity state of this player
 export const EntityToPlayer = new Map<Entity, Player>(); // player owner of this entity
 
+export const PlayerToGameSlot = new Map<Player, number>(); // slot number of this spawned player
+
 @Service()
 export class DataService implements OnStart {
-	protected Collection = createCollection<UserData>("PROD_PlayerDataEvent", {
+	protected Collection = createCollection<UserData>("PROD_PlayerData", {
 		defaultData: defaultUserData,
 		validate: validateUserData,
+		migrations: [
+			// TEST
+			(data) => {
+				return defaultUserData;
+			},
+		],
 	});
 	protected Sessions = new Map<Player, Document<UserData, true>>();
 	protected maid = serverMaid.sub();
@@ -86,6 +96,9 @@ export class DataService implements OnStart {
 				}
 
 				// player loaded
+
+				// TESTING
+				ses.write(defaultUserData);
 
 				// we need player's session for long term use
 				this.Sessions.set(player, ses);
@@ -117,6 +130,7 @@ export class DataService implements OnStart {
 					if (entity) {
 						PlayerToEntity.delete(player);
 						EntityToPlayer.delete(entity);
+						PlayerToGameSlot.delete(player);
 						World.delete(entity);
 					}
 					this.Sessions.delete(player);
@@ -125,6 +139,39 @@ export class DataService implements OnStart {
 					warn(`Failed to remove player session data: ${tostring(err)}`),
 				);
 		}
+	}
+
+	// TODO: RegisterPlayer, spawn and connect to playerdata changes, give components
+
+	// Spawns player data and binds to datastore, returns true/false
+	public RegisterSpawnPlayer(player: Player, slot: number): boolean {
+		// set in maps
+		PlayerToGameSlot.set(player, slot);
+
+		// give ingame data
+		const entity = PlayerToEntity.get(player);
+		if (!entity) {
+			return false;
+		}
+
+		const data = World.get(entity, UserDataComponent);
+		if (!data) {
+			return false;
+		}
+
+		World.set(entity, PlayComponent, data.slots[slot]);
+		if (data.slots[slot].dead) {
+			//cannot spawn a dead slot!
+			player.Kick("Attempt to spawn a dead slot");
+			return false;
+		}
+
+		World.set(entity, SystemHelperComponent, SystemHelperData);
+
+		// update the player
+		IngameDataEvent.fire(player, data.slots[slot]);
+
+		return true;
 	}
 
 	// returns player's entity data
@@ -147,6 +194,24 @@ export class DataService implements OnStart {
 		if (!olddata) return;
 
 		World.set(entity, UserDataComponent, merge(olddata, data));
+	}
+
+	public changeSlotData(player: Player, slot: number, data: SharkSlot): void {
+		const entity = PlayerToEntity.get(player);
+		if (!entity) return;
+
+		// clone table to avoid direct mutation
+		const olddata = World.get(entity, UserDataComponent)!;
+
+		const newdata = {
+			...olddata,
+			slots: {
+				...olddata.slots,
+				[slot]: data,
+			},
+		};
+
+		World.set(entity, UserDataComponent, newdata as UserData);
 	}
 
 	// connects to playeradded, playerremoving and updates session on data changes
@@ -175,6 +240,30 @@ export class DataService implements OnStart {
 				// new data is stored in lapis via this session
 				ses.write(value);
 				PlayerDataEvent.fire(player, value);
+			}),
+		);
+
+		// connect to changes of ingame data
+		this.maid.add(
+			World.changed(PlayComponent, (entity: Entity, id, value: SharkSlot) => {
+				const player = EntityToPlayer.get(entity);
+				if (!player) {
+					warn("Detected change of ingame data of a player who left!");
+					return;
+				}
+
+				const slot = PlayerToGameSlot.get(player);
+				if (slot === undefined) {
+					// slot can be 0
+					player.Kick("No slot assigned");
+					return;
+				}
+
+				// change direct data
+				this.changeSlotData(player, slot, value);
+
+				// fire event
+				IngameDataEvent.fire(player, value);
 			}),
 		);
 	}
