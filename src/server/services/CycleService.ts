@@ -9,7 +9,7 @@ import { Simulate } from "shared/logic/GameSimulation";
  * runs ECS systems onTick with lag compensation at 20hz
  */
 export class CycleService implements OnStart, OnTick {
-	public ECS_HZ: number = 20;
+	public ECS_HZ: number = 1 / 20;
 	public t: number = 0;
 
 	public onStart(): void {
@@ -25,7 +25,7 @@ export class CycleService implements OnStart, OnTick {
 		// run systems in order, compensate lag
 		for (this.t; this.t >= this.ECS_HZ; this.t -= this.ECS_HZ) {
 			// drain hunger
-			hunger(dt);
+			hunger(this.ECS_HZ);
 		}
 	}
 }
