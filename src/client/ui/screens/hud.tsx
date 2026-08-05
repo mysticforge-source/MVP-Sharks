@@ -1,4 +1,4 @@
-import Vide from "@rbxts/vide";
+import Vide, { spring } from "@rbxts/vide";
 import { css } from "../theme";
 import { Corner } from "../components/corner";
 import { ScaleUDim, ScaleUDim2 } from "shared/utils/scale";
@@ -25,6 +25,9 @@ declare interface Props {
 }
 
 export = ({ enabled = true }: Props) => {
+	const [hungerspring] = spring(hunger, 0.4);
+	const [hpspring] = spring(hp, 0.4);
+
 	return (
 		<screengui ResetOnSpawn={false} IgnoreGuiInset={true} Name="Main" Enabled={enabled}>
 			{/* Health Bar */}
@@ -56,12 +59,15 @@ export = ({ enabled = true }: Props) => {
 						Transparency={() =>
 							new NumberSequence([
 								new NumberSequenceKeypoint(0, 0),
-								new NumberSequenceKeypoint(hp() / maxhp(), 0),
-								/* if the hp=maxhp this keypoint is identical to the 1.0 one */
-								hp() < maxhp()
-									? new NumberSequenceKeypoint(hp() / maxhp() + 0.01, 1)
+								new NumberSequenceKeypoint(hpspring() / maxhp(), 0),
+								new NumberSequenceKeypoint(
+									math.min(hpspring() / maxhp() + 0.01, 1.0),
+									1,
+								),
+								// if hp < maxhp, include an end point
+								hpspring() / maxhp() + 0.01 < 1.0
+									? new NumberSequenceKeypoint(1, 1)
 									: undefined,
-								new NumberSequenceKeypoint(1, 1),
 							] as NumberSequenceKeypoint[])
 						}
 					/>
@@ -121,11 +127,15 @@ export = ({ enabled = true }: Props) => {
 						Transparency={() =>
 							new NumberSequence([
 								new NumberSequenceKeypoint(0, 0),
-								new NumberSequenceKeypoint(hunger() / maxhunger(), 0),
-								hunger() < maxhunger()
-									? new NumberSequenceKeypoint(hunger() / maxhunger() + 0.01, 1)
+								new NumberSequenceKeypoint(hungerspring() / maxhunger(), 0),
+								new NumberSequenceKeypoint(
+									math.min(hungerspring() / maxhunger() + 0.01, 1.0),
+									1,
+								),
+								// if hunger < maxhunger, include an end point
+								hungerspring() / maxhunger() + 0.01 < 1.0
+									? new NumberSequenceKeypoint(1, 1)
 									: undefined,
-								new NumberSequenceKeypoint(1, 1),
 							] as NumberSequenceKeypoint[])
 						}
 					/>
