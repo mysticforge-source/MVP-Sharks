@@ -32,7 +32,7 @@ type SharkSlot = struct {
 
     upgrade: u8(0..2),
     level: u8,
-    -- title is from shared
+    -- title size damage speed are from shared
 }
 
 --[[

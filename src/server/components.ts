@@ -8,6 +8,7 @@ export const PlayComponent = World.component<SharkSlot>();
 export interface SystemHelper {
 	hungertime: number;
 	hpdraintime: number;
+	test_exp_t: number;
 }
 
 export const SystemHelperComponent = World.component<SystemHelper>();
@@ -15,4 +16,8 @@ export const SystemHelperComponent = World.component<SystemHelper>();
 export const SystemHelperData: SystemHelper = {
 	hungertime: 0,
 	hpdraintime: 0,
+	test_exp_t: 0,
 };
+
+/* Add EXP intent */
+export const AddExpIntent = World.component<number>();
