@@ -1,5 +1,6 @@
 import { OnStart, OnTick, Service } from "@flamework/core";
 import { RunService } from "@rbxts/services";
+import exp from "server/systems/exp";
 import hunger from "server/systems/hunger";
 import { Simulate } from "shared/logic/GameSimulation";
 
@@ -26,6 +27,9 @@ export class CycleService implements OnStart, OnTick {
 		for (this.t; this.t >= this.ECS_HZ; this.t -= this.ECS_HZ) {
 			// drain hunger
 			hunger(this.ECS_HZ);
+
+			// handle exp and levels
+			exp(this.ECS_HZ);
 		}
 	}
 }
