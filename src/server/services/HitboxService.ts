@@ -11,8 +11,10 @@ import { World } from "shared/ecs/world";
 import { HitboxComponent } from "shared/ecs/components";
 import { RegisterPlayer, UnregisterPlayer, DestroyHitbox } from "shared/logic/GameSimulation";
 import { serverMaid } from "server/servermaid";
+import { getSize } from "shared/utils/ageLevel";
 
-export const HitboxToPlayer = new Map<Instance, Player>();
+export const HitboxToPlayer = new Map<MeshPart, Player>();
+export const PlayerToHitbox = new Map<Player, MeshPart>();
 
 @Service()
 export class HitboxService implements OnStart {
@@ -47,6 +49,16 @@ export class HitboxService implements OnStart {
 		if (inputFolder) {
 			inputFolder.Destroy();
 		}
+	}
+
+	public resizeHitbox(hitbox: MeshPart, shark: number, level: number): void {
+		const size = getSize(shark, level, hitbox);
+		hitbox.Size = size;
+		(hitbox as MeshPart & { AntiGravity: VectorForce }).AntiGravity.Force = new Vector3(
+			0,
+			hitbox.AssemblyMass * Workspace.Gravity,
+			0,
+		);
 	}
 
 	/*
@@ -122,6 +134,7 @@ export class HitboxService implements OnStart {
 
 			// anti-gravity force
 			const antigrav = new Instance("VectorForce");
+			antigrav.Name = "AntiGravity";
 			antigrav.Force = new Vector3(0, hitbox.AssemblyMass * Workspace.Gravity, 0);
 			antigrav.ApplyAtCenterOfMass = true;
 			antigrav.Attachment0 = centerAttach;
@@ -171,8 +184,9 @@ export class HitboxService implements OnStart {
 				}),
 			);
 
-			// map for lookups
+			// maps for lookups
 			HitboxToPlayer.set(hitbox, player);
+			PlayerToHitbox.set(player, hitbox);
 
 			// store in ecs
 			if (playerEntity) {
