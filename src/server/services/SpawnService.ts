@@ -32,6 +32,8 @@ export class SpawnService implements OnStart {
 				const sharkname = idtoshark[sharkid];
 				if (!sharkname) return "Fail";
 
+				this.dataservice.RegisterSpawnPlayer(player, slot);
+
 				const hitbox = this.hitboxservice.createPlayerHitbox(player, sharkname);
 				if (!hitbox) return "Fail";
 
@@ -41,8 +43,6 @@ export class SpawnService implements OnStart {
 					this.hitboxservice.destroyPlayerHitbox(player);
 					return "Fail";
 				}
-
-				this.dataservice.RegisterSpawnPlayer(player, slot);
 
 				return "Success";
 			}),
