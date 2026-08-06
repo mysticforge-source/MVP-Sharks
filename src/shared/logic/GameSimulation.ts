@@ -1,58 +1,80 @@
 /*
  * centralized simulation module for server-authority movement
- * shared by server and client, branches behavior using runservice
+ * shared by server and client, interpolates speed over ~1 second
  */
 
-import { RunService } from "@rbxts/services";
-import { createSpring, Spring } from "@rbxts/ripple";
+import { Maid } from "@rbxts/better-maid";
 import { ReplicateInputs } from "./InputReplicator";
-import { output } from "shared/utils/output";
+import { getSpeed } from "../utils/ageLevel";
 
 const zerovec = new Vector3(0, 0.01, 0);
 
-interface SpringState {
-	spring: Spring;
-	movementSpeed: number;
-}
+/* how long it takes to lerp speed from current to target */
+export const speedLerpDuration = 0.3;
 
-const springMap = new Map<Instance, SpringState>();
-
-function getSpringData(hitbox: Instance): SpringState {
-	let data = springMap.get(hitbox);
-	if (!data) {
-		data = {
-			movementSpeed: 25,
-			spring: createSpring(zerovec, {
-				tension: 300,
-				friction: 50,
-				impulse: new Vector3(50, 50, 50),
-				velocity: new Vector3(25, 25, 25),
-			}),
-		};
-		springMap.set(hitbox, data);
-	}
-	return data;
-}
-
-/* per-player state needed by the simulation */
-export interface PlayerSimulationData {
+interface PlayerSimulationData {
 	player: Player;
 	hitbox: MeshPart;
+	sharkId: number;
+	level: number;
+	movementSpeed: number;
+	/* current interpolated speed */
+	currentSpeed: number;
+	/* speed we are lerping toward */
+	targetSpeed: number;
+	maid: Maid;
 }
 
 /* all active player simulation entries, indexed by player */
 export const PlayerSimMap = new Map<Player, PlayerSimulationData>();
 
-/* registers a player for the simulation loop */
-export function RegisterPlayer(player: Player, hitbox: MeshPart): void {
-	PlayerSimMap.set(player, { player, hitbox });
+/* module-level maid for shared cleanup */
+const simMaid = new Maid();
+
+/* registers a player for the simulation loop with shark id and level */
+export function RegisterPlayer(
+	player: Player,
+	hitbox: MeshPart,
+	sharkId: number,
+	level: number,
+): void {
+	const maid = simMaid.sub();
+
+	const data: PlayerSimulationData = {
+		player,
+		hitbox,
+		sharkId,
+		level,
+		movementSpeed: getSpeed(sharkId, level),
+		currentSpeed: 0,
+		targetSpeed: 0,
+		maid,
+	};
+
+	PlayerSimMap.set(player, data);
+}
+
+/* call when a player's level changes to update their shark speed */
+export function UpdatePlayerLevel(player: Player, level: number): void {
+	const data = PlayerSimMap.get(player);
+	if (!data) return;
+
+	data.level = level;
+	data.movementSpeed = getSpeed(data.sharkId, level);
+
+	warn(`speed changed, new speed: ${data.movementSpeed}`);
+
+	/* retarget speed if currently moving */
+	if (data.targetSpeed > 0) {
+		data.targetSpeed = data.movementSpeed;
+	}
 }
 
 /* unregisters a player from the simulation loop */
 export function UnregisterPlayer(player: Player): void {
 	const data = PlayerSimMap.get(player);
 	if (data) {
-		springMap.delete(data.hitbox);
+		data.maid.Destroy();
 		PlayerSimMap.delete(player);
 	}
 }
@@ -60,19 +82,17 @@ export function UnregisterPlayer(player: Player): void {
 /* main simulation step called from bindtosimulation on both server and client */
 export function Simulate(dt: number): void {
 	for (const [player, data] of PlayerSimMap) {
-		const { hitbox } = data;
-
 		// replicate input from player's input context to attributes
-		ReplicateInputs(player, hitbox);
+		ReplicateInputs(player, data.hitbox);
 
-		// simulate this hitbox
-		SimulateHitbox(hitbox, dt);
+		// simulate this player's hitbox
+		SimulateHitbox(data, dt);
 	}
 }
 
 /* runs one step of physics simulation for a single hitbox */
-function SimulateHitbox(hitbox: MeshPart, dt: number): void {
-	const data = getSpringData(hitbox);
+function SimulateHitbox(data: PlayerSimulationData, dt: number): void {
+	const hitbox = data.hitbox;
 
 	// read camera look vector from rotation input attribute and construct cframe
 	const lookVec = hitbox.GetAttribute("Input_Rotation") as Vector3 | undefined;
@@ -92,22 +112,22 @@ function SimulateHitbox(hitbox: MeshPart, dt: number): void {
 	// compute movement direction from input attributes
 	const moveDir = computeMoveDirection(hitbox, cameraCF);
 
-	// spring-smoothed velocity
-	let velocity = moveDir;
-	if (velocity.Magnitude > zerovec.Magnitude) {
-		velocity = velocity.Unit.mul(data.movementSpeed);
-	} else {
-		velocity = zerovec;
-	}
+	// set target speed: max while moving, zero when idle
+	data.targetSpeed = moveDir.Magnitude > zerovec.Magnitude ? data.movementSpeed : 0;
 
-	data.spring.setGoal(velocity);
-	data.spring.step(dt);
+	// linearly interpolate current speed toward target over ~1 second
+	const lerpFactor = math.min(dt / speedLerpDuration, 1);
+	data.currentSpeed = data.currentSpeed + (data.targetSpeed - data.currentSpeed) * lerpFactor;
+
+	// apply interpolated speed along the movement direction
+	const velocity =
+		moveDir.Magnitude > zerovec.Magnitude ? moveDir.Unit.mul(data.currentSpeed) : zerovec;
 
 	const positionVel = hitbox.FindFirstChildOfClass("LinearVelocity") as
 		| LinearVelocity
 		| undefined;
 	if (positionVel) {
-		positionVel.VectorVelocity = data.spring.getPosition();
+		positionVel.VectorVelocity = velocity;
 	}
 }
 
@@ -125,7 +145,13 @@ function computeMoveDirection(hitbox: Instance, cameraCF: CFrame): Vector3 {
 	return dir.Magnitude > 0 ? dir.Unit : zerovec;
 }
 
-/* cleans up spring state for a hitbox */
+/* cleans up simulation state for a hitbox */
 export function DestroyHitbox(hitbox: Instance): void {
-	springMap.delete(hitbox);
+	for (const [player, data] of PlayerSimMap) {
+		if (data.hitbox === hitbox) {
+			data.maid.Destroy();
+			PlayerSimMap.delete(player);
+			break;
+		}
+	}
 }
