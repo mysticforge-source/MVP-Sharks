@@ -13,6 +13,7 @@ import { level, shark } from "client/ui/sources";
 import { World } from "shared/ecs/world";
 import { PlayerEntity } from "./DataController";
 import { LevelChangeIntent } from "client/state/components";
+import { states } from "client/state/viewstate";
 
 @Controller()
 export class MovementController implements OnInit {
@@ -64,15 +65,10 @@ export class MovementController implements OnInit {
 				// fire rotation input with camera look vector
 				this.rotBinding.Fire(this.camera.CFrame.LookVector);
 
-				if (World.get(PlayerEntity, LevelChangeIntent)) {
-					UpdatePlayerLevel(this.player, level());
-					print("localclient change level");
-					World.remove(PlayerEntity, LevelChangeIntent);
-				}
-
 				// run centralized simulation for local player prediction
 				Simulate(simulationStep);
 			}, Enum.StepFrequency.Hz60),
 		);
+		states.BindedToSimulation = true;
 	}
 }
