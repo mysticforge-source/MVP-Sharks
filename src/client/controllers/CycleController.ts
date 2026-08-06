@@ -1,6 +1,8 @@
 import viewsys from "client/systems/viewsys";
 
 import { Controller, OnRender, OnTick } from "@flamework/core";
+import levelup from "client/systems/levelup";
+import { ViewController } from "./ViewController";
 
 @Controller()
 /*
@@ -10,6 +12,8 @@ import { Controller, OnRender, OnTick } from "@flamework/core";
 export class CycleController implements OnTick, OnRender {
 	protected TICKRATE = 1 / 60;
 	protected t = 0;
+
+	constructor(private readonly viewcontroller: ViewController) {}
 
 	public onTick(dt: number): void {
 		this.t += dt;
@@ -25,5 +29,8 @@ export class CycleController implements OnTick, OnRender {
 	public onRender(dt: number): void {
 		// run render systems in order
 		viewsys(dt);
+
+		// check levels
+		levelup(dt, this.viewcontroller);
 	}
 }
