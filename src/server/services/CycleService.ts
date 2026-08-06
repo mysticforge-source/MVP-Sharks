@@ -3,6 +3,10 @@ import { RunService } from "@rbxts/services";
 import exp from "server/systems/exp";
 import hunger from "server/systems/hunger";
 import { Simulate } from "shared/logic/GameSimulation";
+import { HitboxService } from "./HitboxService";
+import levelup from "server/systems/levelup";
+import network from "server/systems/network";
+import { DataService } from "./DataService";
 
 @Service()
 /*
@@ -12,6 +16,11 @@ import { Simulate } from "shared/logic/GameSimulation";
 export class CycleService implements OnStart, OnTick {
 	public ECS_HZ: number = 1 / 20;
 	public t: number = 0;
+
+	constructor(
+		private readonly hitboxservice: HitboxService,
+		private readonly dataservice: DataService,
+	) {}
 
 	public onStart(): void {
 		// bind to physics simulation step at 60hz, the authoritative game loop
@@ -30,6 +39,11 @@ export class CycleService implements OnStart, OnTick {
 
 			// handle exp and levels
 			exp(this.ECS_HZ);
+
+			levelup(this.ECS_HZ, this.hitboxservice);
+
+			// lastly send the network updates for dirty data
+			network(dt, this.dataservice);
 		}
 	}
 }

@@ -271,29 +271,5 @@ export class DataService implements OnStart {
 				PlayerDataEvent.fire(player, value);
 			}),
 		);
-
-		// connect to changes of ingame data
-		this.maid.add(
-			World.changed(PlayComponent, (entity: Entity, id, value: SharkSlot) => {
-				const player = EntityToPlayer.get(entity);
-				if (!player) {
-					warn("Detected change of ingame data of a player who left!");
-					return;
-				}
-
-				const slot = PlayerToGameSlot.get(player);
-				if (slot === undefined) {
-					// slot can be 0
-					player.Kick("No slot assigned");
-					return;
-				}
-
-				// change direct data
-				this.changeSlotData(player, slot, value);
-
-				// fire event
-				IngameDataEvent.fire(player, value);
-			}),
-		);
 	}
 }
