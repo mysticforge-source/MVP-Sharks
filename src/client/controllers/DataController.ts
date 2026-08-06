@@ -18,11 +18,13 @@ import {
 	maxexp,
 	upgrade,
 	level,
+	shark,
 } from "client/ui/sources";
 import { UserDataComponent } from "shared/ecs/components";
 import { World } from "shared/ecs/world";
 
 import { Controller, OnStart } from "@flamework/core";
+import { LevelChangeIntent } from "client/state/components";
 
 export const PlayerEntity = World.entity();
 
@@ -64,7 +66,10 @@ export class DataController implements OnStart {
 		// update HUD sources
 		this.maid.add(
 			IngameDataEvent.on((data) => {
+				const oldlevel = level();
+
 				// update ui sources
+				shark(data.shark);
 				hp(data.hp);
 				maxhp(data.maxhp);
 				hunger(data.hunger);
@@ -73,6 +78,11 @@ export class DataController implements OnStart {
 				maxexp(data.maxexp);
 				upgrade(data.upgrade);
 				level(data.level);
+
+				// intent to update simulation
+				if (level() !== oldlevel) {
+					World.add(PlayerEntity, LevelChangeIntent);
+				}
 			}),
 		);
 	}

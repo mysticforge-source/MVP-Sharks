@@ -8,7 +8,11 @@ import { clientMaid } from "client/clientmaid";
 import { Controller, OnInit } from "@flamework/core";
 import { Players, RunService, Workspace } from "@rbxts/services";
 
-import { RegisterPlayer, Simulate } from "shared/logic/GameSimulation";
+import { RegisterPlayer, Simulate, UpdatePlayerLevel } from "shared/logic/GameSimulation";
+import { level, shark } from "client/ui/sources";
+import { World } from "shared/ecs/world";
+import { PlayerEntity } from "./DataController";
+import { LevelChangeIntent } from "client/state/components";
 
 @Controller()
 export class MovementController implements OnInit {
@@ -43,8 +47,14 @@ export class MovementController implements OnInit {
 			.FindFirstChild("Rotation") as InputAction;
 		this.rotBinding = rotAction.FindFirstChild("InputBinding") as InputBinding;
 
+		// hopefully received by the client, IngameDataEvent
+		const ingamedata = {
+			sharkid: shark(),
+			level: level(),
+		};
+
 		// register local player for client-side prediction
-		RegisterPlayer(this.player, hitbox);
+		RegisterPlayer(this.player, hitbox, ingamedata.sharkid, ingamedata.level);
 
 		// bind to simulation for rotation input and local prediction
 		this.maid.add(
@@ -53,6 +63,12 @@ export class MovementController implements OnInit {
 
 				// fire rotation input with camera look vector
 				this.rotBinding.Fire(this.camera.CFrame.LookVector);
+
+				if (World.get(PlayerEntity, LevelChangeIntent)) {
+					UpdatePlayerLevel(this.player, level());
+					print("localclient change level");
+					World.remove(PlayerEntity, LevelChangeIntent);
+				}
 
 				// run centralized simulation for local player prediction
 				Simulate(simulationStep);
