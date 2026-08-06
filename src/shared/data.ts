@@ -19,10 +19,22 @@ export const agelevelcaps = [
 
 export const ageleveltitles = ["Baby", "Juvenile", "Teen", "Adult", "Elder"];
 
+/* By how much the size is multiplied each age-up for each shark, starting with 0 */
+/* Normally the size of the hitbox is used, then it's multiplied */
+export const sharksizemultipliers = [1.25];
+
+/* By how much the speed is multiplied each age-up for each shark, starting with 0 */
+export const sharkspeedmultipliers = [1.5];
+
+/* Baby speeds for each shark */
+export const sharkspeeds = [20];
+
+/* Conversion from ID to shark's model name, starting with 0 */
 export const idtoshark = [
 	"Reef Shark Medium", // 0
 ];
 
+/* Costs in coins for each shark, starting with 0 id */
 export const sharkcosts = [
 	100, //0
 ];
