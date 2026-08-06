@@ -9,6 +9,8 @@ export const revivetokens = source<number>(0);
 
 export const title = source<string>("Baby");
 
+export const shark = source<number>(0);
+
 export const hp = source<number>(100);
 export const maxhp = source<number>(100);
 export const exp = source<number>(0);

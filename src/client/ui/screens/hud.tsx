@@ -1,4 +1,4 @@
-import Vide, { spring } from "@rbxts/vide";
+import Vide, { derive, effect, spring } from "@rbxts/vide";
 import { css } from "../theme";
 import { Corner } from "../components/corner";
 import { ScaleUDim, ScaleUDim2 } from "shared/utils/scale";
@@ -17,8 +17,9 @@ import {
 	maxhunger,
 	revivetokens,
 	sharkcoins,
-	title,
+	//title,
 } from "../sources";
+import { getTitle } from "shared/utils/ageLevel";
 
 declare interface Props {
 	enabled?: Vide.Derivable<boolean>;
@@ -27,6 +28,8 @@ declare interface Props {
 export = ({ enabled = true }: Props) => {
 	const [hungerspring] = spring(hunger, 0.4);
 	const [hpspring] = spring(hp, 0.4);
+
+	const title = derive(() => getTitle(level()));
 
 	return (
 		<screengui ResetOnSpawn={false} IgnoreGuiInset={true} Name="Main" Enabled={enabled}>
