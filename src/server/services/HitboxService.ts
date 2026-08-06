@@ -82,10 +82,15 @@ export class HitboxService implements OnStart {
 		return undefined;
 	}
 
-	/* creates a player hitbox and registers in simulation */
+	/** creates a player hitbox and registers in simulation. REQUIRES ingame state to be set-up */
 	public createPlayerHitbox(player: Player, sharkname: string): MeshPart | undefined {
 		const data = this.dataservice.getPlayerData(player);
 		if (!data) return undefined;
+
+		const slotdata = this.dataservice.getPlayerIngameData(player);
+		if (!slotdata) return undefined;
+
+		const sharkId = idtoshark.indexOf(sharkname);
 
 		try {
 			const hitbox = this.cloneHitbox(sharkname);
@@ -107,7 +112,7 @@ export class HitboxService implements OnStart {
 
 			// store shark id for visual model attachment
 			const sharkView = new Instance("IntValue");
-			sharkView.Value = idtoshark.indexOf(sharkname);
+			sharkView.Value = sharkId;
 			sharkView.Name = "SharkViewValue";
 			sharkView.Parent = hitbox;
 
@@ -149,7 +154,7 @@ export class HitboxService implements OnStart {
 			this.cloneInputForPlayer(player);
 
 			// register in centralized simulation
-			RegisterPlayer(player, hitbox);
+			RegisterPlayer(player, hitbox, sharkId, slotdata.level);
 
 			// cleanup on destroy
 			const hitboxMaid = this.maid.sub();
