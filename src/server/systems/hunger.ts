@@ -12,25 +12,23 @@ const config = {
 /** Drains hunger of each PlayComponent entity every hungerdraintime */
 export default (dt: number) => {
 	for (const [entity, data, helperdata] of World.query(PlayComponent, SystemHelperComponent)) {
-		// update time
-		let newhelperdata = {
-			...helperdata,
-			hungertime: helperdata.hungertime + dt,
-			//hpdraintime: helperdata.hpdraintime + dt,
-		};
-		let newdata = {
-			...data,
-		};
+		let newhelperdata = { ...helperdata };
+		let newdata = { ...data };
 
 		// drain hunger
-		if (newdata.hunger > 0 && newhelperdata.hungertime > config.hungerdraintime) {
-			// update syshelper
-			warn("drain hunger");
+		if (newdata.hunger > 0) {
+			// is hunger draining when hunger === 0?
+			newhelperdata.hungertime += dt;
 
-			newhelperdata.hungertime -= config.hungerdraintime;
+			if (newhelperdata.hungertime > config.hungerdraintime) {
+				// update syshelper
+				warn("drain hunger");
 
-			// update hunger
-			newdata.hunger = math.max(newdata.hunger - config.hungerdrainamount, 0);
+				newhelperdata.hungertime -= config.hungerdraintime;
+
+				// update hunger
+				newdata.hunger = math.max(newdata.hunger - config.hungerdrainamount, 0);
+			}
 		}
 
 		// drain hp if hunger == 0
