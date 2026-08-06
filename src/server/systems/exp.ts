@@ -1,4 +1,10 @@
-import { AddExpIntent, PlayComponent, SystemHelperComponent } from "server/components";
+import {
+	AddExpIntent,
+	DirtyPlayComponent,
+	LevelupIntent,
+	PlayComponent,
+	SystemHelperComponent,
+} from "server/components";
 import { EntityToPlayer } from "server/services/DataService";
 import { World } from "shared/ecs/world";
 import { UpdatePlayerLevel } from "shared/logic/GameSimulation";
@@ -34,15 +40,13 @@ export default (dt: number) => {
 
 		/* Handle multiple level-ups */
 		// Doing this in one frame will absolve us from multiple level-ups filling
-		// network bandwidth
-		while (newdata.exp >= newdata.maxexp) {
-			newdata.level++;
-			newdata.exp -= newdata.maxexp;
-
-			const player = EntityToPlayer.get(entity);
-			if (player) UpdatePlayerLevel(player, newdata.level);
+		// network bandwidth, however
+		if (newdata.exp >= newdata.maxexp) {
+			// assign level-up intent
+			World.add(entity, LevelupIntent);
 		}
 
 		World.set(entity, PlayComponent, newdata);
+		World.add(entity, DirtyPlayComponent);
 	}
 };

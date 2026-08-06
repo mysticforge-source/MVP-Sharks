@@ -1,4 +1,4 @@
-import { PlayComponent, SystemHelperComponent } from "server/components";
+import { DirtyPlayComponent, PlayComponent, SystemHelperComponent } from "server/components";
 import { World } from "shared/ecs/world";
 
 const config = {
@@ -28,6 +28,7 @@ export default (dt: number) => {
 
 				// update hunger
 				newdata.hunger = math.max(newdata.hunger - config.hungerdrainamount, 0);
+				World.add(entity, DirtyPlayComponent);
 			}
 		}
 
@@ -44,6 +45,7 @@ export default (dt: number) => {
 
 				// update hp
 				newdata.hp = math.max(newdata.hp - config.hpdrainamount, 0);
+				World.add(entity, DirtyPlayComponent);
 			}
 		}
 
