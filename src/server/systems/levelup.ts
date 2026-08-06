@@ -19,8 +19,6 @@ export default (dt: number, hitboxservice: HitboxService) => {
 			if (player) {
 				UpdatePlayerLevel(player, newdata.level);
 
-				print("AGE UP RESIZE HITBOX");
-
 				// update size
 				const hitbox = PlayerToHitbox.get(player);
 				if (hitbox) hitboxservice.resizeHitbox(hitbox, newdata.shark, newdata.level);
