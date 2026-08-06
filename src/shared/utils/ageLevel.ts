@@ -7,6 +7,7 @@ import {
 	sharksizemultipliers,
 	sharkspeedmultipliers,
 	sharkspeeds,
+	sharkviewmodelmult,
 } from "../data";
 
 // BATTLETESTED
@@ -45,4 +46,13 @@ export function getSize(shark: number, level: number, hitbox: MeshPart): Vector3
 	Z *= math.pow(sharksizemultipliers[shark], agelevel);
 
 	return new Vector3(X, Y, Z);
+}
+
+export function getModelSize(shark: number, level: number, defaultmodel: Model): number {
+	const agelevel = findAgeLevel(level);
+	return (
+		defaultmodel.GetScale() *
+		math.pow(sharksizemultipliers[shark], agelevel) *
+		math.pow(sharkviewmodelmult, agelevel) // increase viewmodels visually so they match the hitbox
+	);
 }

@@ -23,6 +23,9 @@ export const ageleveltitles = ["Baby", "Juvenile", "Teen", "Adult", "Elder"];
 /* Normally the size of the hitbox is used, then it's multiplied */
 export const sharksizemultipliers = [1.25];
 
+/* Multiplying the size of the hitbox results bigger than the viewmodel, so we enlarge the viewmodel a bit */
+export const sharkviewmodelmult = 1.1;
+
 /* By how much the speed is multiplied each age-up for each shark, starting with 0 */
 export const sharkspeedmultipliers = [1.5];
 
