@@ -174,6 +174,25 @@ export class DataService implements OnStart {
 		return true;
 	}
 
+	public UnregisterSpawnPlayer(player: Player): void {
+		const slot = PlayerToGameSlot.get(player);
+		PlayerToGameSlot.delete(player);
+
+		// save remaining data
+		const entity = PlayerToEntity.get(player);
+		if (entity) {
+			const data = World.get(entity, PlayComponent);
+			if (data && slot) {
+				this.changeSlotData(player, slot, data);
+				IngameDataEvent.fire(player, data);
+			}
+
+			// delete state
+			World.remove(entity, PlayComponent);
+			World.remove(entity, SystemHelperComponent);
+		}
+	}
+
 	// returns player's entity data
 	public getPlayerData(player: Player): UserData | false {
 		const entity = PlayerToEntity.get(player);
@@ -182,6 +201,16 @@ export class DataService implements OnStart {
 		const data = World.get(entity, UserDataComponent);
 		if (!data) return false;
 
+		return data;
+	}
+
+	/** returns player's ingame slot data or false if player not ingame */
+	public getPlayerIngameData(player: Player): SharkSlot | false {
+		const entity = PlayerToEntity.get(player);
+		if (!entity) return false;
+
+		const data = World.get(entity, PlayComponent);
+		if (!data) return false;
 		return data;
 	}
 
