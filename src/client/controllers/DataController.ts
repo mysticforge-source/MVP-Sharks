@@ -25,6 +25,7 @@ import { World } from "shared/ecs/world";
 
 import { Controller, OnStart } from "@flamework/core";
 import { LevelChangeIntent } from "client/state/components";
+import { states } from "client/state/viewstate";
 
 export const PlayerEntity = World.entity();
 
@@ -81,7 +82,7 @@ export class DataController implements OnStart {
 
 				// intent to update simulation
 				if (level() !== oldlevel) {
-					World.add(PlayerEntity, LevelChangeIntent);
+					states.levelupIntent = true;
 				}
 			}),
 		);
