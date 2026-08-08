@@ -98,7 +98,7 @@ export class DataService implements OnStart {
 				// player loaded
 
 				// TESTING
-				ses.write(defaultUserData);
+				//ses.write(defaultUserData);
 
 				// we need player's session for long term use
 				this.Sessions.set(player, ses);
@@ -110,6 +110,7 @@ export class DataService implements OnStart {
 
 				// source of truth is the player's component
 				const data = ses.read();
+				warn(data);
 				World.set(entity, UserDataComponent, data);
 
 				PlayerDataEvent.fire(player, data);
@@ -123,10 +124,27 @@ export class DataService implements OnStart {
 	private async PlayerRemoving(player: Player) {
 		const ses = this.Sessions.get(player);
 		if (ses) {
+			// SAVE UNSAVED DATA
+			// 1. player left in-game
+			const ingameData = this.getPlayerIngameData(player);
+			const slot = PlayerToGameSlot.get(player);
+			if (ingameData && slot !== undefined) {
+				this.changeSlotData(player, slot, ingameData);
+			} else if (ingameData) {
+				warn(`NO SLOT ASSIGNED FOR PLAYER ${player.Name} - LOST IN-GAME DATA`);
+			}
+
+			// 2. save all data
+			const entity = PlayerToEntity.get(player);
+			if (entity) {
+				const data = World.get(entity, UserDataComponent);
+				if (data) {
+					ses.write(data);
+				}
+			}
+
 			ses.close()
 				.then(async () => {
-					const entity = PlayerToEntity.get(player);
-
 					if (entity) {
 						PlayerToEntity.delete(player);
 						EntityToPlayer.delete(entity);
@@ -146,7 +164,9 @@ export class DataService implements OnStart {
 	// Spawns player data and binds to datastore, returns true/false
 	public RegisterSpawnPlayer(player: Player, slot: number): boolean {
 		// set in maps
+		warn("SLOT REGISTERED:", slot);
 		PlayerToGameSlot.set(player, slot);
+		warn("SLOT DATA:", this.getPlayerData(player)!.slots);
 
 		// give ingame data
 		const entity = PlayerToEntity.get(player);
@@ -159,7 +179,7 @@ export class DataService implements OnStart {
 			return false;
 		}
 
-		World.set(entity, PlayComponent, data.slots[slot]);
+		World.set(entity, PlayComponent, data.slots[slot - 1]); //minus 1 because of rbxts
 		if (data.slots[slot].dead) {
 			//cannot spawn a dead slot!
 			player.Kick("Attempt to spawn a dead slot");
@@ -169,7 +189,7 @@ export class DataService implements OnStart {
 		World.set(entity, SystemHelperComponent, SystemHelperData);
 
 		// update the player
-		IngameDataEvent.fire(player, data.slots[slot]);
+		IngameDataEvent.fire(player, data.slots[slot - 1]);
 
 		return true;
 	}
@@ -194,12 +214,12 @@ export class DataService implements OnStart {
 	}
 
 	// returns player's entity data
-	public getPlayerData(player: Player): UserData | false {
+	public getPlayerData(player: Player): UserData | undefined {
 		const entity = PlayerToEntity.get(player);
-		if (!entity) return false;
+		if (!entity) return;
 
 		const data = World.get(entity, UserDataComponent);
-		if (!data) return false;
+		if (!data) return;
 
 		return data;
 	}
