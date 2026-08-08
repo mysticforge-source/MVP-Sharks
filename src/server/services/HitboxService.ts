@@ -169,6 +169,12 @@ export class HitboxService implements OnStart {
 			hitbox.SetAttribute("ObjectType", "PlayerHitbox");
 			hitbox.SetAttribute("PlayerId", player.UserId);
 
+			hitbox.SetAttribute("SharkId", sharkId);
+			hitbox.SetAttribute("Level", slotdata.level);
+
+			// resize hitbox
+			this.resizeHitbox(hitbox, sharkId, slotdata.level);
+
 			// clone input template from serverstorage for this player
 			this.cloneInputForPlayer(player);
 
