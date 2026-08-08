@@ -34,15 +34,19 @@ export const createSharkSlot = () => ({
 	upgrade: source(0),
 	level: source(0),
 });
+type sourceSharkSlot = ReturnType<typeof createSharkSlot>;
 
-export const slots = [createSharkSlot(), createSharkSlot(), createSharkSlot()];
+export const slots = [
+	0,
+	createSharkSlot(),
+	createSharkSlot(),
+	createSharkSlot(),
+] as sourceSharkSlot[];
 
 // Game HUD
 
 export const incombat = source<boolean>(false);
 export const combattimer = source<number>(15);
-
-export const currentslot = slots[0];
 
 // UI sources
 export const Menu = source<"Title" | "Slot" | "Shop" | "Sharks" | "Settings" | "GAME">("Slot");
