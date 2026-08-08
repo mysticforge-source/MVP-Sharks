@@ -66,8 +66,14 @@ event IngameDataEvent = {
 
 -- SpawnController & SpawnService
 -- Spawns the player (player always has the hitbox)
-funct SpawnFunction = {
-    call: Async,
-    args: u8(0..2), --slot number
-    rets: (enum { Success, Fail }) --success marks creation of hitbox
+event SpawnSlot = {
+    from: Client,
+    type: Reliable,
+    data: u8(0..2), --slot number
+}
+
+event SpawnResult = {
+    from: Server,
+    type: Reliable,
+    data: (enum { Success, Fail }) --success marks creation of hitbox
 }

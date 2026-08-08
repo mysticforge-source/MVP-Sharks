@@ -52,8 +52,15 @@ export type SharkSlot = {
 	["level"]: number,
 };
 
-export declare const SpawnFunction: {
-	setCallback: (callback: (player: Player, value: number) => "Success" | "Fail") => () => void;
+export declare const SpawnSlot: {
+	on: (callback: (player: Player, value: number) => void) => () => void;
+};
+export declare const SpawnResult: {
+	fire: (player: Player, value: "Success" | "Fail") => void;
+	fireAll: (value: "Success" | "Fail") => void;
+	fireExcept: (except: Player, value: "Success" | "Fail") => void;
+	fireList: (list: Player[] | Record<string | number | symbol, Player> | Map<unknown, Player>, value: "Success" | "Fail") => void;
+	fireSet: (set: Set<Player> | Map<Player, unknown>, value: "Success" | "Fail") => void
 };
 export declare const PlayerDataEvent: {
 	fire: (player: Player, value: {

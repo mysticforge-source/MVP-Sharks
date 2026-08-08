@@ -134,8 +134,15 @@ if not RunService:IsRunning() then
 	local noop = function() end
 	return table.freeze({
 		sendEvents = noop,
-		SpawnFunction = table.freeze({
-			setCallback = noop
+		SpawnSlot = table.freeze({
+			on = noop
+		}),
+		SpawnResult = table.freeze({
+			fire = noop,
+			fireAll = noop,
+			fireExcept = noop,
+			fireList = noop,
+			fireSet = noop
 		}),
 		PlayerDataEvent = table.freeze({
 			fire = noop,
@@ -232,6 +239,7 @@ end
 RunService.Heartbeat:Connect(sendEvents)
 
 local reliable_events = table.create(1)
+reliable_events[0] = {}
 reliable.OnServerEvent:Connect(function(player, buff, inst)
 	debug.profilebegin("Zap Reliable OnServerEvent")
 	incoming_buff = buff
@@ -241,34 +249,17 @@ reliable.OnServerEvent:Connect(function(player, buff, inst)
 	local len = buffer.len(buff)
 	while incoming_read < len do
 		local id = buffer.readu8(buff, read(1))
-		if id == 0 then -- SpawnFunction
-			debug.profilebegin("SpawnFunction Deserialize")
-			local call_id = buffer.readu8(buff, read(1))
+		if id == 0 then -- SpawnSlot
+			debug.profilebegin("SpawnSlot Deserialize")
 			local value
 			value = buffer.readu8(incoming_buff, read(1))
 			assert(value >= 0, "value is less than 0!")
 			assert(value <= 2, "value is more than 2!")
 			debug.profileend()
-			if reliable_events[0] then
-				task.spawn(function(player_2, call_id_2, value_1)
-					local ret_1 = reliable_events[0](player_2, value_1)
-					load_player(player_2)
-					alloc(1)
-					buffer.writeu8(outgoing_buff, outgoing_apos, 2)
-					alloc(1)
-					buffer.writeu8(outgoing_buff, outgoing_apos, call_id_2)
-					local bool_1 = 0
-					local bool_1_pos_1 = alloc(1)
-					if ret_1 == "Success" then
-						bool_1 = bit32.bor(bool_1, 0b0000000000000001)
-					elseif ret_1 == "Fail" then
-						local _
-					else
-						error("Invalid enumerator")
-					end
-					buffer.writeu8(outgoing_buff, bool_1_pos_1, bool_1)
-					player_map[player_2] = save()
-				end, player, call_id, value)
+			for _, cb in reliable_events[0] do
+				debug.profilebegin("SpawnSlot Callback")
+				task.spawn(cb, player, value)
+				debug.profileend()
 			end
 		else
 			error("Unknown event id")
@@ -281,12 +272,134 @@ table.freeze(polling_queues_unreliable)
 
 local returns = {
 	sendEvents = sendEvents,
-	SpawnFunction = {
-		setCallback = function(callback: (player: Player, value: (number)) -> (("Success" | "Fail"))): () -> ()
-			reliable_events[0] = callback
+	SpawnSlot = {
+		on = function(callback: (player: Player, value: (number)) -> ()): () -> ()
+			table.insert(reliable_events[0], callback)
 			return function()
-				reliable_events[0] = nil
+				table.remove(reliable_events[0], table.find(reliable_events[0], callback))
 			end
+		end,
+	},
+	SpawnResult = {
+		fire = function(player: Player, value: ("Success" | "Fail"))
+			debug.profilebegin("SpawnResult Fire")
+			load_player(player)
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, 2)
+			local bool_1 = 0
+			local bool_1_pos_1 = alloc(1)
+			if value == "Success" then
+				bool_1 = bit32.bor(bool_1, 0b0000000000000001)
+			elseif value == "Fail" then
+				local _
+			else
+				error("Invalid enumerator")
+			end
+			buffer.writeu8(outgoing_buff, bool_1_pos_1, bool_1)
+			player_map[player] = save()
+			debug.profileend()
+		end,
+		fireAll = function(value: ("Success" | "Fail"))
+			debug.profilebegin("SpawnResult FireAll")
+			load_empty()
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, 2)
+			local bool_2 = 0
+			local bool_2_pos_1 = alloc(1)
+			if value == "Success" then
+				bool_2 = bit32.bor(bool_2, 0b0000000000000001)
+			elseif value == "Fail" then
+				local _
+			else
+				error("Invalid enumerator")
+			end
+			buffer.writeu8(outgoing_buff, bool_2_pos_1, bool_2)
+			local buff, used, inst = outgoing_buff, outgoing_used, outgoing_inst
+			for _, player in Players:GetPlayers() do
+				load_player(player)
+				alloc(used)
+				buffer.copy(outgoing_buff, outgoing_apos, buff, 0, used)
+				table.move(inst, 1, #inst, #outgoing_inst + 1, outgoing_inst)
+				player_map[player] = save()
+			end
+			debug.profileend()
+		end,
+		fireExcept = function(except: Player, value: ("Success" | "Fail"))
+			debug.profilebegin("SpawnResult FireExcept")
+			load_empty()
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, 2)
+			local bool_3 = 0
+			local bool_3_pos_1 = alloc(1)
+			if value == "Success" then
+				bool_3 = bit32.bor(bool_3, 0b0000000000000001)
+			elseif value == "Fail" then
+				local _
+			else
+				error("Invalid enumerator")
+			end
+			buffer.writeu8(outgoing_buff, bool_3_pos_1, bool_3)
+			local buff, used, inst = outgoing_buff, outgoing_used, outgoing_inst
+			for _, player in Players:GetPlayers() do
+				if player ~= except then
+					load_player(player)
+					alloc(used)
+					buffer.copy(outgoing_buff, outgoing_apos, buff, 0, used)
+					table.move(inst, 1, #inst, #outgoing_inst + 1, outgoing_inst)
+					player_map[player] = save()
+				end
+			end
+			debug.profileend()
+		end,
+		fireList = function(list: { [unknown]: Player }, value: ("Success" | "Fail"))
+			debug.profilebegin("SpawnResult FireList")
+			load_empty()
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, 2)
+			local bool_4 = 0
+			local bool_4_pos_1 = alloc(1)
+			if value == "Success" then
+				bool_4 = bit32.bor(bool_4, 0b0000000000000001)
+			elseif value == "Fail" then
+				local _
+			else
+				error("Invalid enumerator")
+			end
+			buffer.writeu8(outgoing_buff, bool_4_pos_1, bool_4)
+			local buff, used, inst = outgoing_buff, outgoing_used, outgoing_inst
+			for _, player in list do
+				load_player(player)
+				alloc(used)
+				buffer.copy(outgoing_buff, outgoing_apos, buff, 0, used)
+				table.move(inst, 1, #inst, #outgoing_inst + 1, outgoing_inst)
+				player_map[player] = save()
+			end
+			debug.profileend()
+		end,
+		fireSet = function(set: { [Player]: any }, value: ("Success" | "Fail"))
+			debug.profilebegin("SpawnResult FireSet")
+			load_empty()
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, 2)
+			local bool_5 = 0
+			local bool_5_pos_1 = alloc(1)
+			if value == "Success" then
+				bool_5 = bit32.bor(bool_5, 0b0000000000000001)
+			elseif value == "Fail" then
+				local _
+			else
+				error("Invalid enumerator")
+			end
+			buffer.writeu8(outgoing_buff, bool_5_pos_1, bool_5)
+			local buff, used, inst = outgoing_buff, outgoing_used, outgoing_inst
+			for player in set do
+				load_player(player)
+				alloc(used)
+				buffer.copy(outgoing_buff, outgoing_apos, buff, 0, used)
+				table.move(inst, 1, #inst, #outgoing_inst + 1, outgoing_inst)
+				player_map[player] = save()
+			end
+			debug.profileend()
 		end,
 	},
 	PlayerDataEvent = {
@@ -309,589 +422,6 @@ local returns = {
 		}))
 			debug.profilebegin("PlayerDataEvent Fire")
 			load_player(player)
-			alloc(1)
-			buffer.writeu8(outgoing_buff, outgoing_apos, 0)
-			local bool_2 = 0
-			local bool_2_pos_1 = alloc(1)
-			assert(value["coins"] <= 100000, "value is more than 100000!")
-			alloc(4)
-			buffer.writeu32(outgoing_buff, outgoing_apos, value["coins"])
-			alloc(2)
-			buffer.writeu16(outgoing_buff, outgoing_apos, value["sharkcoins"])
-			alloc(1)
-			buffer.writeu8(outgoing_buff, outgoing_apos, value["revivetokens"])
-			assert(#value["slots"] == 3, "length is not equal to 3!")
-			alloc(1)
-			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][1]["shark"])
-			if value["slots"][1]["dead"] then
-				bool_2 = bit32.bor(bool_2, 0b0000000000000001)
-			end
-			assert(value["slots"][1]["hp"] >= 0, "value is less than 0!")
-			assert(value["slots"][1]["hp"] <= 100, "value is more than 100!")
-			alloc(1)
-			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][1]["hp"])
-			assert(value["slots"][1]["maxhp"] >= 0, "value is less than 0!")
-			assert(value["slots"][1]["maxhp"] <= 100, "value is more than 100!")
-			alloc(1)
-			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][1]["maxhp"])
-			assert(value["slots"][1]["hunger"] >= 0, "value is less than 0!")
-			assert(value["slots"][1]["hunger"] <= 100, "value is more than 100!")
-			alloc(1)
-			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][1]["hunger"])
-			assert(value["slots"][1]["maxhunger"] >= 0, "value is less than 0!")
-			assert(value["slots"][1]["maxhunger"] <= 100, "value is more than 100!")
-			alloc(1)
-			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][1]["maxhunger"])
-			assert(value["slots"][1]["exp"] >= 0, "value is less than 0!")
-			assert(value["slots"][1]["exp"] <= 100, "value is more than 100!")
-			alloc(1)
-			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][1]["exp"])
-			assert(value["slots"][1]["maxexp"] >= 0, "value is less than 0!")
-			assert(value["slots"][1]["maxexp"] <= 100, "value is more than 100!")
-			alloc(1)
-			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][1]["maxexp"])
-			assert(value["slots"][1]["upgrade"] >= 0, "value is less than 0!")
-			assert(value["slots"][1]["upgrade"] <= 2, "value is more than 2!")
-			alloc(1)
-			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][1]["upgrade"])
-			alloc(1)
-			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][1]["level"])
-			alloc(1)
-			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][2]["shark"])
-			if value["slots"][2]["dead"] then
-				bool_2 = bit32.bor(bool_2, 0b0000000000000010)
-			end
-			assert(value["slots"][2]["hp"] >= 0, "value is less than 0!")
-			assert(value["slots"][2]["hp"] <= 100, "value is more than 100!")
-			alloc(1)
-			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][2]["hp"])
-			assert(value["slots"][2]["maxhp"] >= 0, "value is less than 0!")
-			assert(value["slots"][2]["maxhp"] <= 100, "value is more than 100!")
-			alloc(1)
-			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][2]["maxhp"])
-			assert(value["slots"][2]["hunger"] >= 0, "value is less than 0!")
-			assert(value["slots"][2]["hunger"] <= 100, "value is more than 100!")
-			alloc(1)
-			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][2]["hunger"])
-			assert(value["slots"][2]["maxhunger"] >= 0, "value is less than 0!")
-			assert(value["slots"][2]["maxhunger"] <= 100, "value is more than 100!")
-			alloc(1)
-			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][2]["maxhunger"])
-			assert(value["slots"][2]["exp"] >= 0, "value is less than 0!")
-			assert(value["slots"][2]["exp"] <= 100, "value is more than 100!")
-			alloc(1)
-			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][2]["exp"])
-			assert(value["slots"][2]["maxexp"] >= 0, "value is less than 0!")
-			assert(value["slots"][2]["maxexp"] <= 100, "value is more than 100!")
-			alloc(1)
-			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][2]["maxexp"])
-			assert(value["slots"][2]["upgrade"] >= 0, "value is less than 0!")
-			assert(value["slots"][2]["upgrade"] <= 2, "value is more than 2!")
-			alloc(1)
-			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][2]["upgrade"])
-			alloc(1)
-			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][2]["level"])
-			alloc(1)
-			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][3]["shark"])
-			if value["slots"][3]["dead"] then
-				bool_2 = bit32.bor(bool_2, 0b0000000000000100)
-			end
-			assert(value["slots"][3]["hp"] >= 0, "value is less than 0!")
-			assert(value["slots"][3]["hp"] <= 100, "value is more than 100!")
-			alloc(1)
-			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][3]["hp"])
-			assert(value["slots"][3]["maxhp"] >= 0, "value is less than 0!")
-			assert(value["slots"][3]["maxhp"] <= 100, "value is more than 100!")
-			alloc(1)
-			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][3]["maxhp"])
-			assert(value["slots"][3]["hunger"] >= 0, "value is less than 0!")
-			assert(value["slots"][3]["hunger"] <= 100, "value is more than 100!")
-			alloc(1)
-			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][3]["hunger"])
-			assert(value["slots"][3]["maxhunger"] >= 0, "value is less than 0!")
-			assert(value["slots"][3]["maxhunger"] <= 100, "value is more than 100!")
-			alloc(1)
-			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][3]["maxhunger"])
-			assert(value["slots"][3]["exp"] >= 0, "value is less than 0!")
-			assert(value["slots"][3]["exp"] <= 100, "value is more than 100!")
-			alloc(1)
-			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][3]["exp"])
-			assert(value["slots"][3]["maxexp"] >= 0, "value is less than 0!")
-			assert(value["slots"][3]["maxexp"] <= 100, "value is more than 100!")
-			alloc(1)
-			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][3]["maxexp"])
-			assert(value["slots"][3]["upgrade"] >= 0, "value is less than 0!")
-			assert(value["slots"][3]["upgrade"] <= 2, "value is more than 2!")
-			alloc(1)
-			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][3]["upgrade"])
-			alloc(1)
-			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][3]["level"])
-			buffer.writeu8(outgoing_buff, bool_2_pos_1, bool_2)
-			player_map[player] = save()
-			debug.profileend()
-		end,
-		fireAll = function(value: ({
-			["coins"]: (number),
-			["sharkcoins"]: (number),
-			["revivetokens"]: (number),
-			["slots"]: ({ ({
-				["shark"]: (number),
-				["dead"]: (boolean),
-				["hp"]: (number),
-				["maxhp"]: (number),
-				["hunger"]: (number),
-				["maxhunger"]: (number),
-				["exp"]: (number),
-				["maxexp"]: (number),
-				["upgrade"]: (number),
-				["level"]: (number),
-			}) }),
-		}))
-			debug.profilebegin("PlayerDataEvent FireAll")
-			load_empty()
-			alloc(1)
-			buffer.writeu8(outgoing_buff, outgoing_apos, 0)
-			local bool_3 = 0
-			local bool_3_pos_1 = alloc(1)
-			assert(value["coins"] <= 100000, "value is more than 100000!")
-			alloc(4)
-			buffer.writeu32(outgoing_buff, outgoing_apos, value["coins"])
-			alloc(2)
-			buffer.writeu16(outgoing_buff, outgoing_apos, value["sharkcoins"])
-			alloc(1)
-			buffer.writeu8(outgoing_buff, outgoing_apos, value["revivetokens"])
-			assert(#value["slots"] == 3, "length is not equal to 3!")
-			alloc(1)
-			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][1]["shark"])
-			if value["slots"][1]["dead"] then
-				bool_3 = bit32.bor(bool_3, 0b0000000000000001)
-			end
-			assert(value["slots"][1]["hp"] >= 0, "value is less than 0!")
-			assert(value["slots"][1]["hp"] <= 100, "value is more than 100!")
-			alloc(1)
-			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][1]["hp"])
-			assert(value["slots"][1]["maxhp"] >= 0, "value is less than 0!")
-			assert(value["slots"][1]["maxhp"] <= 100, "value is more than 100!")
-			alloc(1)
-			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][1]["maxhp"])
-			assert(value["slots"][1]["hunger"] >= 0, "value is less than 0!")
-			assert(value["slots"][1]["hunger"] <= 100, "value is more than 100!")
-			alloc(1)
-			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][1]["hunger"])
-			assert(value["slots"][1]["maxhunger"] >= 0, "value is less than 0!")
-			assert(value["slots"][1]["maxhunger"] <= 100, "value is more than 100!")
-			alloc(1)
-			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][1]["maxhunger"])
-			assert(value["slots"][1]["exp"] >= 0, "value is less than 0!")
-			assert(value["slots"][1]["exp"] <= 100, "value is more than 100!")
-			alloc(1)
-			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][1]["exp"])
-			assert(value["slots"][1]["maxexp"] >= 0, "value is less than 0!")
-			assert(value["slots"][1]["maxexp"] <= 100, "value is more than 100!")
-			alloc(1)
-			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][1]["maxexp"])
-			assert(value["slots"][1]["upgrade"] >= 0, "value is less than 0!")
-			assert(value["slots"][1]["upgrade"] <= 2, "value is more than 2!")
-			alloc(1)
-			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][1]["upgrade"])
-			alloc(1)
-			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][1]["level"])
-			alloc(1)
-			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][2]["shark"])
-			if value["slots"][2]["dead"] then
-				bool_3 = bit32.bor(bool_3, 0b0000000000000010)
-			end
-			assert(value["slots"][2]["hp"] >= 0, "value is less than 0!")
-			assert(value["slots"][2]["hp"] <= 100, "value is more than 100!")
-			alloc(1)
-			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][2]["hp"])
-			assert(value["slots"][2]["maxhp"] >= 0, "value is less than 0!")
-			assert(value["slots"][2]["maxhp"] <= 100, "value is more than 100!")
-			alloc(1)
-			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][2]["maxhp"])
-			assert(value["slots"][2]["hunger"] >= 0, "value is less than 0!")
-			assert(value["slots"][2]["hunger"] <= 100, "value is more than 100!")
-			alloc(1)
-			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][2]["hunger"])
-			assert(value["slots"][2]["maxhunger"] >= 0, "value is less than 0!")
-			assert(value["slots"][2]["maxhunger"] <= 100, "value is more than 100!")
-			alloc(1)
-			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][2]["maxhunger"])
-			assert(value["slots"][2]["exp"] >= 0, "value is less than 0!")
-			assert(value["slots"][2]["exp"] <= 100, "value is more than 100!")
-			alloc(1)
-			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][2]["exp"])
-			assert(value["slots"][2]["maxexp"] >= 0, "value is less than 0!")
-			assert(value["slots"][2]["maxexp"] <= 100, "value is more than 100!")
-			alloc(1)
-			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][2]["maxexp"])
-			assert(value["slots"][2]["upgrade"] >= 0, "value is less than 0!")
-			assert(value["slots"][2]["upgrade"] <= 2, "value is more than 2!")
-			alloc(1)
-			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][2]["upgrade"])
-			alloc(1)
-			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][2]["level"])
-			alloc(1)
-			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][3]["shark"])
-			if value["slots"][3]["dead"] then
-				bool_3 = bit32.bor(bool_3, 0b0000000000000100)
-			end
-			assert(value["slots"][3]["hp"] >= 0, "value is less than 0!")
-			assert(value["slots"][3]["hp"] <= 100, "value is more than 100!")
-			alloc(1)
-			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][3]["hp"])
-			assert(value["slots"][3]["maxhp"] >= 0, "value is less than 0!")
-			assert(value["slots"][3]["maxhp"] <= 100, "value is more than 100!")
-			alloc(1)
-			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][3]["maxhp"])
-			assert(value["slots"][3]["hunger"] >= 0, "value is less than 0!")
-			assert(value["slots"][3]["hunger"] <= 100, "value is more than 100!")
-			alloc(1)
-			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][3]["hunger"])
-			assert(value["slots"][3]["maxhunger"] >= 0, "value is less than 0!")
-			assert(value["slots"][3]["maxhunger"] <= 100, "value is more than 100!")
-			alloc(1)
-			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][3]["maxhunger"])
-			assert(value["slots"][3]["exp"] >= 0, "value is less than 0!")
-			assert(value["slots"][3]["exp"] <= 100, "value is more than 100!")
-			alloc(1)
-			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][3]["exp"])
-			assert(value["slots"][3]["maxexp"] >= 0, "value is less than 0!")
-			assert(value["slots"][3]["maxexp"] <= 100, "value is more than 100!")
-			alloc(1)
-			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][3]["maxexp"])
-			assert(value["slots"][3]["upgrade"] >= 0, "value is less than 0!")
-			assert(value["slots"][3]["upgrade"] <= 2, "value is more than 2!")
-			alloc(1)
-			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][3]["upgrade"])
-			alloc(1)
-			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][3]["level"])
-			buffer.writeu8(outgoing_buff, bool_3_pos_1, bool_3)
-			local buff, used, inst = outgoing_buff, outgoing_used, outgoing_inst
-			for _, player in Players:GetPlayers() do
-				load_player(player)
-				alloc(used)
-				buffer.copy(outgoing_buff, outgoing_apos, buff, 0, used)
-				table.move(inst, 1, #inst, #outgoing_inst + 1, outgoing_inst)
-				player_map[player] = save()
-			end
-			debug.profileend()
-		end,
-		fireExcept = function(except: Player, value: ({
-			["coins"]: (number),
-			["sharkcoins"]: (number),
-			["revivetokens"]: (number),
-			["slots"]: ({ ({
-				["shark"]: (number),
-				["dead"]: (boolean),
-				["hp"]: (number),
-				["maxhp"]: (number),
-				["hunger"]: (number),
-				["maxhunger"]: (number),
-				["exp"]: (number),
-				["maxexp"]: (number),
-				["upgrade"]: (number),
-				["level"]: (number),
-			}) }),
-		}))
-			debug.profilebegin("PlayerDataEvent FireExcept")
-			load_empty()
-			alloc(1)
-			buffer.writeu8(outgoing_buff, outgoing_apos, 0)
-			local bool_4 = 0
-			local bool_4_pos_1 = alloc(1)
-			assert(value["coins"] <= 100000, "value is more than 100000!")
-			alloc(4)
-			buffer.writeu32(outgoing_buff, outgoing_apos, value["coins"])
-			alloc(2)
-			buffer.writeu16(outgoing_buff, outgoing_apos, value["sharkcoins"])
-			alloc(1)
-			buffer.writeu8(outgoing_buff, outgoing_apos, value["revivetokens"])
-			assert(#value["slots"] == 3, "length is not equal to 3!")
-			alloc(1)
-			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][1]["shark"])
-			if value["slots"][1]["dead"] then
-				bool_4 = bit32.bor(bool_4, 0b0000000000000001)
-			end
-			assert(value["slots"][1]["hp"] >= 0, "value is less than 0!")
-			assert(value["slots"][1]["hp"] <= 100, "value is more than 100!")
-			alloc(1)
-			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][1]["hp"])
-			assert(value["slots"][1]["maxhp"] >= 0, "value is less than 0!")
-			assert(value["slots"][1]["maxhp"] <= 100, "value is more than 100!")
-			alloc(1)
-			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][1]["maxhp"])
-			assert(value["slots"][1]["hunger"] >= 0, "value is less than 0!")
-			assert(value["slots"][1]["hunger"] <= 100, "value is more than 100!")
-			alloc(1)
-			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][1]["hunger"])
-			assert(value["slots"][1]["maxhunger"] >= 0, "value is less than 0!")
-			assert(value["slots"][1]["maxhunger"] <= 100, "value is more than 100!")
-			alloc(1)
-			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][1]["maxhunger"])
-			assert(value["slots"][1]["exp"] >= 0, "value is less than 0!")
-			assert(value["slots"][1]["exp"] <= 100, "value is more than 100!")
-			alloc(1)
-			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][1]["exp"])
-			assert(value["slots"][1]["maxexp"] >= 0, "value is less than 0!")
-			assert(value["slots"][1]["maxexp"] <= 100, "value is more than 100!")
-			alloc(1)
-			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][1]["maxexp"])
-			assert(value["slots"][1]["upgrade"] >= 0, "value is less than 0!")
-			assert(value["slots"][1]["upgrade"] <= 2, "value is more than 2!")
-			alloc(1)
-			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][1]["upgrade"])
-			alloc(1)
-			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][1]["level"])
-			alloc(1)
-			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][2]["shark"])
-			if value["slots"][2]["dead"] then
-				bool_4 = bit32.bor(bool_4, 0b0000000000000010)
-			end
-			assert(value["slots"][2]["hp"] >= 0, "value is less than 0!")
-			assert(value["slots"][2]["hp"] <= 100, "value is more than 100!")
-			alloc(1)
-			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][2]["hp"])
-			assert(value["slots"][2]["maxhp"] >= 0, "value is less than 0!")
-			assert(value["slots"][2]["maxhp"] <= 100, "value is more than 100!")
-			alloc(1)
-			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][2]["maxhp"])
-			assert(value["slots"][2]["hunger"] >= 0, "value is less than 0!")
-			assert(value["slots"][2]["hunger"] <= 100, "value is more than 100!")
-			alloc(1)
-			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][2]["hunger"])
-			assert(value["slots"][2]["maxhunger"] >= 0, "value is less than 0!")
-			assert(value["slots"][2]["maxhunger"] <= 100, "value is more than 100!")
-			alloc(1)
-			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][2]["maxhunger"])
-			assert(value["slots"][2]["exp"] >= 0, "value is less than 0!")
-			assert(value["slots"][2]["exp"] <= 100, "value is more than 100!")
-			alloc(1)
-			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][2]["exp"])
-			assert(value["slots"][2]["maxexp"] >= 0, "value is less than 0!")
-			assert(value["slots"][2]["maxexp"] <= 100, "value is more than 100!")
-			alloc(1)
-			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][2]["maxexp"])
-			assert(value["slots"][2]["upgrade"] >= 0, "value is less than 0!")
-			assert(value["slots"][2]["upgrade"] <= 2, "value is more than 2!")
-			alloc(1)
-			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][2]["upgrade"])
-			alloc(1)
-			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][2]["level"])
-			alloc(1)
-			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][3]["shark"])
-			if value["slots"][3]["dead"] then
-				bool_4 = bit32.bor(bool_4, 0b0000000000000100)
-			end
-			assert(value["slots"][3]["hp"] >= 0, "value is less than 0!")
-			assert(value["slots"][3]["hp"] <= 100, "value is more than 100!")
-			alloc(1)
-			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][3]["hp"])
-			assert(value["slots"][3]["maxhp"] >= 0, "value is less than 0!")
-			assert(value["slots"][3]["maxhp"] <= 100, "value is more than 100!")
-			alloc(1)
-			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][3]["maxhp"])
-			assert(value["slots"][3]["hunger"] >= 0, "value is less than 0!")
-			assert(value["slots"][3]["hunger"] <= 100, "value is more than 100!")
-			alloc(1)
-			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][3]["hunger"])
-			assert(value["slots"][3]["maxhunger"] >= 0, "value is less than 0!")
-			assert(value["slots"][3]["maxhunger"] <= 100, "value is more than 100!")
-			alloc(1)
-			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][3]["maxhunger"])
-			assert(value["slots"][3]["exp"] >= 0, "value is less than 0!")
-			assert(value["slots"][3]["exp"] <= 100, "value is more than 100!")
-			alloc(1)
-			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][3]["exp"])
-			assert(value["slots"][3]["maxexp"] >= 0, "value is less than 0!")
-			assert(value["slots"][3]["maxexp"] <= 100, "value is more than 100!")
-			alloc(1)
-			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][3]["maxexp"])
-			assert(value["slots"][3]["upgrade"] >= 0, "value is less than 0!")
-			assert(value["slots"][3]["upgrade"] <= 2, "value is more than 2!")
-			alloc(1)
-			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][3]["upgrade"])
-			alloc(1)
-			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][3]["level"])
-			buffer.writeu8(outgoing_buff, bool_4_pos_1, bool_4)
-			local buff, used, inst = outgoing_buff, outgoing_used, outgoing_inst
-			for _, player in Players:GetPlayers() do
-				if player ~= except then
-					load_player(player)
-					alloc(used)
-					buffer.copy(outgoing_buff, outgoing_apos, buff, 0, used)
-					table.move(inst, 1, #inst, #outgoing_inst + 1, outgoing_inst)
-					player_map[player] = save()
-				end
-			end
-			debug.profileend()
-		end,
-		fireList = function(list: { [unknown]: Player }, value: ({
-			["coins"]: (number),
-			["sharkcoins"]: (number),
-			["revivetokens"]: (number),
-			["slots"]: ({ ({
-				["shark"]: (number),
-				["dead"]: (boolean),
-				["hp"]: (number),
-				["maxhp"]: (number),
-				["hunger"]: (number),
-				["maxhunger"]: (number),
-				["exp"]: (number),
-				["maxexp"]: (number),
-				["upgrade"]: (number),
-				["level"]: (number),
-			}) }),
-		}))
-			debug.profilebegin("PlayerDataEvent FireList")
-			load_empty()
-			alloc(1)
-			buffer.writeu8(outgoing_buff, outgoing_apos, 0)
-			local bool_5 = 0
-			local bool_5_pos_1 = alloc(1)
-			assert(value["coins"] <= 100000, "value is more than 100000!")
-			alloc(4)
-			buffer.writeu32(outgoing_buff, outgoing_apos, value["coins"])
-			alloc(2)
-			buffer.writeu16(outgoing_buff, outgoing_apos, value["sharkcoins"])
-			alloc(1)
-			buffer.writeu8(outgoing_buff, outgoing_apos, value["revivetokens"])
-			assert(#value["slots"] == 3, "length is not equal to 3!")
-			alloc(1)
-			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][1]["shark"])
-			if value["slots"][1]["dead"] then
-				bool_5 = bit32.bor(bool_5, 0b0000000000000001)
-			end
-			assert(value["slots"][1]["hp"] >= 0, "value is less than 0!")
-			assert(value["slots"][1]["hp"] <= 100, "value is more than 100!")
-			alloc(1)
-			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][1]["hp"])
-			assert(value["slots"][1]["maxhp"] >= 0, "value is less than 0!")
-			assert(value["slots"][1]["maxhp"] <= 100, "value is more than 100!")
-			alloc(1)
-			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][1]["maxhp"])
-			assert(value["slots"][1]["hunger"] >= 0, "value is less than 0!")
-			assert(value["slots"][1]["hunger"] <= 100, "value is more than 100!")
-			alloc(1)
-			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][1]["hunger"])
-			assert(value["slots"][1]["maxhunger"] >= 0, "value is less than 0!")
-			assert(value["slots"][1]["maxhunger"] <= 100, "value is more than 100!")
-			alloc(1)
-			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][1]["maxhunger"])
-			assert(value["slots"][1]["exp"] >= 0, "value is less than 0!")
-			assert(value["slots"][1]["exp"] <= 100, "value is more than 100!")
-			alloc(1)
-			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][1]["exp"])
-			assert(value["slots"][1]["maxexp"] >= 0, "value is less than 0!")
-			assert(value["slots"][1]["maxexp"] <= 100, "value is more than 100!")
-			alloc(1)
-			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][1]["maxexp"])
-			assert(value["slots"][1]["upgrade"] >= 0, "value is less than 0!")
-			assert(value["slots"][1]["upgrade"] <= 2, "value is more than 2!")
-			alloc(1)
-			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][1]["upgrade"])
-			alloc(1)
-			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][1]["level"])
-			alloc(1)
-			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][2]["shark"])
-			if value["slots"][2]["dead"] then
-				bool_5 = bit32.bor(bool_5, 0b0000000000000010)
-			end
-			assert(value["slots"][2]["hp"] >= 0, "value is less than 0!")
-			assert(value["slots"][2]["hp"] <= 100, "value is more than 100!")
-			alloc(1)
-			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][2]["hp"])
-			assert(value["slots"][2]["maxhp"] >= 0, "value is less than 0!")
-			assert(value["slots"][2]["maxhp"] <= 100, "value is more than 100!")
-			alloc(1)
-			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][2]["maxhp"])
-			assert(value["slots"][2]["hunger"] >= 0, "value is less than 0!")
-			assert(value["slots"][2]["hunger"] <= 100, "value is more than 100!")
-			alloc(1)
-			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][2]["hunger"])
-			assert(value["slots"][2]["maxhunger"] >= 0, "value is less than 0!")
-			assert(value["slots"][2]["maxhunger"] <= 100, "value is more than 100!")
-			alloc(1)
-			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][2]["maxhunger"])
-			assert(value["slots"][2]["exp"] >= 0, "value is less than 0!")
-			assert(value["slots"][2]["exp"] <= 100, "value is more than 100!")
-			alloc(1)
-			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][2]["exp"])
-			assert(value["slots"][2]["maxexp"] >= 0, "value is less than 0!")
-			assert(value["slots"][2]["maxexp"] <= 100, "value is more than 100!")
-			alloc(1)
-			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][2]["maxexp"])
-			assert(value["slots"][2]["upgrade"] >= 0, "value is less than 0!")
-			assert(value["slots"][2]["upgrade"] <= 2, "value is more than 2!")
-			alloc(1)
-			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][2]["upgrade"])
-			alloc(1)
-			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][2]["level"])
-			alloc(1)
-			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][3]["shark"])
-			if value["slots"][3]["dead"] then
-				bool_5 = bit32.bor(bool_5, 0b0000000000000100)
-			end
-			assert(value["slots"][3]["hp"] >= 0, "value is less than 0!")
-			assert(value["slots"][3]["hp"] <= 100, "value is more than 100!")
-			alloc(1)
-			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][3]["hp"])
-			assert(value["slots"][3]["maxhp"] >= 0, "value is less than 0!")
-			assert(value["slots"][3]["maxhp"] <= 100, "value is more than 100!")
-			alloc(1)
-			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][3]["maxhp"])
-			assert(value["slots"][3]["hunger"] >= 0, "value is less than 0!")
-			assert(value["slots"][3]["hunger"] <= 100, "value is more than 100!")
-			alloc(1)
-			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][3]["hunger"])
-			assert(value["slots"][3]["maxhunger"] >= 0, "value is less than 0!")
-			assert(value["slots"][3]["maxhunger"] <= 100, "value is more than 100!")
-			alloc(1)
-			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][3]["maxhunger"])
-			assert(value["slots"][3]["exp"] >= 0, "value is less than 0!")
-			assert(value["slots"][3]["exp"] <= 100, "value is more than 100!")
-			alloc(1)
-			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][3]["exp"])
-			assert(value["slots"][3]["maxexp"] >= 0, "value is less than 0!")
-			assert(value["slots"][3]["maxexp"] <= 100, "value is more than 100!")
-			alloc(1)
-			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][3]["maxexp"])
-			assert(value["slots"][3]["upgrade"] >= 0, "value is less than 0!")
-			assert(value["slots"][3]["upgrade"] <= 2, "value is more than 2!")
-			alloc(1)
-			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][3]["upgrade"])
-			alloc(1)
-			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][3]["level"])
-			buffer.writeu8(outgoing_buff, bool_5_pos_1, bool_5)
-			local buff, used, inst = outgoing_buff, outgoing_used, outgoing_inst
-			for _, player in list do
-				load_player(player)
-				alloc(used)
-				buffer.copy(outgoing_buff, outgoing_apos, buff, 0, used)
-				table.move(inst, 1, #inst, #outgoing_inst + 1, outgoing_inst)
-				player_map[player] = save()
-			end
-			debug.profileend()
-		end,
-		fireSet = function(set: { [Player]: any }, value: ({
-			["coins"]: (number),
-			["sharkcoins"]: (number),
-			["revivetokens"]: (number),
-			["slots"]: ({ ({
-				["shark"]: (number),
-				["dead"]: (boolean),
-				["hp"]: (number),
-				["maxhp"]: (number),
-				["hunger"]: (number),
-				["maxhunger"]: (number),
-				["exp"]: (number),
-				["maxexp"]: (number),
-				["upgrade"]: (number),
-				["level"]: (number),
-			}) }),
-		}))
-			debug.profilebegin("PlayerDataEvent FireSet")
-			load_empty()
 			alloc(1)
 			buffer.writeu8(outgoing_buff, outgoing_apos, 0)
 			local bool_6 = 0
@@ -1010,6 +540,589 @@ local returns = {
 			alloc(1)
 			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][3]["level"])
 			buffer.writeu8(outgoing_buff, bool_6_pos_1, bool_6)
+			player_map[player] = save()
+			debug.profileend()
+		end,
+		fireAll = function(value: ({
+			["coins"]: (number),
+			["sharkcoins"]: (number),
+			["revivetokens"]: (number),
+			["slots"]: ({ ({
+				["shark"]: (number),
+				["dead"]: (boolean),
+				["hp"]: (number),
+				["maxhp"]: (number),
+				["hunger"]: (number),
+				["maxhunger"]: (number),
+				["exp"]: (number),
+				["maxexp"]: (number),
+				["upgrade"]: (number),
+				["level"]: (number),
+			}) }),
+		}))
+			debug.profilebegin("PlayerDataEvent FireAll")
+			load_empty()
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, 0)
+			local bool_7 = 0
+			local bool_7_pos_1 = alloc(1)
+			assert(value["coins"] <= 100000, "value is more than 100000!")
+			alloc(4)
+			buffer.writeu32(outgoing_buff, outgoing_apos, value["coins"])
+			alloc(2)
+			buffer.writeu16(outgoing_buff, outgoing_apos, value["sharkcoins"])
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["revivetokens"])
+			assert(#value["slots"] == 3, "length is not equal to 3!")
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][1]["shark"])
+			if value["slots"][1]["dead"] then
+				bool_7 = bit32.bor(bool_7, 0b0000000000000001)
+			end
+			assert(value["slots"][1]["hp"] >= 0, "value is less than 0!")
+			assert(value["slots"][1]["hp"] <= 100, "value is more than 100!")
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][1]["hp"])
+			assert(value["slots"][1]["maxhp"] >= 0, "value is less than 0!")
+			assert(value["slots"][1]["maxhp"] <= 100, "value is more than 100!")
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][1]["maxhp"])
+			assert(value["slots"][1]["hunger"] >= 0, "value is less than 0!")
+			assert(value["slots"][1]["hunger"] <= 100, "value is more than 100!")
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][1]["hunger"])
+			assert(value["slots"][1]["maxhunger"] >= 0, "value is less than 0!")
+			assert(value["slots"][1]["maxhunger"] <= 100, "value is more than 100!")
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][1]["maxhunger"])
+			assert(value["slots"][1]["exp"] >= 0, "value is less than 0!")
+			assert(value["slots"][1]["exp"] <= 100, "value is more than 100!")
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][1]["exp"])
+			assert(value["slots"][1]["maxexp"] >= 0, "value is less than 0!")
+			assert(value["slots"][1]["maxexp"] <= 100, "value is more than 100!")
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][1]["maxexp"])
+			assert(value["slots"][1]["upgrade"] >= 0, "value is less than 0!")
+			assert(value["slots"][1]["upgrade"] <= 2, "value is more than 2!")
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][1]["upgrade"])
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][1]["level"])
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][2]["shark"])
+			if value["slots"][2]["dead"] then
+				bool_7 = bit32.bor(bool_7, 0b0000000000000010)
+			end
+			assert(value["slots"][2]["hp"] >= 0, "value is less than 0!")
+			assert(value["slots"][2]["hp"] <= 100, "value is more than 100!")
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][2]["hp"])
+			assert(value["slots"][2]["maxhp"] >= 0, "value is less than 0!")
+			assert(value["slots"][2]["maxhp"] <= 100, "value is more than 100!")
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][2]["maxhp"])
+			assert(value["slots"][2]["hunger"] >= 0, "value is less than 0!")
+			assert(value["slots"][2]["hunger"] <= 100, "value is more than 100!")
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][2]["hunger"])
+			assert(value["slots"][2]["maxhunger"] >= 0, "value is less than 0!")
+			assert(value["slots"][2]["maxhunger"] <= 100, "value is more than 100!")
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][2]["maxhunger"])
+			assert(value["slots"][2]["exp"] >= 0, "value is less than 0!")
+			assert(value["slots"][2]["exp"] <= 100, "value is more than 100!")
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][2]["exp"])
+			assert(value["slots"][2]["maxexp"] >= 0, "value is less than 0!")
+			assert(value["slots"][2]["maxexp"] <= 100, "value is more than 100!")
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][2]["maxexp"])
+			assert(value["slots"][2]["upgrade"] >= 0, "value is less than 0!")
+			assert(value["slots"][2]["upgrade"] <= 2, "value is more than 2!")
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][2]["upgrade"])
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][2]["level"])
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][3]["shark"])
+			if value["slots"][3]["dead"] then
+				bool_7 = bit32.bor(bool_7, 0b0000000000000100)
+			end
+			assert(value["slots"][3]["hp"] >= 0, "value is less than 0!")
+			assert(value["slots"][3]["hp"] <= 100, "value is more than 100!")
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][3]["hp"])
+			assert(value["slots"][3]["maxhp"] >= 0, "value is less than 0!")
+			assert(value["slots"][3]["maxhp"] <= 100, "value is more than 100!")
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][3]["maxhp"])
+			assert(value["slots"][3]["hunger"] >= 0, "value is less than 0!")
+			assert(value["slots"][3]["hunger"] <= 100, "value is more than 100!")
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][3]["hunger"])
+			assert(value["slots"][3]["maxhunger"] >= 0, "value is less than 0!")
+			assert(value["slots"][3]["maxhunger"] <= 100, "value is more than 100!")
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][3]["maxhunger"])
+			assert(value["slots"][3]["exp"] >= 0, "value is less than 0!")
+			assert(value["slots"][3]["exp"] <= 100, "value is more than 100!")
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][3]["exp"])
+			assert(value["slots"][3]["maxexp"] >= 0, "value is less than 0!")
+			assert(value["slots"][3]["maxexp"] <= 100, "value is more than 100!")
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][3]["maxexp"])
+			assert(value["slots"][3]["upgrade"] >= 0, "value is less than 0!")
+			assert(value["slots"][3]["upgrade"] <= 2, "value is more than 2!")
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][3]["upgrade"])
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][3]["level"])
+			buffer.writeu8(outgoing_buff, bool_7_pos_1, bool_7)
+			local buff, used, inst = outgoing_buff, outgoing_used, outgoing_inst
+			for _, player in Players:GetPlayers() do
+				load_player(player)
+				alloc(used)
+				buffer.copy(outgoing_buff, outgoing_apos, buff, 0, used)
+				table.move(inst, 1, #inst, #outgoing_inst + 1, outgoing_inst)
+				player_map[player] = save()
+			end
+			debug.profileend()
+		end,
+		fireExcept = function(except: Player, value: ({
+			["coins"]: (number),
+			["sharkcoins"]: (number),
+			["revivetokens"]: (number),
+			["slots"]: ({ ({
+				["shark"]: (number),
+				["dead"]: (boolean),
+				["hp"]: (number),
+				["maxhp"]: (number),
+				["hunger"]: (number),
+				["maxhunger"]: (number),
+				["exp"]: (number),
+				["maxexp"]: (number),
+				["upgrade"]: (number),
+				["level"]: (number),
+			}) }),
+		}))
+			debug.profilebegin("PlayerDataEvent FireExcept")
+			load_empty()
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, 0)
+			local bool_8 = 0
+			local bool_8_pos_1 = alloc(1)
+			assert(value["coins"] <= 100000, "value is more than 100000!")
+			alloc(4)
+			buffer.writeu32(outgoing_buff, outgoing_apos, value["coins"])
+			alloc(2)
+			buffer.writeu16(outgoing_buff, outgoing_apos, value["sharkcoins"])
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["revivetokens"])
+			assert(#value["slots"] == 3, "length is not equal to 3!")
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][1]["shark"])
+			if value["slots"][1]["dead"] then
+				bool_8 = bit32.bor(bool_8, 0b0000000000000001)
+			end
+			assert(value["slots"][1]["hp"] >= 0, "value is less than 0!")
+			assert(value["slots"][1]["hp"] <= 100, "value is more than 100!")
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][1]["hp"])
+			assert(value["slots"][1]["maxhp"] >= 0, "value is less than 0!")
+			assert(value["slots"][1]["maxhp"] <= 100, "value is more than 100!")
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][1]["maxhp"])
+			assert(value["slots"][1]["hunger"] >= 0, "value is less than 0!")
+			assert(value["slots"][1]["hunger"] <= 100, "value is more than 100!")
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][1]["hunger"])
+			assert(value["slots"][1]["maxhunger"] >= 0, "value is less than 0!")
+			assert(value["slots"][1]["maxhunger"] <= 100, "value is more than 100!")
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][1]["maxhunger"])
+			assert(value["slots"][1]["exp"] >= 0, "value is less than 0!")
+			assert(value["slots"][1]["exp"] <= 100, "value is more than 100!")
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][1]["exp"])
+			assert(value["slots"][1]["maxexp"] >= 0, "value is less than 0!")
+			assert(value["slots"][1]["maxexp"] <= 100, "value is more than 100!")
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][1]["maxexp"])
+			assert(value["slots"][1]["upgrade"] >= 0, "value is less than 0!")
+			assert(value["slots"][1]["upgrade"] <= 2, "value is more than 2!")
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][1]["upgrade"])
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][1]["level"])
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][2]["shark"])
+			if value["slots"][2]["dead"] then
+				bool_8 = bit32.bor(bool_8, 0b0000000000000010)
+			end
+			assert(value["slots"][2]["hp"] >= 0, "value is less than 0!")
+			assert(value["slots"][2]["hp"] <= 100, "value is more than 100!")
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][2]["hp"])
+			assert(value["slots"][2]["maxhp"] >= 0, "value is less than 0!")
+			assert(value["slots"][2]["maxhp"] <= 100, "value is more than 100!")
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][2]["maxhp"])
+			assert(value["slots"][2]["hunger"] >= 0, "value is less than 0!")
+			assert(value["slots"][2]["hunger"] <= 100, "value is more than 100!")
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][2]["hunger"])
+			assert(value["slots"][2]["maxhunger"] >= 0, "value is less than 0!")
+			assert(value["slots"][2]["maxhunger"] <= 100, "value is more than 100!")
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][2]["maxhunger"])
+			assert(value["slots"][2]["exp"] >= 0, "value is less than 0!")
+			assert(value["slots"][2]["exp"] <= 100, "value is more than 100!")
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][2]["exp"])
+			assert(value["slots"][2]["maxexp"] >= 0, "value is less than 0!")
+			assert(value["slots"][2]["maxexp"] <= 100, "value is more than 100!")
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][2]["maxexp"])
+			assert(value["slots"][2]["upgrade"] >= 0, "value is less than 0!")
+			assert(value["slots"][2]["upgrade"] <= 2, "value is more than 2!")
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][2]["upgrade"])
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][2]["level"])
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][3]["shark"])
+			if value["slots"][3]["dead"] then
+				bool_8 = bit32.bor(bool_8, 0b0000000000000100)
+			end
+			assert(value["slots"][3]["hp"] >= 0, "value is less than 0!")
+			assert(value["slots"][3]["hp"] <= 100, "value is more than 100!")
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][3]["hp"])
+			assert(value["slots"][3]["maxhp"] >= 0, "value is less than 0!")
+			assert(value["slots"][3]["maxhp"] <= 100, "value is more than 100!")
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][3]["maxhp"])
+			assert(value["slots"][3]["hunger"] >= 0, "value is less than 0!")
+			assert(value["slots"][3]["hunger"] <= 100, "value is more than 100!")
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][3]["hunger"])
+			assert(value["slots"][3]["maxhunger"] >= 0, "value is less than 0!")
+			assert(value["slots"][3]["maxhunger"] <= 100, "value is more than 100!")
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][3]["maxhunger"])
+			assert(value["slots"][3]["exp"] >= 0, "value is less than 0!")
+			assert(value["slots"][3]["exp"] <= 100, "value is more than 100!")
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][3]["exp"])
+			assert(value["slots"][3]["maxexp"] >= 0, "value is less than 0!")
+			assert(value["slots"][3]["maxexp"] <= 100, "value is more than 100!")
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][3]["maxexp"])
+			assert(value["slots"][3]["upgrade"] >= 0, "value is less than 0!")
+			assert(value["slots"][3]["upgrade"] <= 2, "value is more than 2!")
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][3]["upgrade"])
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][3]["level"])
+			buffer.writeu8(outgoing_buff, bool_8_pos_1, bool_8)
+			local buff, used, inst = outgoing_buff, outgoing_used, outgoing_inst
+			for _, player in Players:GetPlayers() do
+				if player ~= except then
+					load_player(player)
+					alloc(used)
+					buffer.copy(outgoing_buff, outgoing_apos, buff, 0, used)
+					table.move(inst, 1, #inst, #outgoing_inst + 1, outgoing_inst)
+					player_map[player] = save()
+				end
+			end
+			debug.profileend()
+		end,
+		fireList = function(list: { [unknown]: Player }, value: ({
+			["coins"]: (number),
+			["sharkcoins"]: (number),
+			["revivetokens"]: (number),
+			["slots"]: ({ ({
+				["shark"]: (number),
+				["dead"]: (boolean),
+				["hp"]: (number),
+				["maxhp"]: (number),
+				["hunger"]: (number),
+				["maxhunger"]: (number),
+				["exp"]: (number),
+				["maxexp"]: (number),
+				["upgrade"]: (number),
+				["level"]: (number),
+			}) }),
+		}))
+			debug.profilebegin("PlayerDataEvent FireList")
+			load_empty()
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, 0)
+			local bool_9 = 0
+			local bool_9_pos_1 = alloc(1)
+			assert(value["coins"] <= 100000, "value is more than 100000!")
+			alloc(4)
+			buffer.writeu32(outgoing_buff, outgoing_apos, value["coins"])
+			alloc(2)
+			buffer.writeu16(outgoing_buff, outgoing_apos, value["sharkcoins"])
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["revivetokens"])
+			assert(#value["slots"] == 3, "length is not equal to 3!")
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][1]["shark"])
+			if value["slots"][1]["dead"] then
+				bool_9 = bit32.bor(bool_9, 0b0000000000000001)
+			end
+			assert(value["slots"][1]["hp"] >= 0, "value is less than 0!")
+			assert(value["slots"][1]["hp"] <= 100, "value is more than 100!")
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][1]["hp"])
+			assert(value["slots"][1]["maxhp"] >= 0, "value is less than 0!")
+			assert(value["slots"][1]["maxhp"] <= 100, "value is more than 100!")
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][1]["maxhp"])
+			assert(value["slots"][1]["hunger"] >= 0, "value is less than 0!")
+			assert(value["slots"][1]["hunger"] <= 100, "value is more than 100!")
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][1]["hunger"])
+			assert(value["slots"][1]["maxhunger"] >= 0, "value is less than 0!")
+			assert(value["slots"][1]["maxhunger"] <= 100, "value is more than 100!")
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][1]["maxhunger"])
+			assert(value["slots"][1]["exp"] >= 0, "value is less than 0!")
+			assert(value["slots"][1]["exp"] <= 100, "value is more than 100!")
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][1]["exp"])
+			assert(value["slots"][1]["maxexp"] >= 0, "value is less than 0!")
+			assert(value["slots"][1]["maxexp"] <= 100, "value is more than 100!")
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][1]["maxexp"])
+			assert(value["slots"][1]["upgrade"] >= 0, "value is less than 0!")
+			assert(value["slots"][1]["upgrade"] <= 2, "value is more than 2!")
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][1]["upgrade"])
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][1]["level"])
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][2]["shark"])
+			if value["slots"][2]["dead"] then
+				bool_9 = bit32.bor(bool_9, 0b0000000000000010)
+			end
+			assert(value["slots"][2]["hp"] >= 0, "value is less than 0!")
+			assert(value["slots"][2]["hp"] <= 100, "value is more than 100!")
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][2]["hp"])
+			assert(value["slots"][2]["maxhp"] >= 0, "value is less than 0!")
+			assert(value["slots"][2]["maxhp"] <= 100, "value is more than 100!")
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][2]["maxhp"])
+			assert(value["slots"][2]["hunger"] >= 0, "value is less than 0!")
+			assert(value["slots"][2]["hunger"] <= 100, "value is more than 100!")
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][2]["hunger"])
+			assert(value["slots"][2]["maxhunger"] >= 0, "value is less than 0!")
+			assert(value["slots"][2]["maxhunger"] <= 100, "value is more than 100!")
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][2]["maxhunger"])
+			assert(value["slots"][2]["exp"] >= 0, "value is less than 0!")
+			assert(value["slots"][2]["exp"] <= 100, "value is more than 100!")
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][2]["exp"])
+			assert(value["slots"][2]["maxexp"] >= 0, "value is less than 0!")
+			assert(value["slots"][2]["maxexp"] <= 100, "value is more than 100!")
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][2]["maxexp"])
+			assert(value["slots"][2]["upgrade"] >= 0, "value is less than 0!")
+			assert(value["slots"][2]["upgrade"] <= 2, "value is more than 2!")
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][2]["upgrade"])
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][2]["level"])
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][3]["shark"])
+			if value["slots"][3]["dead"] then
+				bool_9 = bit32.bor(bool_9, 0b0000000000000100)
+			end
+			assert(value["slots"][3]["hp"] >= 0, "value is less than 0!")
+			assert(value["slots"][3]["hp"] <= 100, "value is more than 100!")
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][3]["hp"])
+			assert(value["slots"][3]["maxhp"] >= 0, "value is less than 0!")
+			assert(value["slots"][3]["maxhp"] <= 100, "value is more than 100!")
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][3]["maxhp"])
+			assert(value["slots"][3]["hunger"] >= 0, "value is less than 0!")
+			assert(value["slots"][3]["hunger"] <= 100, "value is more than 100!")
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][3]["hunger"])
+			assert(value["slots"][3]["maxhunger"] >= 0, "value is less than 0!")
+			assert(value["slots"][3]["maxhunger"] <= 100, "value is more than 100!")
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][3]["maxhunger"])
+			assert(value["slots"][3]["exp"] >= 0, "value is less than 0!")
+			assert(value["slots"][3]["exp"] <= 100, "value is more than 100!")
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][3]["exp"])
+			assert(value["slots"][3]["maxexp"] >= 0, "value is less than 0!")
+			assert(value["slots"][3]["maxexp"] <= 100, "value is more than 100!")
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][3]["maxexp"])
+			assert(value["slots"][3]["upgrade"] >= 0, "value is less than 0!")
+			assert(value["slots"][3]["upgrade"] <= 2, "value is more than 2!")
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][3]["upgrade"])
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][3]["level"])
+			buffer.writeu8(outgoing_buff, bool_9_pos_1, bool_9)
+			local buff, used, inst = outgoing_buff, outgoing_used, outgoing_inst
+			for _, player in list do
+				load_player(player)
+				alloc(used)
+				buffer.copy(outgoing_buff, outgoing_apos, buff, 0, used)
+				table.move(inst, 1, #inst, #outgoing_inst + 1, outgoing_inst)
+				player_map[player] = save()
+			end
+			debug.profileend()
+		end,
+		fireSet = function(set: { [Player]: any }, value: ({
+			["coins"]: (number),
+			["sharkcoins"]: (number),
+			["revivetokens"]: (number),
+			["slots"]: ({ ({
+				["shark"]: (number),
+				["dead"]: (boolean),
+				["hp"]: (number),
+				["maxhp"]: (number),
+				["hunger"]: (number),
+				["maxhunger"]: (number),
+				["exp"]: (number),
+				["maxexp"]: (number),
+				["upgrade"]: (number),
+				["level"]: (number),
+			}) }),
+		}))
+			debug.profilebegin("PlayerDataEvent FireSet")
+			load_empty()
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, 0)
+			local bool_10 = 0
+			local bool_10_pos_1 = alloc(1)
+			assert(value["coins"] <= 100000, "value is more than 100000!")
+			alloc(4)
+			buffer.writeu32(outgoing_buff, outgoing_apos, value["coins"])
+			alloc(2)
+			buffer.writeu16(outgoing_buff, outgoing_apos, value["sharkcoins"])
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["revivetokens"])
+			assert(#value["slots"] == 3, "length is not equal to 3!")
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][1]["shark"])
+			if value["slots"][1]["dead"] then
+				bool_10 = bit32.bor(bool_10, 0b0000000000000001)
+			end
+			assert(value["slots"][1]["hp"] >= 0, "value is less than 0!")
+			assert(value["slots"][1]["hp"] <= 100, "value is more than 100!")
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][1]["hp"])
+			assert(value["slots"][1]["maxhp"] >= 0, "value is less than 0!")
+			assert(value["slots"][1]["maxhp"] <= 100, "value is more than 100!")
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][1]["maxhp"])
+			assert(value["slots"][1]["hunger"] >= 0, "value is less than 0!")
+			assert(value["slots"][1]["hunger"] <= 100, "value is more than 100!")
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][1]["hunger"])
+			assert(value["slots"][1]["maxhunger"] >= 0, "value is less than 0!")
+			assert(value["slots"][1]["maxhunger"] <= 100, "value is more than 100!")
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][1]["maxhunger"])
+			assert(value["slots"][1]["exp"] >= 0, "value is less than 0!")
+			assert(value["slots"][1]["exp"] <= 100, "value is more than 100!")
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][1]["exp"])
+			assert(value["slots"][1]["maxexp"] >= 0, "value is less than 0!")
+			assert(value["slots"][1]["maxexp"] <= 100, "value is more than 100!")
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][1]["maxexp"])
+			assert(value["slots"][1]["upgrade"] >= 0, "value is less than 0!")
+			assert(value["slots"][1]["upgrade"] <= 2, "value is more than 2!")
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][1]["upgrade"])
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][1]["level"])
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][2]["shark"])
+			if value["slots"][2]["dead"] then
+				bool_10 = bit32.bor(bool_10, 0b0000000000000010)
+			end
+			assert(value["slots"][2]["hp"] >= 0, "value is less than 0!")
+			assert(value["slots"][2]["hp"] <= 100, "value is more than 100!")
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][2]["hp"])
+			assert(value["slots"][2]["maxhp"] >= 0, "value is less than 0!")
+			assert(value["slots"][2]["maxhp"] <= 100, "value is more than 100!")
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][2]["maxhp"])
+			assert(value["slots"][2]["hunger"] >= 0, "value is less than 0!")
+			assert(value["slots"][2]["hunger"] <= 100, "value is more than 100!")
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][2]["hunger"])
+			assert(value["slots"][2]["maxhunger"] >= 0, "value is less than 0!")
+			assert(value["slots"][2]["maxhunger"] <= 100, "value is more than 100!")
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][2]["maxhunger"])
+			assert(value["slots"][2]["exp"] >= 0, "value is less than 0!")
+			assert(value["slots"][2]["exp"] <= 100, "value is more than 100!")
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][2]["exp"])
+			assert(value["slots"][2]["maxexp"] >= 0, "value is less than 0!")
+			assert(value["slots"][2]["maxexp"] <= 100, "value is more than 100!")
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][2]["maxexp"])
+			assert(value["slots"][2]["upgrade"] >= 0, "value is less than 0!")
+			assert(value["slots"][2]["upgrade"] <= 2, "value is more than 2!")
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][2]["upgrade"])
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][2]["level"])
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][3]["shark"])
+			if value["slots"][3]["dead"] then
+				bool_10 = bit32.bor(bool_10, 0b0000000000000100)
+			end
+			assert(value["slots"][3]["hp"] >= 0, "value is less than 0!")
+			assert(value["slots"][3]["hp"] <= 100, "value is more than 100!")
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][3]["hp"])
+			assert(value["slots"][3]["maxhp"] >= 0, "value is less than 0!")
+			assert(value["slots"][3]["maxhp"] <= 100, "value is more than 100!")
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][3]["maxhp"])
+			assert(value["slots"][3]["hunger"] >= 0, "value is less than 0!")
+			assert(value["slots"][3]["hunger"] <= 100, "value is more than 100!")
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][3]["hunger"])
+			assert(value["slots"][3]["maxhunger"] >= 0, "value is less than 0!")
+			assert(value["slots"][3]["maxhunger"] <= 100, "value is more than 100!")
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][3]["maxhunger"])
+			assert(value["slots"][3]["exp"] >= 0, "value is less than 0!")
+			assert(value["slots"][3]["exp"] <= 100, "value is more than 100!")
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][3]["exp"])
+			assert(value["slots"][3]["maxexp"] >= 0, "value is less than 0!")
+			assert(value["slots"][3]["maxexp"] <= 100, "value is more than 100!")
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][3]["maxexp"])
+			assert(value["slots"][3]["upgrade"] >= 0, "value is less than 0!")
+			assert(value["slots"][3]["upgrade"] <= 2, "value is more than 2!")
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][3]["upgrade"])
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][3]["level"])
+			buffer.writeu8(outgoing_buff, bool_10_pos_1, bool_10)
 			local buff, used, inst = outgoing_buff, outgoing_used, outgoing_inst
 			for player in set do
 				load_player(player)
@@ -1036,257 +1149,6 @@ local returns = {
 		}))
 			debug.profilebegin("IngameDataEvent Fire")
 			load_player(player)
-			alloc(1)
-			buffer.writeu8(outgoing_buff, outgoing_apos, 1)
-			local bool_7 = 0
-			local bool_7_pos_1 = alloc(1)
-			alloc(1)
-			buffer.writeu8(outgoing_buff, outgoing_apos, value["shark"])
-			if value["dead"] then
-				bool_7 = bit32.bor(bool_7, 0b0000000000000001)
-			end
-			assert(value["hp"] >= 0, "value is less than 0!")
-			assert(value["hp"] <= 100, "value is more than 100!")
-			alloc(1)
-			buffer.writeu8(outgoing_buff, outgoing_apos, value["hp"])
-			assert(value["maxhp"] >= 0, "value is less than 0!")
-			assert(value["maxhp"] <= 100, "value is more than 100!")
-			alloc(1)
-			buffer.writeu8(outgoing_buff, outgoing_apos, value["maxhp"])
-			assert(value["hunger"] >= 0, "value is less than 0!")
-			assert(value["hunger"] <= 100, "value is more than 100!")
-			alloc(1)
-			buffer.writeu8(outgoing_buff, outgoing_apos, value["hunger"])
-			assert(value["maxhunger"] >= 0, "value is less than 0!")
-			assert(value["maxhunger"] <= 100, "value is more than 100!")
-			alloc(1)
-			buffer.writeu8(outgoing_buff, outgoing_apos, value["maxhunger"])
-			assert(value["exp"] >= 0, "value is less than 0!")
-			assert(value["exp"] <= 100, "value is more than 100!")
-			alloc(1)
-			buffer.writeu8(outgoing_buff, outgoing_apos, value["exp"])
-			assert(value["maxexp"] >= 0, "value is less than 0!")
-			assert(value["maxexp"] <= 100, "value is more than 100!")
-			alloc(1)
-			buffer.writeu8(outgoing_buff, outgoing_apos, value["maxexp"])
-			assert(value["upgrade"] >= 0, "value is less than 0!")
-			assert(value["upgrade"] <= 2, "value is more than 2!")
-			alloc(1)
-			buffer.writeu8(outgoing_buff, outgoing_apos, value["upgrade"])
-			alloc(1)
-			buffer.writeu8(outgoing_buff, outgoing_apos, value["level"])
-			buffer.writeu8(outgoing_buff, bool_7_pos_1, bool_7)
-			player_map[player] = save()
-			debug.profileend()
-		end,
-		fireAll = function(value: ({
-			["shark"]: (number),
-			["dead"]: (boolean),
-			["hp"]: (number),
-			["maxhp"]: (number),
-			["hunger"]: (number),
-			["maxhunger"]: (number),
-			["exp"]: (number),
-			["maxexp"]: (number),
-			["upgrade"]: (number),
-			["level"]: (number),
-		}))
-			debug.profilebegin("IngameDataEvent FireAll")
-			load_empty()
-			alloc(1)
-			buffer.writeu8(outgoing_buff, outgoing_apos, 1)
-			local bool_8 = 0
-			local bool_8_pos_1 = alloc(1)
-			alloc(1)
-			buffer.writeu8(outgoing_buff, outgoing_apos, value["shark"])
-			if value["dead"] then
-				bool_8 = bit32.bor(bool_8, 0b0000000000000001)
-			end
-			assert(value["hp"] >= 0, "value is less than 0!")
-			assert(value["hp"] <= 100, "value is more than 100!")
-			alloc(1)
-			buffer.writeu8(outgoing_buff, outgoing_apos, value["hp"])
-			assert(value["maxhp"] >= 0, "value is less than 0!")
-			assert(value["maxhp"] <= 100, "value is more than 100!")
-			alloc(1)
-			buffer.writeu8(outgoing_buff, outgoing_apos, value["maxhp"])
-			assert(value["hunger"] >= 0, "value is less than 0!")
-			assert(value["hunger"] <= 100, "value is more than 100!")
-			alloc(1)
-			buffer.writeu8(outgoing_buff, outgoing_apos, value["hunger"])
-			assert(value["maxhunger"] >= 0, "value is less than 0!")
-			assert(value["maxhunger"] <= 100, "value is more than 100!")
-			alloc(1)
-			buffer.writeu8(outgoing_buff, outgoing_apos, value["maxhunger"])
-			assert(value["exp"] >= 0, "value is less than 0!")
-			assert(value["exp"] <= 100, "value is more than 100!")
-			alloc(1)
-			buffer.writeu8(outgoing_buff, outgoing_apos, value["exp"])
-			assert(value["maxexp"] >= 0, "value is less than 0!")
-			assert(value["maxexp"] <= 100, "value is more than 100!")
-			alloc(1)
-			buffer.writeu8(outgoing_buff, outgoing_apos, value["maxexp"])
-			assert(value["upgrade"] >= 0, "value is less than 0!")
-			assert(value["upgrade"] <= 2, "value is more than 2!")
-			alloc(1)
-			buffer.writeu8(outgoing_buff, outgoing_apos, value["upgrade"])
-			alloc(1)
-			buffer.writeu8(outgoing_buff, outgoing_apos, value["level"])
-			buffer.writeu8(outgoing_buff, bool_8_pos_1, bool_8)
-			local buff, used, inst = outgoing_buff, outgoing_used, outgoing_inst
-			for _, player in Players:GetPlayers() do
-				load_player(player)
-				alloc(used)
-				buffer.copy(outgoing_buff, outgoing_apos, buff, 0, used)
-				table.move(inst, 1, #inst, #outgoing_inst + 1, outgoing_inst)
-				player_map[player] = save()
-			end
-			debug.profileend()
-		end,
-		fireExcept = function(except: Player, value: ({
-			["shark"]: (number),
-			["dead"]: (boolean),
-			["hp"]: (number),
-			["maxhp"]: (number),
-			["hunger"]: (number),
-			["maxhunger"]: (number),
-			["exp"]: (number),
-			["maxexp"]: (number),
-			["upgrade"]: (number),
-			["level"]: (number),
-		}))
-			debug.profilebegin("IngameDataEvent FireExcept")
-			load_empty()
-			alloc(1)
-			buffer.writeu8(outgoing_buff, outgoing_apos, 1)
-			local bool_9 = 0
-			local bool_9_pos_1 = alloc(1)
-			alloc(1)
-			buffer.writeu8(outgoing_buff, outgoing_apos, value["shark"])
-			if value["dead"] then
-				bool_9 = bit32.bor(bool_9, 0b0000000000000001)
-			end
-			assert(value["hp"] >= 0, "value is less than 0!")
-			assert(value["hp"] <= 100, "value is more than 100!")
-			alloc(1)
-			buffer.writeu8(outgoing_buff, outgoing_apos, value["hp"])
-			assert(value["maxhp"] >= 0, "value is less than 0!")
-			assert(value["maxhp"] <= 100, "value is more than 100!")
-			alloc(1)
-			buffer.writeu8(outgoing_buff, outgoing_apos, value["maxhp"])
-			assert(value["hunger"] >= 0, "value is less than 0!")
-			assert(value["hunger"] <= 100, "value is more than 100!")
-			alloc(1)
-			buffer.writeu8(outgoing_buff, outgoing_apos, value["hunger"])
-			assert(value["maxhunger"] >= 0, "value is less than 0!")
-			assert(value["maxhunger"] <= 100, "value is more than 100!")
-			alloc(1)
-			buffer.writeu8(outgoing_buff, outgoing_apos, value["maxhunger"])
-			assert(value["exp"] >= 0, "value is less than 0!")
-			assert(value["exp"] <= 100, "value is more than 100!")
-			alloc(1)
-			buffer.writeu8(outgoing_buff, outgoing_apos, value["exp"])
-			assert(value["maxexp"] >= 0, "value is less than 0!")
-			assert(value["maxexp"] <= 100, "value is more than 100!")
-			alloc(1)
-			buffer.writeu8(outgoing_buff, outgoing_apos, value["maxexp"])
-			assert(value["upgrade"] >= 0, "value is less than 0!")
-			assert(value["upgrade"] <= 2, "value is more than 2!")
-			alloc(1)
-			buffer.writeu8(outgoing_buff, outgoing_apos, value["upgrade"])
-			alloc(1)
-			buffer.writeu8(outgoing_buff, outgoing_apos, value["level"])
-			buffer.writeu8(outgoing_buff, bool_9_pos_1, bool_9)
-			local buff, used, inst = outgoing_buff, outgoing_used, outgoing_inst
-			for _, player in Players:GetPlayers() do
-				if player ~= except then
-					load_player(player)
-					alloc(used)
-					buffer.copy(outgoing_buff, outgoing_apos, buff, 0, used)
-					table.move(inst, 1, #inst, #outgoing_inst + 1, outgoing_inst)
-					player_map[player] = save()
-				end
-			end
-			debug.profileend()
-		end,
-		fireList = function(list: { [unknown]: Player }, value: ({
-			["shark"]: (number),
-			["dead"]: (boolean),
-			["hp"]: (number),
-			["maxhp"]: (number),
-			["hunger"]: (number),
-			["maxhunger"]: (number),
-			["exp"]: (number),
-			["maxexp"]: (number),
-			["upgrade"]: (number),
-			["level"]: (number),
-		}))
-			debug.profilebegin("IngameDataEvent FireList")
-			load_empty()
-			alloc(1)
-			buffer.writeu8(outgoing_buff, outgoing_apos, 1)
-			local bool_10 = 0
-			local bool_10_pos_1 = alloc(1)
-			alloc(1)
-			buffer.writeu8(outgoing_buff, outgoing_apos, value["shark"])
-			if value["dead"] then
-				bool_10 = bit32.bor(bool_10, 0b0000000000000001)
-			end
-			assert(value["hp"] >= 0, "value is less than 0!")
-			assert(value["hp"] <= 100, "value is more than 100!")
-			alloc(1)
-			buffer.writeu8(outgoing_buff, outgoing_apos, value["hp"])
-			assert(value["maxhp"] >= 0, "value is less than 0!")
-			assert(value["maxhp"] <= 100, "value is more than 100!")
-			alloc(1)
-			buffer.writeu8(outgoing_buff, outgoing_apos, value["maxhp"])
-			assert(value["hunger"] >= 0, "value is less than 0!")
-			assert(value["hunger"] <= 100, "value is more than 100!")
-			alloc(1)
-			buffer.writeu8(outgoing_buff, outgoing_apos, value["hunger"])
-			assert(value["maxhunger"] >= 0, "value is less than 0!")
-			assert(value["maxhunger"] <= 100, "value is more than 100!")
-			alloc(1)
-			buffer.writeu8(outgoing_buff, outgoing_apos, value["maxhunger"])
-			assert(value["exp"] >= 0, "value is less than 0!")
-			assert(value["exp"] <= 100, "value is more than 100!")
-			alloc(1)
-			buffer.writeu8(outgoing_buff, outgoing_apos, value["exp"])
-			assert(value["maxexp"] >= 0, "value is less than 0!")
-			assert(value["maxexp"] <= 100, "value is more than 100!")
-			alloc(1)
-			buffer.writeu8(outgoing_buff, outgoing_apos, value["maxexp"])
-			assert(value["upgrade"] >= 0, "value is less than 0!")
-			assert(value["upgrade"] <= 2, "value is more than 2!")
-			alloc(1)
-			buffer.writeu8(outgoing_buff, outgoing_apos, value["upgrade"])
-			alloc(1)
-			buffer.writeu8(outgoing_buff, outgoing_apos, value["level"])
-			buffer.writeu8(outgoing_buff, bool_10_pos_1, bool_10)
-			local buff, used, inst = outgoing_buff, outgoing_used, outgoing_inst
-			for _, player in list do
-				load_player(player)
-				alloc(used)
-				buffer.copy(outgoing_buff, outgoing_apos, buff, 0, used)
-				table.move(inst, 1, #inst, #outgoing_inst + 1, outgoing_inst)
-				player_map[player] = save()
-			end
-			debug.profileend()
-		end,
-		fireSet = function(set: { [Player]: any }, value: ({
-			["shark"]: (number),
-			["dead"]: (boolean),
-			["hp"]: (number),
-			["maxhp"]: (number),
-			["hunger"]: (number),
-			["maxhunger"]: (number),
-			["exp"]: (number),
-			["maxexp"]: (number),
-			["upgrade"]: (number),
-			["level"]: (number),
-		}))
-			debug.profilebegin("IngameDataEvent FireSet")
-			load_empty()
 			alloc(1)
 			buffer.writeu8(outgoing_buff, outgoing_apos, 1)
 			local bool_11 = 0
@@ -1327,6 +1189,257 @@ local returns = {
 			alloc(1)
 			buffer.writeu8(outgoing_buff, outgoing_apos, value["level"])
 			buffer.writeu8(outgoing_buff, bool_11_pos_1, bool_11)
+			player_map[player] = save()
+			debug.profileend()
+		end,
+		fireAll = function(value: ({
+			["shark"]: (number),
+			["dead"]: (boolean),
+			["hp"]: (number),
+			["maxhp"]: (number),
+			["hunger"]: (number),
+			["maxhunger"]: (number),
+			["exp"]: (number),
+			["maxexp"]: (number),
+			["upgrade"]: (number),
+			["level"]: (number),
+		}))
+			debug.profilebegin("IngameDataEvent FireAll")
+			load_empty()
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, 1)
+			local bool_12 = 0
+			local bool_12_pos_1 = alloc(1)
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["shark"])
+			if value["dead"] then
+				bool_12 = bit32.bor(bool_12, 0b0000000000000001)
+			end
+			assert(value["hp"] >= 0, "value is less than 0!")
+			assert(value["hp"] <= 100, "value is more than 100!")
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["hp"])
+			assert(value["maxhp"] >= 0, "value is less than 0!")
+			assert(value["maxhp"] <= 100, "value is more than 100!")
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["maxhp"])
+			assert(value["hunger"] >= 0, "value is less than 0!")
+			assert(value["hunger"] <= 100, "value is more than 100!")
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["hunger"])
+			assert(value["maxhunger"] >= 0, "value is less than 0!")
+			assert(value["maxhunger"] <= 100, "value is more than 100!")
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["maxhunger"])
+			assert(value["exp"] >= 0, "value is less than 0!")
+			assert(value["exp"] <= 100, "value is more than 100!")
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["exp"])
+			assert(value["maxexp"] >= 0, "value is less than 0!")
+			assert(value["maxexp"] <= 100, "value is more than 100!")
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["maxexp"])
+			assert(value["upgrade"] >= 0, "value is less than 0!")
+			assert(value["upgrade"] <= 2, "value is more than 2!")
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["upgrade"])
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["level"])
+			buffer.writeu8(outgoing_buff, bool_12_pos_1, bool_12)
+			local buff, used, inst = outgoing_buff, outgoing_used, outgoing_inst
+			for _, player in Players:GetPlayers() do
+				load_player(player)
+				alloc(used)
+				buffer.copy(outgoing_buff, outgoing_apos, buff, 0, used)
+				table.move(inst, 1, #inst, #outgoing_inst + 1, outgoing_inst)
+				player_map[player] = save()
+			end
+			debug.profileend()
+		end,
+		fireExcept = function(except: Player, value: ({
+			["shark"]: (number),
+			["dead"]: (boolean),
+			["hp"]: (number),
+			["maxhp"]: (number),
+			["hunger"]: (number),
+			["maxhunger"]: (number),
+			["exp"]: (number),
+			["maxexp"]: (number),
+			["upgrade"]: (number),
+			["level"]: (number),
+		}))
+			debug.profilebegin("IngameDataEvent FireExcept")
+			load_empty()
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, 1)
+			local bool_13 = 0
+			local bool_13_pos_1 = alloc(1)
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["shark"])
+			if value["dead"] then
+				bool_13 = bit32.bor(bool_13, 0b0000000000000001)
+			end
+			assert(value["hp"] >= 0, "value is less than 0!")
+			assert(value["hp"] <= 100, "value is more than 100!")
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["hp"])
+			assert(value["maxhp"] >= 0, "value is less than 0!")
+			assert(value["maxhp"] <= 100, "value is more than 100!")
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["maxhp"])
+			assert(value["hunger"] >= 0, "value is less than 0!")
+			assert(value["hunger"] <= 100, "value is more than 100!")
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["hunger"])
+			assert(value["maxhunger"] >= 0, "value is less than 0!")
+			assert(value["maxhunger"] <= 100, "value is more than 100!")
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["maxhunger"])
+			assert(value["exp"] >= 0, "value is less than 0!")
+			assert(value["exp"] <= 100, "value is more than 100!")
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["exp"])
+			assert(value["maxexp"] >= 0, "value is less than 0!")
+			assert(value["maxexp"] <= 100, "value is more than 100!")
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["maxexp"])
+			assert(value["upgrade"] >= 0, "value is less than 0!")
+			assert(value["upgrade"] <= 2, "value is more than 2!")
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["upgrade"])
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["level"])
+			buffer.writeu8(outgoing_buff, bool_13_pos_1, bool_13)
+			local buff, used, inst = outgoing_buff, outgoing_used, outgoing_inst
+			for _, player in Players:GetPlayers() do
+				if player ~= except then
+					load_player(player)
+					alloc(used)
+					buffer.copy(outgoing_buff, outgoing_apos, buff, 0, used)
+					table.move(inst, 1, #inst, #outgoing_inst + 1, outgoing_inst)
+					player_map[player] = save()
+				end
+			end
+			debug.profileend()
+		end,
+		fireList = function(list: { [unknown]: Player }, value: ({
+			["shark"]: (number),
+			["dead"]: (boolean),
+			["hp"]: (number),
+			["maxhp"]: (number),
+			["hunger"]: (number),
+			["maxhunger"]: (number),
+			["exp"]: (number),
+			["maxexp"]: (number),
+			["upgrade"]: (number),
+			["level"]: (number),
+		}))
+			debug.profilebegin("IngameDataEvent FireList")
+			load_empty()
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, 1)
+			local bool_14 = 0
+			local bool_14_pos_1 = alloc(1)
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["shark"])
+			if value["dead"] then
+				bool_14 = bit32.bor(bool_14, 0b0000000000000001)
+			end
+			assert(value["hp"] >= 0, "value is less than 0!")
+			assert(value["hp"] <= 100, "value is more than 100!")
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["hp"])
+			assert(value["maxhp"] >= 0, "value is less than 0!")
+			assert(value["maxhp"] <= 100, "value is more than 100!")
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["maxhp"])
+			assert(value["hunger"] >= 0, "value is less than 0!")
+			assert(value["hunger"] <= 100, "value is more than 100!")
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["hunger"])
+			assert(value["maxhunger"] >= 0, "value is less than 0!")
+			assert(value["maxhunger"] <= 100, "value is more than 100!")
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["maxhunger"])
+			assert(value["exp"] >= 0, "value is less than 0!")
+			assert(value["exp"] <= 100, "value is more than 100!")
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["exp"])
+			assert(value["maxexp"] >= 0, "value is less than 0!")
+			assert(value["maxexp"] <= 100, "value is more than 100!")
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["maxexp"])
+			assert(value["upgrade"] >= 0, "value is less than 0!")
+			assert(value["upgrade"] <= 2, "value is more than 2!")
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["upgrade"])
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["level"])
+			buffer.writeu8(outgoing_buff, bool_14_pos_1, bool_14)
+			local buff, used, inst = outgoing_buff, outgoing_used, outgoing_inst
+			for _, player in list do
+				load_player(player)
+				alloc(used)
+				buffer.copy(outgoing_buff, outgoing_apos, buff, 0, used)
+				table.move(inst, 1, #inst, #outgoing_inst + 1, outgoing_inst)
+				player_map[player] = save()
+			end
+			debug.profileend()
+		end,
+		fireSet = function(set: { [Player]: any }, value: ({
+			["shark"]: (number),
+			["dead"]: (boolean),
+			["hp"]: (number),
+			["maxhp"]: (number),
+			["hunger"]: (number),
+			["maxhunger"]: (number),
+			["exp"]: (number),
+			["maxexp"]: (number),
+			["upgrade"]: (number),
+			["level"]: (number),
+		}))
+			debug.profilebegin("IngameDataEvent FireSet")
+			load_empty()
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, 1)
+			local bool_15 = 0
+			local bool_15_pos_1 = alloc(1)
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["shark"])
+			if value["dead"] then
+				bool_15 = bit32.bor(bool_15, 0b0000000000000001)
+			end
+			assert(value["hp"] >= 0, "value is less than 0!")
+			assert(value["hp"] <= 100, "value is more than 100!")
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["hp"])
+			assert(value["maxhp"] >= 0, "value is less than 0!")
+			assert(value["maxhp"] <= 100, "value is more than 100!")
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["maxhp"])
+			assert(value["hunger"] >= 0, "value is less than 0!")
+			assert(value["hunger"] <= 100, "value is more than 100!")
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["hunger"])
+			assert(value["maxhunger"] >= 0, "value is less than 0!")
+			assert(value["maxhunger"] <= 100, "value is more than 100!")
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["maxhunger"])
+			assert(value["exp"] >= 0, "value is less than 0!")
+			assert(value["exp"] <= 100, "value is more than 100!")
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["exp"])
+			assert(value["maxexp"] >= 0, "value is less than 0!")
+			assert(value["maxexp"] <= 100, "value is more than 100!")
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["maxexp"])
+			assert(value["upgrade"] >= 0, "value is less than 0!")
+			assert(value["upgrade"] <= 2, "value is more than 2!")
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["upgrade"])
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["level"])
+			buffer.writeu8(outgoing_buff, bool_15_pos_1, bool_15)
 			local buff, used, inst = outgoing_buff, outgoing_used, outgoing_inst
 			for player in set do
 				load_player(player)
