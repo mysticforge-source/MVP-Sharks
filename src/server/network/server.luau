@@ -188,6 +188,18 @@ end
 Players.PlayerRemoving:Connect(function(player)
 	player_map[player] = nil
 end)
+export type SharkSlot = ({
+	["shark"]: (number),
+	["dead"]: (boolean),
+	["hp"]: (number),
+	["maxhp"]: (number),
+	["hunger"]: (number),
+	["maxhunger"]: (number),
+	["exp"]: (number),
+	["maxexp"]: (number),
+	["upgrade"]: (number),
+	["level"]: (number),
+})
 export type UserData = ({
 	["coins"]: (number),
 	["sharkcoins"]: (number),
@@ -204,18 +216,6 @@ export type UserData = ({
 		["upgrade"]: (number),
 		["level"]: (number),
 	}) }),
-})
-export type SharkSlot = ({
-	["shark"]: (number),
-	["dead"]: (boolean),
-	["hp"]: (number),
-	["maxhp"]: (number),
-	["hunger"]: (number),
-	["maxhunger"]: (number),
-	["exp"]: (number),
-	["maxexp"]: (number),
-	["upgrade"]: (number),
-	["level"]: (number),
 })
 
 local function sendEvents()
@@ -253,8 +253,8 @@ reliable.OnServerEvent:Connect(function(player, buff, inst)
 			debug.profilebegin("SpawnSlot Deserialize")
 			local value
 			value = buffer.readu8(incoming_buff, read(1))
-			assert(value >= 0, "value is less than 0!")
-			assert(value <= 2, "value is more than 2!")
+			assert(value >= 1, "value is less than 1!")
+			assert(value <= 3, "value is more than 3!")
 			debug.profileend()
 			for _, cb in reliable_events[0] do
 				debug.profilebegin("SpawnSlot Callback")

@@ -69,7 +69,7 @@ event IngameDataEvent = {
 event SpawnSlot = {
     from: Client,
     type: Reliable,
-    data: u8(0..2), --slot number
+    data: u8(1..3), --slot number
 }
 
 event SpawnResult = {
