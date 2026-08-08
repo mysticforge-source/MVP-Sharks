@@ -12,11 +12,13 @@ import { SpawnController } from "./SpawnController";
 import InputTools from "shared/utils/inputTools";
 import { Entity } from "@rbxts/jecs";
 import { getModelSize, getSize } from "shared/utils/ageLevel";
+import { level } from "client/ui/sources";
 
 export type Shark = {
 	sharkModel: Model;
 	defaultsharkModel: Model;
 	sharkId: number;
+	level: number;
 	hitbox: Hitbox;
 };
 
@@ -50,14 +52,14 @@ export class ViewController implements OnStart {
 		}
 	}
 
-	public updateModelSize(player: Player, level: number) {
+	public updateModelSize(player: Player) {
 		const sharkEntity = PlayerToSharkEntity.get(player);
 		if (!sharkEntity) return;
 
 		const data = World.get(sharkEntity, SharkViewComponent);
 		if (!data) return;
 
-		const size = getModelSize(data?.sharkId, level, data.defaultsharkModel);
+		const size = getModelSize(data?.sharkId, data.level, data.defaultsharkModel);
 		data.sharkModel.ScaleTo(size);
 	}
 
@@ -76,10 +78,14 @@ export class ViewController implements OnStart {
 			defaultsharkModel: this.getDefaultModel(sharkName) as Model,
 			sharkModel: model,
 			sharkId: hitbox.SharkViewValue.Value,
+			level: hitbox.GetAttribute("Level") as number,
 			hitbox: hitbox,
 		});
 
 		PlayerToSharkEntity.set(Players.LocalPlayer, sharkEntity);
+
+		warn("updating size for level", hitbox.GetAttribute("Level"));
+		this.updateModelSize(Players.LocalPlayer);
 
 		this.maid.add(() => World.delete(sharkEntity));
 	}
