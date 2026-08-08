@@ -50,6 +50,10 @@ export class AuthorityController implements OnStart {
 		this.watchDescendants(authorityModel, predictionMode);
 
 		print("[AuthorityController] Prediction mode ON for ServerAuthority descendants");
+
+		// RunService.Rollback.Connect((t) => {
+		// 	warn("rollback");
+		// });
 	}
 
 	/* watches for new children added to the authority folder and enables prediction */
