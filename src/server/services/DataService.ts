@@ -180,7 +180,7 @@ export class DataService implements OnStart {
 		}
 
 		World.set(entity, PlayComponent, data.slots[slot - 1]); //minus 1 because of rbxts
-		if (data.slots[slot].dead) {
+		if (data.slots[slot - 1].dead) {
 			//cannot spawn a dead slot!
 			player.Kick("Attempt to spawn a dead slot");
 			return false;
