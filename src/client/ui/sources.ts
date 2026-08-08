@@ -45,4 +45,4 @@ export const combattimer = source<number>(15);
 export const currentslot = slots[0];
 
 // UI sources
-export const Menu = source<"Title" | "Slot" | "Shop" | "Sharks" | "Settings" | "GAME">("GAME");
+export const Menu = source<"Title" | "Slot" | "Shop" | "Sharks" | "Settings" | "GAME">("Slot");
