@@ -51,8 +51,7 @@ export function getSize(shark: number, level: number, hitbox: MeshPart): Vector3
 export function getModelSize(shark: number, level: number, defaultmodel: Model): number {
 	const agelevel = findAgeLevel(level);
 	return (
-		defaultmodel.GetScale() *
-		math.pow(sharksizemultipliers[shark], agelevel) *
-		math.pow(sharkviewmodelmult, agelevel) // increase viewmodels visually so they match the hitbox
+		defaultmodel.GetScale() * math.pow(sharksizemultipliers[shark], agelevel) //*
+		//math.pow(sharkviewmodelmult, agelevel) // increase viewmodels visually so they match the hitbox
 	);
 }

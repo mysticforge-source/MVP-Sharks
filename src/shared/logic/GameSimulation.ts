@@ -6,8 +6,11 @@
 import { Maid } from "@rbxts/better-maid";
 import { ReplicateInputs } from "./InputReplicator";
 import { getSpeed } from "../utils/ageLevel";
+import { output } from "shared/utils/output";
 
 const zerovec = new Vector3(0, 0.01, 0);
+
+let frame = 0;
 
 /* how long it takes to lerp speed from current to target */
 export const speedLerpDuration = 0.3;
@@ -81,6 +84,8 @@ export function UnregisterPlayer(player: Player): void {
 
 /* main simulation step called from bindtosimulation on both server and client */
 export function Simulate(dt: number): void {
+	frame += 1;
+
 	for (const [player, data] of PlayerSimMap) {
 		// replicate input from player's input context to attributes
 		ReplicateInputs(player, data.hitbox);
@@ -102,12 +107,8 @@ function SimulateHitbox(data: PlayerSimulationData, dt: number): void {
 			: new CFrame(hitbox.Position);
 
 	// orientation: align hitbox to the camera
-	const alignRotation = hitbox.FindFirstChildOfClass("AlignOrientation") as
-		| AlignOrientation
-		| undefined;
-	if (alignRotation) {
-		alignRotation.CFrame = cameraCF;
-	}
+	const alignRotation = hitbox.FindFirstChildOfClass("AlignOrientation")!;
+	alignRotation.CFrame = cameraCF;
 
 	// compute movement direction from input attributes
 	const moveDir = computeMoveDirection(hitbox, cameraCF);
@@ -116,19 +117,18 @@ function SimulateHitbox(data: PlayerSimulationData, dt: number): void {
 	data.targetSpeed = moveDir.Magnitude > zerovec.Magnitude ? data.movementSpeed : 0;
 
 	// linearly interpolate current speed toward target over ~1 second
-	const lerpFactor = math.min(dt / speedLerpDuration, 1);
-	data.currentSpeed = data.currentSpeed + (data.targetSpeed - data.currentSpeed) * lerpFactor;
+	//const lerpFactor = math.min(1 / 60 / speedLerpDuration, 1);
+	//data.currentSpeed = data.currentSpeed + (data.targetSpeed - data.currentSpeed) * lerpFactor;
+
+	data.currentSpeed = data.targetSpeed;
 
 	// apply interpolated speed along the movement direction
-	const velocity =
-		moveDir.Magnitude > zerovec.Magnitude ? moveDir.Unit.mul(data.currentSpeed) : zerovec;
+	const velocity = moveDir.Unit.mul(data.currentSpeed);
 
-	const positionVel = hitbox.FindFirstChildOfClass("LinearVelocity") as
-		| LinearVelocity
-		| undefined;
-	if (positionVel) {
-		positionVel.VectorVelocity = velocity;
-	}
+	//output(velocity.Magnitude, data.currentSpeed);
+
+	const positionVel = hitbox.FindFirstChildOfClass("LinearVelocity")!;
+	positionVel.VectorVelocity = velocity;
 }
 
 /* reads input attributes and computes a movement direction vector */
@@ -142,7 +142,9 @@ function computeMoveDirection(hitbox: Instance, cameraCF: CFrame): Vector3 {
 
 	const dir = cameraCF.RightVector.mul(right).add(cameraCF.LookVector.mul(forward));
 
-	return dir.Magnitude > 0 ? dir.Unit : zerovec;
+	//output(dir.Magnitude, "at frame", frame);
+
+	return dir.Unit;
 }
 
 /* cleans up simulation state for a hitbox */

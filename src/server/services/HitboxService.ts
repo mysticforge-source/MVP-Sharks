@@ -52,7 +52,11 @@ export class HitboxService implements OnStart {
 	}
 
 	public resizeHitbox(hitbox: MeshPart, shark: number, level: number): void {
-		const size = getSize(shark, level, hitbox);
+		const size = getSize(
+			shark,
+			level,
+			ServerStorage.Hitboxes.FindFirstChild(idtoshark[shark]) as MeshPart,
+		);
 		hitbox.Size = size;
 		(hitbox as MeshPart & { AntiGravity: VectorForce }).AntiGravity.Force = new Vector3(
 			0,
@@ -147,6 +151,8 @@ export class HitboxService implements OnStart {
 			alignRotation.Responsiveness = 15;
 			alignRotation.Mode = Enum.OrientationAlignmentMode.OneAttachment;
 			alignRotation.Parent = hitbox;
+			alignRotation.MaxTorque = math.huge;
+			alignRotation.MaxAngularVelocity = 20;
 
 			// linear velocity for movement
 			const positionVel = new Instance("LinearVelocity");
