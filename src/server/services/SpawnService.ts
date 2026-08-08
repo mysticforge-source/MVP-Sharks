@@ -1,4 +1,4 @@
-import { SpawnFunction } from "server/network/server";
+import { SpawnResult, SpawnSlot } from "server/network/server";
 import { serverMaid } from "server/servermaid";
 import { UserDataComponent } from "shared/ecs/components";
 import { World } from "shared/ecs/world";
@@ -22,9 +22,14 @@ export class SpawnService implements OnStart {
 	/* connects to the spawn event */
 	public onStart(): void {
 		this.maid.add(
-			SpawnFunction.setCallback((player: Player, slot: number) => {
+			SpawnSlot.on((player: Player, slot: number) => {
 				const data = this.dataservice.getPlayerData(player);
 				if (!data) return "Fail";
+
+				// fail if player already in-game
+				if (this.dataservice.getPlayerIngameData(player)) return "Fail";
+
+				warn("SPAWNSLOT GOT", slot);
 
 				const sharkid = data.slots[slot]?.shark;
 				if (sharkid === undefined) return "Fail";
@@ -44,7 +49,7 @@ export class SpawnService implements OnStart {
 					return "Fail";
 				}
 
-				return "Success";
+				SpawnResult.fire(player, "Success");
 			}),
 		);
 	}
