@@ -41,6 +41,7 @@
     "@rbxts/services": "^1.6.0",
     "@rbxts/sift": "^0.0.11",
     "@rbxts/trash": "^1.0.9",
-    "@rbxts/vide": "^0.6.1"
+    "@rbxts/vide": "^0.6.1",
+    "vela-rbxts": "^0.12.1"
   }
 }

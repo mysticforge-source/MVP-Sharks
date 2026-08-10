@@ -2,14 +2,15 @@
 
 import Vide from "@rbxts/vide";
 
-import Titlescreen from "./screens/titlescreen";
 import { Menu } from "./sources";
 import Hud from "./screens/hud";
 import Slotselect from "./screens/slotselect";
+import Title from "./screens/title";
 
 export = () => (
 	<>
-		<Titlescreen enabled={() => Menu() === "Title"} />
+		{/* <Titlescreen enabled={() => Menu() === "Title"} /> */}
+		<Title enabled={() => Menu() === "Title"} />
 		<Hud enabled={() => Menu() === "GAME"} />
 		<Slotselect enabled={() => Menu() === "Slot"} />
 	</>

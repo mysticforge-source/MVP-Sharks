@@ -49,4 +49,4 @@ export const incombat = source<boolean>(false);
 export const combattimer = source<number>(15);
 
 // UI sources
-export const Menu = source<"Title" | "Slot" | "Shop" | "Sharks" | "Settings" | "GAME">("Slot");
+export const Menu = source<"Title" | "Slot" | "Shop" | "Sharks" | "Settings" | "GAME">("Title");

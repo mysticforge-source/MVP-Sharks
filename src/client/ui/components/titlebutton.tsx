@@ -1,43 +1,32 @@
 /* title screen button component */
 
-import Vide from "@rbxts/vide"
-import { css } from "../theme"
+import Vide, { effect, source, spring } from "@rbxts/vide";
 
-declare interface Props {
-    text: string,
-    size?: UDim2,
-    position?: UDim2,
-    corner?: number,
-    aspectratio?: number,
-
-    activated: () => void,
+interface Props {
+	text: string;
+	onClick: () => void;
 }
 
-export = (
-    {
-        text,
-        size = css.tittlebutton.Size as UDim2,
-        position = css.tittlebutton.Position as UDim2,
-        corner = 0.13,
-        aspectratio = 4.5,
-        activated
-    }: Props
-) => {
-    const ratio = aspectratio ?? size.X.Scale/size.Y.Scale
+export = ({ text, onClick }: Props) => {
+	const hovered = source(false);
 
-    return (
-        <textbutton
-            {...css.tittlebutton}
-
-            Size={size}
-            Position={position}
-            Text={text}
-
-            Activated={activated}
-        >
-            <uiaspectratioconstraint AspectRatio={ratio} />
-            <uistroke {...css.tittlebuttonstroke} />
-            <uicorner CornerRadius={new UDim(corner, 0)} />
-        </textbutton>
-    );
-}
+	return (
+		<frame
+			className={() => [
+				"bg-slate-800 border flex items-center justify-around border-slate-500 w-60 h-12 rounded-xl",
+				hovered() ? "bg-blue-600 border-blue-400" : "",
+			]}
+			MouseEnter={() => hovered(true)}
+			MouseLeave={() => hovered(false)}
+		>
+			<textbutton
+				className={() => [
+					"w-30 h-full text-center text-white font-mono font-thin text-2xl",
+					hovered() ? "font-bold" : "",
+				]}
+				Text={text}
+				Activated={onClick}
+			/>
+		</frame>
+	);
+};
