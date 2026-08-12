@@ -66,9 +66,9 @@ export class ViewController implements OnStart {
 	/* connected to spawncontroller.hitboxadded, creates the shark entity */
 	public HitboxAttached(hitbox: Hitbox) {
 		const sharkData = sharkcatalog[hitbox.SharkViewValue.Value];
-		const sharkName = sharkData.name;
+		const viewmodelName = sharkData.viewmodelname;
 
-		const model = this.cloneModel(sharkName) as Model & {
+		const model = this.cloneModel(viewmodelName) as Model & {
 			Attachment: Attachment;
 		};
 
@@ -77,7 +77,7 @@ export class ViewController implements OnStart {
 		// creating the shark's state immediately attaches it to viewsystem
 		const sharkEntity = World.entity();
 		World.set(sharkEntity, SharkViewComponent, {
-			defaultsharkModel: this.getDefaultModel(sharkName) as Model,
+			defaultsharkModel: this.getDefaultModel(viewmodelName) as Model,
 			sharkModel: model,
 			sharkId: hitbox.SharkViewValue.Value,
 			level: hitbox.GetAttribute("Level") as number,
