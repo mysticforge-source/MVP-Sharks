@@ -107,21 +107,17 @@ export class HitboxService implements OnStart {
 	}
 
 	/** creates a player hitbox and registers in simulation. REQUIRES ingame state to be set-up */
-	public createPlayerHitbox(player: Player, sharkname: string): MeshPart | undefined {
+	public createPlayerHitbox(player: Player, sharkId: number): MeshPart | undefined {
 		const data = this.dataservice.getPlayerData(player);
 		if (!data) return undefined;
 
 		const slotdata = this.dataservice.getPlayerIngameData(player);
 		if (!slotdata) return undefined;
 
-		const sharkId = this.getSharkIdFromName(sharkname);
-		if (!sharkId) {
-			warn(`[HitboxService] Shark ${sharkname} not found`);
-			return;
-		}
+		const sharkData = sharkcatalog[sharkId];
 
 		try {
-			const hitbox = this.cloneHitbox(sharkname);
+			const hitbox = this.cloneHitbox(sharkData.hitboxname);
 			if (!hitbox) return undefined;
 
 			// delete old hitbox if exists
@@ -220,7 +216,7 @@ export class HitboxService implements OnStart {
 			// set replication focus
 			player.ReplicationFocus = hitbox;
 
-			print(`[HitboxService] Spawned hitbox for ${player.Name} (${sharkname})`);
+			print(`[HitboxService] Spawned hitbox for ${player.Name} (${sharkData.name})`);
 			return hitbox;
 		} catch (e) {
 			warn(`[HitboxService] Failed to create hitbox for ${player.Name}: ${e}`);

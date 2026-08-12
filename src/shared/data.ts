@@ -19,10 +19,13 @@ export const agelevelcaps = [
 
 export const ageleveltitles = ["Baby", "Juvenile", "Teen", "Adult", "Elder"];
 
-/* Data catalog of each shark */
+/* Data catalog of each shark (id: data) */
 export const sharkcatalog: Record<number, SharkData> = {
 	0: {
 		name: "Reef Shark Medium",
+		hitboxname: "Reef Shark Medium",
+		viewmodelname: "Reef Shark Medium",
+
 		icon: "rbxassetid://134716316716783",
 
 		cost: 100,
@@ -36,7 +39,10 @@ export const sharkcatalog: Record<number, SharkData> = {
 
 /* Explanations */
 interface SharkData {
-	name: string; /* Name should EXACTLY match the hitbox and viewmodel name */
+	name: string; /* General name of the shark */
+	hitboxname: string; /* Name of the hitbox model in ServerStorage */
+	viewmodelname: string; /* Name of the viewmodel in ReplicatedStorage */
+
 	icon: string;
 	cost: number; /* Cost of the shark in shark-coins */
 

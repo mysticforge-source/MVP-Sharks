@@ -31,14 +31,9 @@ export class SpawnService implements OnStart {
 				const sharkid = data.slots[slot - 1]?.shark;
 				if (sharkid === undefined) return "Fail";
 
-				const sharkData = sharkcatalog[sharkid];
-				if (!sharkData) return "Fail";
-
-				const sharkname = sharkData.name;
-
 				this.dataservice.RegisterSpawnPlayer(player, slot);
 
-				const hitbox = this.hitboxservice.createPlayerHitbox(player, sharkname);
+				const hitbox = this.hitboxservice.createPlayerHitbox(player, sharkid);
 				if (!hitbox) return "Fail";
 
 				// assign the player play data
