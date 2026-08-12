@@ -1,14 +1,11 @@
 import { SpawnResult, SpawnSlot } from "server/network/server";
 import { serverMaid } from "server/servermaid";
-import { UserDataComponent } from "shared/ecs/components";
-import { World } from "shared/ecs/world";
 
 import { OnStart, Service } from "@flamework/core";
 
+import { sharkcatalog } from "shared/data";
 import { DataService, PlayerToEntity } from "./DataService";
-import { idtoshark } from "shared/data";
 import { HitboxService } from "./HitboxService";
-import { PlayComponent, SystemHelperComponent, SystemHelperData } from "server/components";
 
 @Service()
 export class SpawnService implements OnStart {
@@ -34,8 +31,10 @@ export class SpawnService implements OnStart {
 				const sharkid = data.slots[slot - 1]?.shark;
 				if (sharkid === undefined) return "Fail";
 
-				const sharkname = idtoshark[sharkid];
-				if (!sharkname) return "Fail";
+				const sharkData = sharkcatalog[sharkid];
+				if (!sharkData) return "Fail";
+
+				const sharkname = sharkData.name;
 
 				this.dataservice.RegisterSpawnPlayer(player, slot);
 

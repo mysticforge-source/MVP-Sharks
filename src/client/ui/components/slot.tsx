@@ -3,7 +3,7 @@ import { ScaleUDim2 } from "shared/utils/scale";
 import { Corner } from "./corner";
 import { Aspect } from "./aspect";
 import { slots } from "../sources";
-import { idtoshark } from "shared/data";
+import { sharkcatalog } from "shared/data";
 import { SpawnSlot } from "client/network/client";
 
 const defaultButtonColoring = {
@@ -32,6 +32,8 @@ export default ({ slotnumber = 0 }: Props) => {
 	const size = source(ScaleUDim2(0.4, 0.8));
 	const [sizeSpring] = spring(size, 0.3, 0.7);
 
+	const sharkData = sharkcatalog[slots[slotnumber].shark()];
+
 	return (
 		<frame
 			Size={sizeSpring}
@@ -52,7 +54,7 @@ export default ({ slotnumber = 0 }: Props) => {
 
 			{/* Shark name label */}
 			<textlabel
-				Text={idtoshark[slots[slotnumber].shark()]}
+				Text={sharkData.name}
 				Font="GothamBlack"
 				TextColor3={() => buttonColoring().text}
 				TextScaled={true}

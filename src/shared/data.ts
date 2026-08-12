@@ -19,28 +19,34 @@ export const agelevelcaps = [
 
 export const ageleveltitles = ["Baby", "Juvenile", "Teen", "Adult", "Elder"];
 
-/* By how much the size is multiplied each age-up for each shark, starting with 0 */
-/* Normally the size of the hitbox is used, then it's multiplied */
-export const sharksizemultipliers = [1.25];
+/* Data catalog of each shark */
+export const sharkcatalog: Record<number, SharkData> = {
+	0: {
+		name: "Reef Shark Medium",
+		icon: "rbxassetid://134716316716783",
 
-/* Multiplying the size of the hitbox results bigger than the viewmodel, so we enlarge the viewmodel a bit */
-export const sharkviewmodelmult = 1.1;
+		cost: 100,
+		speed: 20,
+		damage: 25,
+		sizemult: 1.25,
+		speedmult: 1.5,
+		damagemult: 1.2,
+	},
+};
 
-/* By how much the speed is multiplied each age-up for each shark, starting with 0 */
-export const sharkspeedmultipliers = [1.5];
+/* Explanations */
+interface SharkData {
+	name: string; /* Name should EXACTLY match the hitbox and viewmodel name */
+	icon: string;
+	cost: number; /* Cost of the shark in shark-coins */
 
-/* Baby speeds for each shark */
-export const sharkspeeds = [20];
+	speed: number; /* Baby age speed */
+	damage: number; /* Baby age damage */
 
-/* Conversion from ID to shark's model name, starting with 0 */
-export const idtoshark = [
-	"Reef Shark Medium", // 0
-];
-
-/* Costs in coins for each shark, starting with 0 id */
-export const sharkcosts = [
-	100, //0
-];
+	sizemult: number; /* By how much size is multiplied each age-up */
+	speedmult: number; /* By how much speed is multiplied each age-up */
+	damagemult: number; /* By how much damage is multiplied each age-up */
+}
 
 export const animdata = {
 	UniversalIdle: "134716316716783",

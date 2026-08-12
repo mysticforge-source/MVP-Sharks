@@ -6,7 +6,7 @@
 import { OnStart, Service } from "@flamework/core";
 import { Players, ServerStorage, Workspace } from "@rbxts/services";
 import { DataService, PlayerToEntity } from "./DataService";
-import { idtoshark } from "shared/data";
+import { sharkcatalog } from "shared/data";
 import { World } from "shared/ecs/world";
 import { HitboxComponent } from "shared/ecs/components";
 import { RegisterPlayer, UnregisterPlayer, DestroyHitbox } from "shared/logic/GameSimulation";
@@ -52,10 +52,12 @@ export class HitboxService implements OnStart {
 	}
 
 	public resizeHitbox(hitbox: MeshPart, shark: number, level: number): void {
+		const sharkData = sharkcatalog[shark];
+
 		const size = getSize(
 			shark,
 			level,
-			ServerStorage.Hitboxes.FindFirstChild(idtoshark[shark]) as MeshPart,
+			ServerStorage.Hitboxes.FindFirstChild(sharkData.name) as MeshPart,
 		);
 		hitbox.Size = size;
 		(hitbox as MeshPart & { AntiGravity: VectorForce }).AntiGravity.Force = new Vector3(
@@ -63,6 +65,12 @@ export class HitboxService implements OnStart {
 			hitbox.AssemblyMass * Workspace.Gravity,
 			0,
 		);
+	}
+
+	public getSharkIdFromName(name: string) {
+		for (const [id, data] of pairs(sharkcatalog)) {
+			if (data.name === name) return id;
+		}
 	}
 
 	/*
@@ -106,7 +114,11 @@ export class HitboxService implements OnStart {
 		const slotdata = this.dataservice.getPlayerIngameData(player);
 		if (!slotdata) return undefined;
 
-		const sharkId = idtoshark.indexOf(sharkname);
+		const sharkId = this.getSharkIdFromName(sharkname);
+		if (!sharkId) {
+			warn(`[HitboxService] Shark ${sharkname} not found`);
+			return;
+		}
 
 		try {
 			const hitbox = this.cloneHitbox(sharkname);

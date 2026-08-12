@@ -1,14 +1,7 @@
 // finds age level from age
 // returns the index of the first cap higher than the given level
 
-import {
-	agelevelcaps,
-	ageleveltitles,
-	sharksizemultipliers,
-	sharkspeedmultipliers,
-	sharkspeeds,
-	sharkviewmodelmult,
-} from "../data";
+import { agelevelcaps, ageleveltitles, sharkcatalog } from "../data";
 
 // BATTLETESTED
 export function findAgeLevel(level: number): number {
@@ -34,24 +27,26 @@ export function getTitle(level: number): string {
 
 export function getSpeed(shark: number, level: number): number {
 	const agelevel = findAgeLevel(level);
-	return sharkspeeds[shark] * math.pow(sharkspeedmultipliers[shark], agelevel);
+	const sharkdata = sharkcatalog[level];
+
+	return sharkdata.speed * math.pow(sharkdata.speedmult, agelevel);
 }
 
 export function getSize(shark: number, level: number, hitbox: MeshPart): Vector3 {
 	const agelevel = findAgeLevel(level);
+	const sharkdata = sharkcatalog[level];
 
 	let { X, Y, Z } = hitbox.Size;
-	X *= math.pow(sharksizemultipliers[shark], agelevel);
-	Y *= math.pow(sharksizemultipliers[shark], agelevel);
-	Z *= math.pow(sharksizemultipliers[shark], agelevel);
+	X *= math.pow(sharkdata.sizemult, agelevel);
+	Y *= math.pow(sharkdata.sizemult, agelevel);
+	Z *= math.pow(sharkdata.sizemult, agelevel);
 
 	return new Vector3(X, Y, Z);
 }
 
 export function getModelSize(shark: number, level: number, defaultmodel: Model): number {
 	const agelevel = findAgeLevel(level);
-	return (
-		defaultmodel.GetScale() * math.pow(sharksizemultipliers[shark], agelevel) //*
-		//math.pow(sharkviewmodelmult, agelevel) // increase viewmodels visually so they match the hitbox
-	);
+	const sharkdata = sharkcatalog[level];
+
+	return defaultmodel.GetScale() * math.pow(sharkdata.sizemult, agelevel);
 }

@@ -1,7 +1,7 @@
 import { clientMaid } from "client/clientmaid";
 import { SharkViewComponent } from "client/state/components";
 import { HitboxesVisible } from "client/state/viewstate";
-import { idtoshark } from "shared/data";
+import { sharkcatalog } from "shared/data";
 import { World } from "shared/ecs/world";
 
 import { Controller, OnStart } from "@flamework/core";
@@ -65,7 +65,9 @@ export class ViewController implements OnStart {
 
 	/* connected to spawncontroller.hitboxadded, creates the shark entity */
 	public HitboxAttached(hitbox: Hitbox) {
-		const sharkName = idtoshark[hitbox.SharkViewValue.Value];
+		const sharkData = sharkcatalog[hitbox.SharkViewValue.Value];
+		const sharkName = sharkData.name;
+
 		const model = this.cloneModel(sharkName) as Model & {
 			Attachment: Attachment;
 		};
@@ -84,7 +86,6 @@ export class ViewController implements OnStart {
 
 		PlayerToSharkEntity.set(Players.LocalPlayer, sharkEntity);
 
-		warn("updating size for level", hitbox.GetAttribute("Level"));
 		this.updateModelSize(Players.LocalPlayer);
 
 		this.maid.add(() => World.delete(sharkEntity));
