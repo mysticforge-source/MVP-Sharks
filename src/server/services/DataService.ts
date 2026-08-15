@@ -38,6 +38,9 @@ export const defaultUserData: UserData = {
 	coins: 0,
 	sharkcoins: 0,
 	revivetokens: 0,
+
+	ownedsharks: [],
+
 	slots: [defaultSharkSlotData, defaultSharkSlotData, defaultSharkSlotData],
 };
 
@@ -62,6 +65,7 @@ export const validateUserData = t.interface({
 	coins: t.numberConstrained(0, 100_000),
 	sharkcoins: t.numberConstrained(0, 65_535),
 	revivetokens: t.numberConstrained(0, 255),
+	ownedsharks: t.array(t.numberConstrained(0, 255)),
 	slots: t.strictArray(validateSharkSlot, validateSharkSlot, validateSharkSlot),
 });
 

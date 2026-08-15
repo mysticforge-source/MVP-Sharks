@@ -188,22 +188,11 @@ end
 Players.PlayerRemoving:Connect(function(player)
 	player_map[player] = nil
 end)
-export type SharkSlot = ({
-	["shark"]: (number),
-	["dead"]: (boolean),
-	["hp"]: (number),
-	["maxhp"]: (number),
-	["hunger"]: (number),
-	["maxhunger"]: (number),
-	["exp"]: (number),
-	["maxexp"]: (number),
-	["upgrade"]: (number),
-	["level"]: (number),
-})
 export type UserData = ({
 	["coins"]: (number),
 	["sharkcoins"]: (number),
 	["revivetokens"]: (number),
+	["ownedsharks"]: ({ (number) }),
 	["slots"]: ({ ({
 		["shark"]: (number),
 		["dead"]: (boolean),
@@ -216,6 +205,18 @@ export type UserData = ({
 		["upgrade"]: (number),
 		["level"]: (number),
 	}) }),
+})
+export type SharkSlot = ({
+	["shark"]: (number),
+	["dead"]: (boolean),
+	["hp"]: (number),
+	["maxhp"]: (number),
+	["hunger"]: (number),
+	["maxhunger"]: (number),
+	["exp"]: (number),
+	["maxexp"]: (number),
+	["upgrade"]: (number),
+	["level"]: (number),
 })
 
 local function sendEvents()
@@ -407,6 +408,7 @@ local returns = {
 			["coins"]: (number),
 			["sharkcoins"]: (number),
 			["revivetokens"]: (number),
+			["ownedsharks"]: ({ (number) }),
 			["slots"]: ({ ({
 				["shark"]: (number),
 				["dead"]: (boolean),
@@ -433,6 +435,14 @@ local returns = {
 			buffer.writeu16(outgoing_buff, outgoing_apos, value["sharkcoins"])
 			alloc(1)
 			buffer.writeu8(outgoing_buff, outgoing_apos, value["revivetokens"])
+			local len_1 = #value["ownedsharks"]
+			alloc(2)
+			buffer.writeu16(outgoing_buff, outgoing_apos, len_1)
+			for i_1 = 1, len_1 do
+				local val_1 = value["ownedsharks"][i_1]
+				alloc(1)
+				buffer.writeu8(outgoing_buff, outgoing_apos, val_1)
+			end
 			assert(#value["slots"] == 3, "length is not equal to 3!")
 			alloc(1)
 			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][1]["shark"])
@@ -547,6 +557,7 @@ local returns = {
 			["coins"]: (number),
 			["sharkcoins"]: (number),
 			["revivetokens"]: (number),
+			["ownedsharks"]: ({ (number) }),
 			["slots"]: ({ ({
 				["shark"]: (number),
 				["dead"]: (boolean),
@@ -573,6 +584,14 @@ local returns = {
 			buffer.writeu16(outgoing_buff, outgoing_apos, value["sharkcoins"])
 			alloc(1)
 			buffer.writeu8(outgoing_buff, outgoing_apos, value["revivetokens"])
+			local len_2 = #value["ownedsharks"]
+			alloc(2)
+			buffer.writeu16(outgoing_buff, outgoing_apos, len_2)
+			for i_2 = 1, len_2 do
+				local val_2 = value["ownedsharks"][i_2]
+				alloc(1)
+				buffer.writeu8(outgoing_buff, outgoing_apos, val_2)
+			end
 			assert(#value["slots"] == 3, "length is not equal to 3!")
 			alloc(1)
 			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][1]["shark"])
@@ -694,6 +713,7 @@ local returns = {
 			["coins"]: (number),
 			["sharkcoins"]: (number),
 			["revivetokens"]: (number),
+			["ownedsharks"]: ({ (number) }),
 			["slots"]: ({ ({
 				["shark"]: (number),
 				["dead"]: (boolean),
@@ -720,6 +740,14 @@ local returns = {
 			buffer.writeu16(outgoing_buff, outgoing_apos, value["sharkcoins"])
 			alloc(1)
 			buffer.writeu8(outgoing_buff, outgoing_apos, value["revivetokens"])
+			local len_3 = #value["ownedsharks"]
+			alloc(2)
+			buffer.writeu16(outgoing_buff, outgoing_apos, len_3)
+			for i_3 = 1, len_3 do
+				local val_3 = value["ownedsharks"][i_3]
+				alloc(1)
+				buffer.writeu8(outgoing_buff, outgoing_apos, val_3)
+			end
 			assert(#value["slots"] == 3, "length is not equal to 3!")
 			alloc(1)
 			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][1]["shark"])
@@ -843,6 +871,7 @@ local returns = {
 			["coins"]: (number),
 			["sharkcoins"]: (number),
 			["revivetokens"]: (number),
+			["ownedsharks"]: ({ (number) }),
 			["slots"]: ({ ({
 				["shark"]: (number),
 				["dead"]: (boolean),
@@ -869,6 +898,14 @@ local returns = {
 			buffer.writeu16(outgoing_buff, outgoing_apos, value["sharkcoins"])
 			alloc(1)
 			buffer.writeu8(outgoing_buff, outgoing_apos, value["revivetokens"])
+			local len_4 = #value["ownedsharks"]
+			alloc(2)
+			buffer.writeu16(outgoing_buff, outgoing_apos, len_4)
+			for i_4 = 1, len_4 do
+				local val_4 = value["ownedsharks"][i_4]
+				alloc(1)
+				buffer.writeu8(outgoing_buff, outgoing_apos, val_4)
+			end
 			assert(#value["slots"] == 3, "length is not equal to 3!")
 			alloc(1)
 			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][1]["shark"])
@@ -990,6 +1027,7 @@ local returns = {
 			["coins"]: (number),
 			["sharkcoins"]: (number),
 			["revivetokens"]: (number),
+			["ownedsharks"]: ({ (number) }),
 			["slots"]: ({ ({
 				["shark"]: (number),
 				["dead"]: (boolean),
@@ -1016,6 +1054,14 @@ local returns = {
 			buffer.writeu16(outgoing_buff, outgoing_apos, value["sharkcoins"])
 			alloc(1)
 			buffer.writeu8(outgoing_buff, outgoing_apos, value["revivetokens"])
+			local len_5 = #value["ownedsharks"]
+			alloc(2)
+			buffer.writeu16(outgoing_buff, outgoing_apos, len_5)
+			for i_5 = 1, len_5 do
+				local val_5 = value["ownedsharks"][i_5]
+				alloc(1)
+				buffer.writeu8(outgoing_buff, outgoing_apos, val_5)
+			end
 			assert(#value["slots"] == 3, "length is not equal to 3!")
 			alloc(1)
 			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][1]["shark"])

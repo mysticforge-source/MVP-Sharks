@@ -151,22 +151,11 @@ local remotes = ReplicatedStorage:WaitForChild("ZAP")
 local reliable = remotes:WaitForChild("ZAP_RELIABLE")
 assert(reliable:IsA("RemoteEvent"), "Expected ZAP_RELIABLE to be a RemoteEvent")
 
-export type SharkSlot = ({
-	["shark"]: (number),
-	["dead"]: (boolean),
-	["hp"]: (number),
-	["maxhp"]: (number),
-	["hunger"]: (number),
-	["maxhunger"]: (number),
-	["exp"]: (number),
-	["maxexp"]: (number),
-	["upgrade"]: (number),
-	["level"]: (number),
-})
 export type UserData = ({
 	["coins"]: (number),
 	["sharkcoins"]: (number),
 	["revivetokens"]: (number),
+	["ownedsharks"]: ({ (number) }),
 	["slots"]: ({ ({
 		["shark"]: (number),
 		["dead"]: (boolean),
@@ -179,6 +168,18 @@ export type UserData = ({
 		["upgrade"]: (number),
 		["level"]: (number),
 	}) }),
+})
+export type SharkSlot = ({
+	["shark"]: (number),
+	["dead"]: (boolean),
+	["hp"]: (number),
+	["maxhp"]: (number),
+	["hunger"]: (number),
+	["maxhunger"]: (number),
+	["exp"]: (number),
+	["maxexp"]: (number),
+	["upgrade"]: (number),
+	["level"]: (number),
 })
 
 local function sendEvents()
@@ -247,6 +248,13 @@ reliable.OnClientEvent:Connect(function(buff, inst)
 			assert(value["coins"] <= 100000, "value is more than 100000!")
 			value["sharkcoins"] = buffer.readu16(incoming_buff, read(2))
 			value["revivetokens"] = buffer.readu8(incoming_buff, read(1))
+			local len_1 = buffer.readu16(incoming_buff, read(2))
+			value["ownedsharks"] = table.create(len_1)
+			for i_1 = 1, len_1 do
+				local val_1
+				val_1 = buffer.readu8(incoming_buff, read(1))
+				value["ownedsharks"][i_1] = val_1
+			end
 			value["slots"] = table.create(3)
 			value["slots"][1] = {  }
 			value["slots"][1]["shark"] = buffer.readu8(incoming_buff, read(1))
@@ -420,6 +428,7 @@ local returns = {
 			["coins"]: (number),
 			["sharkcoins"]: (number),
 			["revivetokens"]: (number),
+			["ownedsharks"]: ({ (number) }),
 			["slots"]: ({ ({
 				["shark"]: (number),
 				["dead"]: (boolean),

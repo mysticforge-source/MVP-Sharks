@@ -44,6 +44,8 @@ type UserData = struct {
     sharkcoins: u16, --65,535
     revivetokens: u8,
 
+    ownedsharks: u8[],
+
     -- zap uses luau-based indexing so 0..3 is 3 elements
     slots: SharkSlot[3],
 }
