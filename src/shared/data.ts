@@ -34,6 +34,8 @@ export const sharkcatalog: Record<number, SharkData> = {
 		sizemult: 1.25,
 		speedmult: 1.5,
 		damagemult: 1.2,
+
+		showinshop: true,
 	},
 };
 
@@ -52,6 +54,8 @@ interface SharkData {
 	sizemult: number; /* By how much size is multiplied each age-up */
 	speedmult: number; /* By how much speed is multiplied each age-up */
 	damagemult: number; /* By how much damage is multiplied each age-up */
+
+	showinshop?: true; /* Include 'showinshop: true' to make it purchasable and viewable */
 }
 
 export const animdata = {
