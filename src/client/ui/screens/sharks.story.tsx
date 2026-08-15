@@ -1,5 +1,5 @@
 import { CreateVideStory, InferVideProps } from "@rbxts/ui-labs";
-import Sharks from "./sharks";
+import Sharks from "./sharkselect";
 import { source } from "@rbxts/vide";
 
 const controls = {

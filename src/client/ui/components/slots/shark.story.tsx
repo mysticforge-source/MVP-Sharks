@@ -9,7 +9,7 @@ export = CreateVideStory(
 	},
 	() => (
 		<frame className="w-full h-full flex items-center justify-center">
-			<Shark name="Minawii" />
+			<Shark id={0} on_click={() => {}} />
 		</frame>
 	),
 );

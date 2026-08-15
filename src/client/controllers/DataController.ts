@@ -19,12 +19,12 @@ import {
 	upgrade,
 	level,
 	shark,
+	ownedsharks,
 } from "client/ui/sources";
 import { UserDataComponent } from "shared/ecs/components";
 import { World } from "shared/ecs/world";
 
 import { Controller, OnStart } from "@flamework/core";
-import { LevelChangeIntent } from "client/state/components";
 import { states } from "client/state/viewstate";
 
 export const PlayerEntity = World.entity();
@@ -42,6 +42,8 @@ export class DataController implements OnStart {
 				coins(data.coins);
 				sharkcoins(data.sharkcoins);
 				revivetokens(data.revivetokens);
+
+				ownedsharks(data.ownedsharks);
 
 				// update slot sources
 				for (const [i, slot] of ipairs(data.slots)) {
