@@ -1,23 +1,31 @@
 /* shared data file */
 
-import { ReplicatedStorage } from "@rbxts/services";
-import { SharkSlot } from "./networktypes";
-
 export const version = "0.0.1";
 
+export const defaultmaxlevelcap = 80;
 export const agelevelcaps = [
-	5, // max level for baby
-	15,
-	30,
-	50,
-	80,
-	// non titled upgrades:
-	90,
-	100,
-	120,
+	// all sharks age-up at these levels:
+	5, 15, 30, 50, 80,
+
+	90, 100, 120,
 ];
 
 export const ageleveltitles = ["Baby", "Juvenile", "Teen", "Adult", "Elder"];
+
+export const upgradedata: Upgrade[] = [
+	{
+		cost: 100,
+		maxlevelcap: 90,
+	},
+	{
+		cost: 200,
+		maxlevelcap: 100,
+	},
+	{
+		cost: 300,
+		maxlevelcap: 120,
+	},
+];
 
 /* Data catalog of each shark (id: data) */
 export const sharkcatalog: Record<number, SharkData> = {
@@ -31,6 +39,7 @@ export const sharkcatalog: Record<number, SharkData> = {
 		cost: 100,
 		speed: 20,
 		damage: 25,
+
 		sizemult: 1.25,
 		speedmult: 1.5,
 		damagemult: 1.2,
@@ -56,6 +65,11 @@ interface SharkData {
 	damagemult: number; /* By how much damage is multiplied each age-up */
 
 	showinshop?: true; /* Include 'showinshop: true' to make it purchasable and viewable */
+}
+
+interface Upgrade {
+	cost: number;
+	maxlevelcap: number;
 }
 
 export const animdata = {
