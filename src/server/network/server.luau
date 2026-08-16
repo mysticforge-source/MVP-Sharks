@@ -188,19 +188,6 @@ end
 Players.PlayerRemoving:Connect(function(player)
 	player_map[player] = nil
 end)
-export type SharkSlot = ({
-	["shark"]: (number),
-	["alive"]: (boolean),
-	["created"]: (boolean),
-	["hp"]: (number),
-	["maxhp"]: (number),
-	["hunger"]: (number),
-	["maxhunger"]: (number),
-	["exp"]: (number),
-	["maxexp"]: (number),
-	["upgrade"]: (number),
-	["level"]: (number),
-})
 export type UserData = ({
 	["coins"]: (number),
 	["sharkcoins"]: (number),
@@ -219,6 +206,19 @@ export type UserData = ({
 		["upgrade"]: (number),
 		["level"]: (number),
 	}) }),
+})
+export type SharkSlot = ({
+	["shark"]: (number),
+	["alive"]: (boolean),
+	["created"]: (boolean),
+	["hp"]: (number),
+	["maxhp"]: (number),
+	["hunger"]: (number),
+	["maxhunger"]: (number),
+	["exp"]: (number),
+	["maxexp"]: (number),
+	["upgrade"]: (number),
+	["level"]: (number),
 })
 
 local function sendEvents()
@@ -255,9 +255,9 @@ reliable.OnServerEvent:Connect(function(player, buff, inst)
 		if id == 0 then -- SpawnSlot
 			debug.profilebegin("SpawnSlot Deserialize")
 			local value
-			value = buffer.readu8(incoming_buff, read(1))
-			assert(value >= 1, "value is less than 1!")
-			assert(value <= 3, "value is more than 3!")
+			value = {  }
+			value["slot"] = buffer.readu8(incoming_buff, read(1))
+			value["shark"] = buffer.readu8(incoming_buff, read(1))
 			debug.profileend()
 			for _, cb in reliable_events[0] do
 				debug.profilebegin("SpawnSlot Callback")
@@ -276,7 +276,10 @@ table.freeze(polling_queues_unreliable)
 local returns = {
 	sendEvents = sendEvents,
 	SpawnSlot = {
-		on = function(callback: (player: Player, value: (number)) -> ()): () -> ()
+		on = function(callback: (player: Player, value: ({
+			["slot"]: (number),
+			["shark"]: (number),
+		})) -> ()): () -> ()
 			table.insert(reliable_events[0], callback)
 			return function()
 				table.remove(reliable_events[0], table.find(reliable_events[0], callback))

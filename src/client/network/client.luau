@@ -151,19 +151,6 @@ local remotes = ReplicatedStorage:WaitForChild("ZAP")
 local reliable = remotes:WaitForChild("ZAP_RELIABLE")
 assert(reliable:IsA("RemoteEvent"), "Expected ZAP_RELIABLE to be a RemoteEvent")
 
-export type SharkSlot = ({
-	["shark"]: (number),
-	["alive"]: (boolean),
-	["created"]: (boolean),
-	["hp"]: (number),
-	["maxhp"]: (number),
-	["hunger"]: (number),
-	["maxhunger"]: (number),
-	["exp"]: (number),
-	["maxexp"]: (number),
-	["upgrade"]: (number),
-	["level"]: (number),
-})
 export type UserData = ({
 	["coins"]: (number),
 	["sharkcoins"]: (number),
@@ -182,6 +169,19 @@ export type UserData = ({
 		["upgrade"]: (number),
 		["level"]: (number),
 	}) }),
+})
+export type SharkSlot = ({
+	["shark"]: (number),
+	["alive"]: (boolean),
+	["created"]: (boolean),
+	["hp"]: (number),
+	["maxhp"]: (number),
+	["hunger"]: (number),
+	["maxhunger"]: (number),
+	["exp"]: (number),
+	["maxexp"]: (number),
+	["upgrade"]: (number),
+	["level"]: (number),
 })
 
 local function sendEvents()
@@ -404,14 +404,17 @@ table.freeze(polling_queues_unreliable)
 local returns = {
 	sendEvents = sendEvents,
 	SpawnSlot = {
-		fire = function(value: (number))
+		fire = function(value: ({
+			["slot"]: (number),
+			["shark"]: (number),
+		}))
 			debug.profilebegin("SpawnSlot Fire")
 			alloc(1)
 			buffer.writeu8(outgoing_buff, outgoing_apos, 0)
-			assert(value >= 1, "value is less than 1!")
-			assert(value <= 3, "value is more than 3!")
 			alloc(1)
-			buffer.writeu8(outgoing_buff, outgoing_apos, value)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["slot"])
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value["shark"])
 			debug.profileend()
 		end,
 	},

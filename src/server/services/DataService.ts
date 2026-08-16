@@ -167,7 +167,51 @@ export class DataService implements OnStart {
 		}
 	}
 
-	// TODO: RegisterPlayer, spawn and connect to playerdata changes, give components
+	/** Creates the slot if its noncreated and shark is owned */
+	public CreateSlot(player: Player, slot: number, sharkid: number): boolean {
+		const data = this.getPlayerData(player);
+		if (!data) return false;
+
+		// slot isn't created
+		const slotdata = data.slots[slot - 1];
+		if (slotdata.created) {
+			player.Kick("Attempt to create a slot that is already created");
+			return false;
+		}
+
+		// shark is owned
+		if (!data.ownedsharks.includes(sharkid)) {
+			player.Kick("You don't own this shark");
+			return false;
+		}
+
+		// verified; create a new slot
+		const newSlotData = merge(defaultSharkSlotData, {
+			created: true,
+			alive: true,
+			sharkid: sharkid,
+		});
+		this.changeSlotData(player, slot - 1, newSlotData);
+
+		return true;
+	}
+
+	/** Deletes the slot (uncreates it) if it's created */
+	public DeleteSlot(player: Player, slot: number): boolean {
+		const data = this.getPlayerData(player);
+		if (!data) return false;
+
+		// slot is created
+		const slotdata = data.slots[slot - 1];
+		if (!slotdata.created) {
+			warn(player.Name, slot, "Attempt to delete a slot that is not created");
+			return false;
+		}
+
+		// default sharkslot data is a non-created slot
+		this.changeSlotData(player, slot - 1, defaultSharkSlotData);
+		return true;
+	}
 
 	// Spawns player data and binds to datastore, returns true/false
 	public RegisterSpawnPlayer(player: Player, slot: number): boolean {

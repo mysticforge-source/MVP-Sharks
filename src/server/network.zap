@@ -68,12 +68,12 @@ event IngameDataEvent = {
     data: SharkSlot
 }
 
--- SpawnController & SpawnService
--- Spawns the player (player always has the hitbox)
+-- Create a new slot and enter the game
 event SpawnSlot = {
     from: Client,
     type: Reliable,
-    data: u8(1..3), --slot number
+    data: struct {slot: u8, shark: u8}, 
+    -- slot must not be created & shark must be owned
 }
 
 event SpawnResult = {
