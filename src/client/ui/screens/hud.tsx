@@ -17,10 +17,12 @@ import {
 	maxhunger,
 	revivetokens,
 	sharkcoins,
+	upgrade,
 	//title,
 } from "../sources";
 import { getTitle } from "shared/utils/ageLevel";
 import Topbar from "../components/topbar";
+import { BuyUpgrade } from "client/network/client";
 
 declare interface Props {
 	enabled?: Vide.Derivable<boolean>;
@@ -264,6 +266,17 @@ export = ({ enabled = true }: Props) => {
 
 			{/* Top Bar */}
 			<Topbar />
+
+			{/* Upgrade button */}
+			<textbutton
+				className="w-55 h-15 bg-violet-900 ring-2 ring-violet-500 right-[25%] top-[50%] rounded-lg p-1 origin-center"
+				Activated={() => BuyUpgrade.fire()}
+			>
+				<textlabel
+					className="size-full text-4xl text-white font-black"
+					Text={() => `Upgrade ${upgrade()}`}
+				/>
+			</textbutton>
 
 			{/* Combat timer */}
 			<textlabel

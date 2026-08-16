@@ -32,7 +32,7 @@ type SharkSlot = struct {
     exp: u8(0..100),
     maxexp: u8(0..100),
 
-    upgrade: u8(0..2),
+    upgrade: u8(0..3), --0 is default; 3 is max
     level: u8,
     -- title size damage speed are from shared
 }
@@ -78,6 +78,10 @@ event SpawnSlot = {
 
 event SpawnResult = {
     from: Server,
-    type: Reliable,
-    data: (enum { Success, Fail }) --success marks creation of hitbox
+    type: Reliable
+}
+
+event BuyUpgrade = {
+    from: Client,
+    type: Reliable
 }

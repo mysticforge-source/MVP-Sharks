@@ -64,7 +64,7 @@ export declare const SpawnSlot: {
 	}) => void;
 };
 export declare const SpawnResult: {
-	on: (callback: (value: "Success" | "Fail") => void) => () => void;
+	on: (callback: () => void) => () => void;
 };
 export declare const PlayerDataEvent: {
 	on: (callback: (value: {
@@ -125,4 +125,7 @@ export declare const IngameDataEvent: {
 		["upgrade"]: number,
 		["level"]: number,
 	}) => void) => () => void;
+};
+export declare const BuyUpgrade: {
+	fire: () => void;
 };

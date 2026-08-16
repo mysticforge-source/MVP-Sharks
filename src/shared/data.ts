@@ -14,6 +14,10 @@ export const ageleveltitles = ["Baby", "Juvenile", "Teen", "Adult", "Elder"];
 
 export const upgradedata: Upgrade[] = [
 	{
+		// default upgrade
+		maxlevelcap: 80,
+	},
+	{
 		cost: 100,
 		maxlevelcap: 90,
 	},
@@ -68,7 +72,7 @@ interface SharkData {
 }
 
 interface Upgrade {
-	cost: number;
+	cost?: number;
 	maxlevelcap: number;
 }
 

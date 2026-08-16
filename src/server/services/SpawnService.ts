@@ -42,7 +42,7 @@ export class SpawnService implements OnStart {
 					return "Fail";
 				}
 
-				SpawnResult.fire(player, "Success");
+				SpawnResult.fire(player);
 			}),
 		);
 	}

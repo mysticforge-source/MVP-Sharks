@@ -64,11 +64,11 @@ export declare const SpawnSlot: {
 	}) => void) => () => void;
 };
 export declare const SpawnResult: {
-	fire: (player: Player, value: "Success" | "Fail") => void;
-	fireAll: (value: "Success" | "Fail") => void;
-	fireExcept: (except: Player, value: "Success" | "Fail") => void;
-	fireList: (list: Player[] | Record<string | number | symbol, Player> | Map<unknown, Player>, value: "Success" | "Fail") => void;
-	fireSet: (set: Set<Player> | Map<Player, unknown>, value: "Success" | "Fail") => void
+	fire: (player: Player) => void;
+	fireAll: () => void;
+	fireExcept: (except: Player) => void;
+	fireList: (list: Player[] | Record<string | number | symbol, Player> | Map<unknown, Player>) => void;
+	fireSet: (set: Set<Player> | Map<Player, unknown>) => void
 };
 export declare const PlayerDataEvent: {
 	fire: (player: Player, value: {
@@ -353,4 +353,7 @@ export declare const IngameDataEvent: {
 		["upgrade"]: number,
 		["level"]: number,
 	}) => void
+};
+export declare const BuyUpgrade: {
+	on: (callback: (player: Player) => void) => () => void;
 };

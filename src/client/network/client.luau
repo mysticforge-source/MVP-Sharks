@@ -144,6 +144,9 @@ if not RunService:IsRunning() then
 		IngameDataEvent = table.freeze({
 			on = noop
 		}),
+		BuyUpgrade = table.freeze({
+			fire = noop
+		}),
 	}) :: Events
 end
 local remotes = ReplicatedStorage:WaitForChild("ZAP")
@@ -205,7 +208,7 @@ RunService.Heartbeat:Connect(sendEvents)
 local reliable_events = table.create(3)
 local reliable_event_queue: { [number]: { any } } = table.create(3)
 reliable_events[2] = {}
-reliable_event_queue[2] = {}
+reliable_event_queue[2] = 0
 reliable_events[0] = {}
 reliable_event_queue[0] = {}
 reliable_events[1] = {}
@@ -222,12 +225,6 @@ reliable.OnClientEvent:Connect(function(buff, inst)
 		if id == 2 then -- SpawnResult
 			debug.profilebegin("SpawnResult Deserialize")
 			local value
-			local bool_1 = buffer.readu8(incoming_buff, read(1))
-			if bit32.btest(bool_1, 0b0000000000000001) then
-				value = "Success"
-			else
-				value = "Fail"
-			end
 			debug.profileend()
 			if reliable_events[2][1] then
 				for _, cb in reliable_events[2] do
@@ -236,15 +233,15 @@ reliable.OnClientEvent:Connect(function(buff, inst)
 					debug.profileend()
 				end
 			else
-				table.insert(reliable_event_queue[2], value)
-				if #reliable_event_queue[2] > 64 then
-					warn(`[ZAP] {#reliable_event_queue[2]} events in queue for SpawnResult. Did you forget to attach a listener?`)
+				reliable_event_queue[2] += 1
+				if reliable_event_queue[2] > 16 then
+					warn(`[ZAP] {reliable_event_queue[2]} events in queue for SpawnResult. Did you forget to attach a listener?`)
 				end
 			end
 		elseif id == 0 then -- PlayerDataEvent
 			debug.profilebegin("PlayerDataEvent Deserialize")
 			local value
-			local bool_2 = buffer.readu8(incoming_buff, read(1))
+			local bool_1 = buffer.readu8(incoming_buff, read(1))
 			value = {  }
 			value["coins"] = buffer.readu32(incoming_buff, read(4))
 			assert(value["coins"] <= 100000, "value is more than 100000!")
@@ -260,8 +257,8 @@ reliable.OnClientEvent:Connect(function(buff, inst)
 			value["slots"] = table.create(3)
 			value["slots"][1] = {  }
 			value["slots"][1]["shark"] = buffer.readu8(incoming_buff, read(1))
-			value["slots"][1]["alive"] = bit32.btest(bool_2, 0b0000000000000001)
-			value["slots"][1]["created"] = bit32.btest(bool_2, 0b0000000000000010)
+			value["slots"][1]["alive"] = bit32.btest(bool_1, 0b0000000000000001)
+			value["slots"][1]["created"] = bit32.btest(bool_1, 0b0000000000000010)
 			value["slots"][1]["hp"] = buffer.readu8(incoming_buff, read(1))
 			assert(value["slots"][1]["hp"] >= 0, "value is less than 0!")
 			assert(value["slots"][1]["hp"] <= 100, "value is more than 100!")
@@ -282,12 +279,12 @@ reliable.OnClientEvent:Connect(function(buff, inst)
 			assert(value["slots"][1]["maxexp"] <= 100, "value is more than 100!")
 			value["slots"][1]["upgrade"] = buffer.readu8(incoming_buff, read(1))
 			assert(value["slots"][1]["upgrade"] >= 0, "value is less than 0!")
-			assert(value["slots"][1]["upgrade"] <= 2, "value is more than 2!")
+			assert(value["slots"][1]["upgrade"] <= 3, "value is more than 3!")
 			value["slots"][1]["level"] = buffer.readu8(incoming_buff, read(1))
 			value["slots"][2] = {  }
 			value["slots"][2]["shark"] = buffer.readu8(incoming_buff, read(1))
-			value["slots"][2]["alive"] = bit32.btest(bool_2, 0b0000000000000100)
-			value["slots"][2]["created"] = bit32.btest(bool_2, 0b0000000000001000)
+			value["slots"][2]["alive"] = bit32.btest(bool_1, 0b0000000000000100)
+			value["slots"][2]["created"] = bit32.btest(bool_1, 0b0000000000001000)
 			value["slots"][2]["hp"] = buffer.readu8(incoming_buff, read(1))
 			assert(value["slots"][2]["hp"] >= 0, "value is less than 0!")
 			assert(value["slots"][2]["hp"] <= 100, "value is more than 100!")
@@ -308,12 +305,12 @@ reliable.OnClientEvent:Connect(function(buff, inst)
 			assert(value["slots"][2]["maxexp"] <= 100, "value is more than 100!")
 			value["slots"][2]["upgrade"] = buffer.readu8(incoming_buff, read(1))
 			assert(value["slots"][2]["upgrade"] >= 0, "value is less than 0!")
-			assert(value["slots"][2]["upgrade"] <= 2, "value is more than 2!")
+			assert(value["slots"][2]["upgrade"] <= 3, "value is more than 3!")
 			value["slots"][2]["level"] = buffer.readu8(incoming_buff, read(1))
 			value["slots"][3] = {  }
 			value["slots"][3]["shark"] = buffer.readu8(incoming_buff, read(1))
-			value["slots"][3]["alive"] = bit32.btest(bool_2, 0b0000000000010000)
-			value["slots"][3]["created"] = bit32.btest(bool_2, 0b0000000000100000)
+			value["slots"][3]["alive"] = bit32.btest(bool_1, 0b0000000000010000)
+			value["slots"][3]["created"] = bit32.btest(bool_1, 0b0000000000100000)
 			value["slots"][3]["hp"] = buffer.readu8(incoming_buff, read(1))
 			assert(value["slots"][3]["hp"] >= 0, "value is less than 0!")
 			assert(value["slots"][3]["hp"] <= 100, "value is more than 100!")
@@ -334,7 +331,7 @@ reliable.OnClientEvent:Connect(function(buff, inst)
 			assert(value["slots"][3]["maxexp"] <= 100, "value is more than 100!")
 			value["slots"][3]["upgrade"] = buffer.readu8(incoming_buff, read(1))
 			assert(value["slots"][3]["upgrade"] >= 0, "value is less than 0!")
-			assert(value["slots"][3]["upgrade"] <= 2, "value is more than 2!")
+			assert(value["slots"][3]["upgrade"] <= 3, "value is more than 3!")
 			value["slots"][3]["level"] = buffer.readu8(incoming_buff, read(1))
 			debug.profileend()
 			if reliable_events[0][1] then
@@ -352,11 +349,11 @@ reliable.OnClientEvent:Connect(function(buff, inst)
 		elseif id == 1 then -- IngameDataEvent
 			debug.profilebegin("IngameDataEvent Deserialize")
 			local value
-			local bool_3 = buffer.readu8(incoming_buff, read(1))
+			local bool_2 = buffer.readu8(incoming_buff, read(1))
 			value = {  }
 			value["shark"] = buffer.readu8(incoming_buff, read(1))
-			value["alive"] = bit32.btest(bool_3, 0b0000000000000001)
-			value["created"] = bit32.btest(bool_3, 0b0000000000000010)
+			value["alive"] = bit32.btest(bool_2, 0b0000000000000001)
+			value["created"] = bit32.btest(bool_2, 0b0000000000000010)
 			value["hp"] = buffer.readu8(incoming_buff, read(1))
 			assert(value["hp"] >= 0, "value is less than 0!")
 			assert(value["hp"] <= 100, "value is more than 100!")
@@ -377,7 +374,7 @@ reliable.OnClientEvent:Connect(function(buff, inst)
 			assert(value["maxexp"] <= 100, "value is more than 100!")
 			value["upgrade"] = buffer.readu8(incoming_buff, read(1))
 			assert(value["upgrade"] >= 0, "value is less than 0!")
-			assert(value["upgrade"] <= 2, "value is more than 2!")
+			assert(value["upgrade"] <= 3, "value is more than 3!")
 			value["level"] = buffer.readu8(incoming_buff, read(1))
 			debug.profileend()
 			if reliable_events[1][1] then
@@ -419,14 +416,14 @@ local returns = {
 		end,
 	},
 	SpawnResult = {
-		on = function(callback: (value: ("Success" | "Fail")) -> ())
+		on = function(callback: () -> ())
 			table.insert(reliable_events[2], callback)
-			for _, value in reliable_event_queue[2] do
+			for _ = 1, reliable_event_queue[2] do
 				debug.profilebegin("SpawnResult Callback")
-				task.spawn(callback, value)
+				task.spawn(callback)
 				debug.profileend()
 			end
-			reliable_event_queue[2] = {}
+			reliable_event_queue[2] = 0
 			return function()
 				table.remove(reliable_events[2], table.find(reliable_events[2], callback))
 			end
@@ -488,6 +485,14 @@ local returns = {
 			return function()
 				table.remove(reliable_events[1], table.find(reliable_events[1], callback))
 			end
+		end,
+	},
+	BuyUpgrade = {
+		fire = function()
+			debug.profilebegin("BuyUpgrade Fire")
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, 1)
+			debug.profileend()
 		end,
 	},
 }

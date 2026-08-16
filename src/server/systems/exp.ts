@@ -6,12 +6,13 @@ import {
 	SystemHelperComponent,
 } from "server/components";
 import { EntityToPlayer } from "server/services/DataService";
+import { upgradedata } from "shared/data";
 import { World } from "shared/ecs/world";
 import { UpdatePlayerLevel } from "shared/logic/GameSimulation";
 
 const config = {
-	test_exp_dt: 0.3,
-	test_exp_amount: 13,
+	test_exp_dt: 0.1,
+	test_exp_amount: 24,
 };
 
 export default (dt: number) => {
@@ -33,6 +34,9 @@ export default (dt: number) => {
 
 	/* Handle add exp intent */
 	for (const [entity, data, addexp] of World.query(PlayComponent, AddExpIntent)) {
+		// do not add exp if max lvl
+		if (data.level >= upgradedata[data.upgrade].maxlevelcap) return;
+
 		let newdata = { ...data };
 
 		newdata.exp += addexp;

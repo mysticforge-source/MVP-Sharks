@@ -37,7 +37,7 @@ const defaultSharkSlotData: SharkSlot = {
 };
 
 export const defaultUserData: UserData = {
-	coins: 0,
+	coins: 10_000,
 	sharkcoins: 0,
 	revivetokens: 0,
 
@@ -61,7 +61,7 @@ const validateSharkSlot = t.interface({
 	exp: t.numberConstrained(0, 100),
 	maxexp: t.numberConstrained(0, 100),
 
-	upgrade: t.numberConstrained(0, 2),
+	upgrade: t.numberConstrained(0, 3),
 	level: t.numberConstrained(0, 255),
 });
 
