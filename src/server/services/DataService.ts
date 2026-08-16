@@ -41,7 +41,7 @@ export const defaultUserData: UserData = {
 	sharkcoins: 0,
 	revivetokens: 0,
 
-	ownedsharks: [],
+	ownedsharks: [0],
 
 	slots: [defaultSharkSlotData, defaultSharkSlotData, defaultSharkSlotData],
 };
@@ -88,6 +88,9 @@ export class DataService implements OnStart {
 			(data) => {
 				return defaultUserData;
 			},
+			(data) => {
+				return defaultUserData;
+			},
 		],
 	});
 	protected Sessions = new Map<Player, Document<UserData, true>>();
@@ -106,7 +109,7 @@ export class DataService implements OnStart {
 				// player loaded
 
 				// TESTING
-				//ses.write(defaultUserData);
+				ses.write(defaultUserData);
 
 				// we need player's session for long term use
 				this.Sessions.set(player, ses);
@@ -191,7 +194,7 @@ export class DataService implements OnStart {
 			alive: true,
 			sharkid: sharkid,
 		});
-		this.changeSlotData(player, slot - 1, newSlotData);
+		this.changeSlotData(player, slot, newSlotData);
 
 		return true;
 	}

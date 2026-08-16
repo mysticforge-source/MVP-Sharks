@@ -27,14 +27,14 @@ export function getTitle(level: number): string {
 
 export function getSpeed(shark: number, level: number): number {
 	const agelevel = findAgeLevel(level);
-	const sharkdata = sharkcatalog[level];
+	const sharkdata = sharkcatalog[shark];
 
 	return sharkdata.speed * math.pow(sharkdata.speedmult, agelevel);
 }
 
 export function getSize(shark: number, level: number, hitbox: MeshPart): Vector3 {
 	const agelevel = findAgeLevel(level);
-	const sharkdata = sharkcatalog[level];
+	const sharkdata = sharkcatalog[shark];
 
 	let { X, Y, Z } = hitbox.Size;
 	X *= math.pow(sharkdata.sizemult, agelevel);
@@ -46,7 +46,7 @@ export function getSize(shark: number, level: number, hitbox: MeshPart): Vector3
 
 export function getModelSize(shark: number, level: number, defaultmodel: Model): number {
 	const agelevel = findAgeLevel(level);
-	const sharkdata = sharkcatalog[level];
+	const sharkdata = sharkcatalog[shark];
 
 	return defaultmodel.GetScale() * math.pow(sharkdata.sizemult, agelevel);
 }
