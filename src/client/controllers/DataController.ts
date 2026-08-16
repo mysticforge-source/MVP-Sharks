@@ -53,7 +53,9 @@ export class DataController implements OnStart {
 					}
 
 					slotData.shark(slot.shark);
-					slotData.dead(slot.dead);
+
+					slotData.alive(slot.alive);
+					slotData.created(slot.created);
 					slotData.hp(slot.hp);
 					slotData.maxhp(slot.maxhp);
 					slotData.hunger(slot.hunger);

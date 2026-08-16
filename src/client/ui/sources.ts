@@ -27,7 +27,10 @@ export const selectedshark = source<number>(0);
 
 export const createSharkSlot = () => ({
 	shark: source(0),
-	dead: source(false),
+
+	alive: source(false),
+	created: source(false),
+
 	hp: source(100),
 	maxhp: source(100),
 

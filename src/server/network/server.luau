@@ -188,6 +188,19 @@ end
 Players.PlayerRemoving:Connect(function(player)
 	player_map[player] = nil
 end)
+export type SharkSlot = ({
+	["shark"]: (number),
+	["alive"]: (boolean),
+	["created"]: (boolean),
+	["hp"]: (number),
+	["maxhp"]: (number),
+	["hunger"]: (number),
+	["maxhunger"]: (number),
+	["exp"]: (number),
+	["maxexp"]: (number),
+	["upgrade"]: (number),
+	["level"]: (number),
+})
 export type UserData = ({
 	["coins"]: (number),
 	["sharkcoins"]: (number),
@@ -195,7 +208,8 @@ export type UserData = ({
 	["ownedsharks"]: ({ (number) }),
 	["slots"]: ({ ({
 		["shark"]: (number),
-		["dead"]: (boolean),
+		["alive"]: (boolean),
+		["created"]: (boolean),
 		["hp"]: (number),
 		["maxhp"]: (number),
 		["hunger"]: (number),
@@ -205,18 +219,6 @@ export type UserData = ({
 		["upgrade"]: (number),
 		["level"]: (number),
 	}) }),
-})
-export type SharkSlot = ({
-	["shark"]: (number),
-	["dead"]: (boolean),
-	["hp"]: (number),
-	["maxhp"]: (number),
-	["hunger"]: (number),
-	["maxhunger"]: (number),
-	["exp"]: (number),
-	["maxexp"]: (number),
-	["upgrade"]: (number),
-	["level"]: (number),
 })
 
 local function sendEvents()
@@ -411,7 +413,8 @@ local returns = {
 			["ownedsharks"]: ({ (number) }),
 			["slots"]: ({ ({
 				["shark"]: (number),
-				["dead"]: (boolean),
+				["alive"]: (boolean),
+				["created"]: (boolean),
 				["hp"]: (number),
 				["maxhp"]: (number),
 				["hunger"]: (number),
@@ -446,8 +449,11 @@ local returns = {
 			assert(#value["slots"] == 3, "length is not equal to 3!")
 			alloc(1)
 			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][1]["shark"])
-			if value["slots"][1]["dead"] then
+			if value["slots"][1]["alive"] then
 				bool_6 = bit32.bor(bool_6, 0b0000000000000001)
+			end
+			if value["slots"][1]["created"] then
+				bool_6 = bit32.bor(bool_6, 0b0000000000000010)
 			end
 			assert(value["slots"][1]["hp"] >= 0, "value is less than 0!")
 			assert(value["slots"][1]["hp"] <= 100, "value is more than 100!")
@@ -481,8 +487,11 @@ local returns = {
 			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][1]["level"])
 			alloc(1)
 			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][2]["shark"])
-			if value["slots"][2]["dead"] then
-				bool_6 = bit32.bor(bool_6, 0b0000000000000010)
+			if value["slots"][2]["alive"] then
+				bool_6 = bit32.bor(bool_6, 0b0000000000000100)
+			end
+			if value["slots"][2]["created"] then
+				bool_6 = bit32.bor(bool_6, 0b0000000000001000)
 			end
 			assert(value["slots"][2]["hp"] >= 0, "value is less than 0!")
 			assert(value["slots"][2]["hp"] <= 100, "value is more than 100!")
@@ -516,8 +525,11 @@ local returns = {
 			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][2]["level"])
 			alloc(1)
 			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][3]["shark"])
-			if value["slots"][3]["dead"] then
-				bool_6 = bit32.bor(bool_6, 0b0000000000000100)
+			if value["slots"][3]["alive"] then
+				bool_6 = bit32.bor(bool_6, 0b0000000000010000)
+			end
+			if value["slots"][3]["created"] then
+				bool_6 = bit32.bor(bool_6, 0b0000000000100000)
 			end
 			assert(value["slots"][3]["hp"] >= 0, "value is less than 0!")
 			assert(value["slots"][3]["hp"] <= 100, "value is more than 100!")
@@ -560,7 +572,8 @@ local returns = {
 			["ownedsharks"]: ({ (number) }),
 			["slots"]: ({ ({
 				["shark"]: (number),
-				["dead"]: (boolean),
+				["alive"]: (boolean),
+				["created"]: (boolean),
 				["hp"]: (number),
 				["maxhp"]: (number),
 				["hunger"]: (number),
@@ -595,8 +608,11 @@ local returns = {
 			assert(#value["slots"] == 3, "length is not equal to 3!")
 			alloc(1)
 			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][1]["shark"])
-			if value["slots"][1]["dead"] then
+			if value["slots"][1]["alive"] then
 				bool_7 = bit32.bor(bool_7, 0b0000000000000001)
+			end
+			if value["slots"][1]["created"] then
+				bool_7 = bit32.bor(bool_7, 0b0000000000000010)
 			end
 			assert(value["slots"][1]["hp"] >= 0, "value is less than 0!")
 			assert(value["slots"][1]["hp"] <= 100, "value is more than 100!")
@@ -630,8 +646,11 @@ local returns = {
 			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][1]["level"])
 			alloc(1)
 			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][2]["shark"])
-			if value["slots"][2]["dead"] then
-				bool_7 = bit32.bor(bool_7, 0b0000000000000010)
+			if value["slots"][2]["alive"] then
+				bool_7 = bit32.bor(bool_7, 0b0000000000000100)
+			end
+			if value["slots"][2]["created"] then
+				bool_7 = bit32.bor(bool_7, 0b0000000000001000)
 			end
 			assert(value["slots"][2]["hp"] >= 0, "value is less than 0!")
 			assert(value["slots"][2]["hp"] <= 100, "value is more than 100!")
@@ -665,8 +684,11 @@ local returns = {
 			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][2]["level"])
 			alloc(1)
 			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][3]["shark"])
-			if value["slots"][3]["dead"] then
-				bool_7 = bit32.bor(bool_7, 0b0000000000000100)
+			if value["slots"][3]["alive"] then
+				bool_7 = bit32.bor(bool_7, 0b0000000000010000)
+			end
+			if value["slots"][3]["created"] then
+				bool_7 = bit32.bor(bool_7, 0b0000000000100000)
 			end
 			assert(value["slots"][3]["hp"] >= 0, "value is less than 0!")
 			assert(value["slots"][3]["hp"] <= 100, "value is more than 100!")
@@ -716,7 +738,8 @@ local returns = {
 			["ownedsharks"]: ({ (number) }),
 			["slots"]: ({ ({
 				["shark"]: (number),
-				["dead"]: (boolean),
+				["alive"]: (boolean),
+				["created"]: (boolean),
 				["hp"]: (number),
 				["maxhp"]: (number),
 				["hunger"]: (number),
@@ -751,8 +774,11 @@ local returns = {
 			assert(#value["slots"] == 3, "length is not equal to 3!")
 			alloc(1)
 			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][1]["shark"])
-			if value["slots"][1]["dead"] then
+			if value["slots"][1]["alive"] then
 				bool_8 = bit32.bor(bool_8, 0b0000000000000001)
+			end
+			if value["slots"][1]["created"] then
+				bool_8 = bit32.bor(bool_8, 0b0000000000000010)
 			end
 			assert(value["slots"][1]["hp"] >= 0, "value is less than 0!")
 			assert(value["slots"][1]["hp"] <= 100, "value is more than 100!")
@@ -786,8 +812,11 @@ local returns = {
 			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][1]["level"])
 			alloc(1)
 			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][2]["shark"])
-			if value["slots"][2]["dead"] then
-				bool_8 = bit32.bor(bool_8, 0b0000000000000010)
+			if value["slots"][2]["alive"] then
+				bool_8 = bit32.bor(bool_8, 0b0000000000000100)
+			end
+			if value["slots"][2]["created"] then
+				bool_8 = bit32.bor(bool_8, 0b0000000000001000)
 			end
 			assert(value["slots"][2]["hp"] >= 0, "value is less than 0!")
 			assert(value["slots"][2]["hp"] <= 100, "value is more than 100!")
@@ -821,8 +850,11 @@ local returns = {
 			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][2]["level"])
 			alloc(1)
 			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][3]["shark"])
-			if value["slots"][3]["dead"] then
-				bool_8 = bit32.bor(bool_8, 0b0000000000000100)
+			if value["slots"][3]["alive"] then
+				bool_8 = bit32.bor(bool_8, 0b0000000000010000)
+			end
+			if value["slots"][3]["created"] then
+				bool_8 = bit32.bor(bool_8, 0b0000000000100000)
 			end
 			assert(value["slots"][3]["hp"] >= 0, "value is less than 0!")
 			assert(value["slots"][3]["hp"] <= 100, "value is more than 100!")
@@ -874,7 +906,8 @@ local returns = {
 			["ownedsharks"]: ({ (number) }),
 			["slots"]: ({ ({
 				["shark"]: (number),
-				["dead"]: (boolean),
+				["alive"]: (boolean),
+				["created"]: (boolean),
 				["hp"]: (number),
 				["maxhp"]: (number),
 				["hunger"]: (number),
@@ -909,8 +942,11 @@ local returns = {
 			assert(#value["slots"] == 3, "length is not equal to 3!")
 			alloc(1)
 			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][1]["shark"])
-			if value["slots"][1]["dead"] then
+			if value["slots"][1]["alive"] then
 				bool_9 = bit32.bor(bool_9, 0b0000000000000001)
+			end
+			if value["slots"][1]["created"] then
+				bool_9 = bit32.bor(bool_9, 0b0000000000000010)
 			end
 			assert(value["slots"][1]["hp"] >= 0, "value is less than 0!")
 			assert(value["slots"][1]["hp"] <= 100, "value is more than 100!")
@@ -944,8 +980,11 @@ local returns = {
 			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][1]["level"])
 			alloc(1)
 			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][2]["shark"])
-			if value["slots"][2]["dead"] then
-				bool_9 = bit32.bor(bool_9, 0b0000000000000010)
+			if value["slots"][2]["alive"] then
+				bool_9 = bit32.bor(bool_9, 0b0000000000000100)
+			end
+			if value["slots"][2]["created"] then
+				bool_9 = bit32.bor(bool_9, 0b0000000000001000)
 			end
 			assert(value["slots"][2]["hp"] >= 0, "value is less than 0!")
 			assert(value["slots"][2]["hp"] <= 100, "value is more than 100!")
@@ -979,8 +1018,11 @@ local returns = {
 			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][2]["level"])
 			alloc(1)
 			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][3]["shark"])
-			if value["slots"][3]["dead"] then
-				bool_9 = bit32.bor(bool_9, 0b0000000000000100)
+			if value["slots"][3]["alive"] then
+				bool_9 = bit32.bor(bool_9, 0b0000000000010000)
+			end
+			if value["slots"][3]["created"] then
+				bool_9 = bit32.bor(bool_9, 0b0000000000100000)
 			end
 			assert(value["slots"][3]["hp"] >= 0, "value is less than 0!")
 			assert(value["slots"][3]["hp"] <= 100, "value is more than 100!")
@@ -1030,7 +1072,8 @@ local returns = {
 			["ownedsharks"]: ({ (number) }),
 			["slots"]: ({ ({
 				["shark"]: (number),
-				["dead"]: (boolean),
+				["alive"]: (boolean),
+				["created"]: (boolean),
 				["hp"]: (number),
 				["maxhp"]: (number),
 				["hunger"]: (number),
@@ -1065,8 +1108,11 @@ local returns = {
 			assert(#value["slots"] == 3, "length is not equal to 3!")
 			alloc(1)
 			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][1]["shark"])
-			if value["slots"][1]["dead"] then
+			if value["slots"][1]["alive"] then
 				bool_10 = bit32.bor(bool_10, 0b0000000000000001)
+			end
+			if value["slots"][1]["created"] then
+				bool_10 = bit32.bor(bool_10, 0b0000000000000010)
 			end
 			assert(value["slots"][1]["hp"] >= 0, "value is less than 0!")
 			assert(value["slots"][1]["hp"] <= 100, "value is more than 100!")
@@ -1100,8 +1146,11 @@ local returns = {
 			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][1]["level"])
 			alloc(1)
 			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][2]["shark"])
-			if value["slots"][2]["dead"] then
-				bool_10 = bit32.bor(bool_10, 0b0000000000000010)
+			if value["slots"][2]["alive"] then
+				bool_10 = bit32.bor(bool_10, 0b0000000000000100)
+			end
+			if value["slots"][2]["created"] then
+				bool_10 = bit32.bor(bool_10, 0b0000000000001000)
 			end
 			assert(value["slots"][2]["hp"] >= 0, "value is less than 0!")
 			assert(value["slots"][2]["hp"] <= 100, "value is more than 100!")
@@ -1135,8 +1184,11 @@ local returns = {
 			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][2]["level"])
 			alloc(1)
 			buffer.writeu8(outgoing_buff, outgoing_apos, value["slots"][3]["shark"])
-			if value["slots"][3]["dead"] then
-				bool_10 = bit32.bor(bool_10, 0b0000000000000100)
+			if value["slots"][3]["alive"] then
+				bool_10 = bit32.bor(bool_10, 0b0000000000010000)
+			end
+			if value["slots"][3]["created"] then
+				bool_10 = bit32.bor(bool_10, 0b0000000000100000)
 			end
 			assert(value["slots"][3]["hp"] >= 0, "value is less than 0!")
 			assert(value["slots"][3]["hp"] <= 100, "value is more than 100!")
@@ -1183,7 +1235,8 @@ local returns = {
 	IngameDataEvent = {
 		fire = function(player: Player, value: ({
 			["shark"]: (number),
-			["dead"]: (boolean),
+			["alive"]: (boolean),
+			["created"]: (boolean),
 			["hp"]: (number),
 			["maxhp"]: (number),
 			["hunger"]: (number),
@@ -1201,8 +1254,11 @@ local returns = {
 			local bool_11_pos_1 = alloc(1)
 			alloc(1)
 			buffer.writeu8(outgoing_buff, outgoing_apos, value["shark"])
-			if value["dead"] then
+			if value["alive"] then
 				bool_11 = bit32.bor(bool_11, 0b0000000000000001)
+			end
+			if value["created"] then
+				bool_11 = bit32.bor(bool_11, 0b0000000000000010)
 			end
 			assert(value["hp"] >= 0, "value is less than 0!")
 			assert(value["hp"] <= 100, "value is more than 100!")
@@ -1240,7 +1296,8 @@ local returns = {
 		end,
 		fireAll = function(value: ({
 			["shark"]: (number),
-			["dead"]: (boolean),
+			["alive"]: (boolean),
+			["created"]: (boolean),
 			["hp"]: (number),
 			["maxhp"]: (number),
 			["hunger"]: (number),
@@ -1258,8 +1315,11 @@ local returns = {
 			local bool_12_pos_1 = alloc(1)
 			alloc(1)
 			buffer.writeu8(outgoing_buff, outgoing_apos, value["shark"])
-			if value["dead"] then
+			if value["alive"] then
 				bool_12 = bit32.bor(bool_12, 0b0000000000000001)
+			end
+			if value["created"] then
+				bool_12 = bit32.bor(bool_12, 0b0000000000000010)
 			end
 			assert(value["hp"] >= 0, "value is less than 0!")
 			assert(value["hp"] <= 100, "value is more than 100!")
@@ -1304,7 +1364,8 @@ local returns = {
 		end,
 		fireExcept = function(except: Player, value: ({
 			["shark"]: (number),
-			["dead"]: (boolean),
+			["alive"]: (boolean),
+			["created"]: (boolean),
 			["hp"]: (number),
 			["maxhp"]: (number),
 			["hunger"]: (number),
@@ -1322,8 +1383,11 @@ local returns = {
 			local bool_13_pos_1 = alloc(1)
 			alloc(1)
 			buffer.writeu8(outgoing_buff, outgoing_apos, value["shark"])
-			if value["dead"] then
+			if value["alive"] then
 				bool_13 = bit32.bor(bool_13, 0b0000000000000001)
+			end
+			if value["created"] then
+				bool_13 = bit32.bor(bool_13, 0b0000000000000010)
 			end
 			assert(value["hp"] >= 0, "value is less than 0!")
 			assert(value["hp"] <= 100, "value is more than 100!")
@@ -1370,7 +1434,8 @@ local returns = {
 		end,
 		fireList = function(list: { [unknown]: Player }, value: ({
 			["shark"]: (number),
-			["dead"]: (boolean),
+			["alive"]: (boolean),
+			["created"]: (boolean),
 			["hp"]: (number),
 			["maxhp"]: (number),
 			["hunger"]: (number),
@@ -1388,8 +1453,11 @@ local returns = {
 			local bool_14_pos_1 = alloc(1)
 			alloc(1)
 			buffer.writeu8(outgoing_buff, outgoing_apos, value["shark"])
-			if value["dead"] then
+			if value["alive"] then
 				bool_14 = bit32.bor(bool_14, 0b0000000000000001)
+			end
+			if value["created"] then
+				bool_14 = bit32.bor(bool_14, 0b0000000000000010)
 			end
 			assert(value["hp"] >= 0, "value is less than 0!")
 			assert(value["hp"] <= 100, "value is more than 100!")
@@ -1434,7 +1502,8 @@ local returns = {
 		end,
 		fireSet = function(set: { [Player]: any }, value: ({
 			["shark"]: (number),
-			["dead"]: (boolean),
+			["alive"]: (boolean),
+			["created"]: (boolean),
 			["hp"]: (number),
 			["maxhp"]: (number),
 			["hunger"]: (number),
@@ -1452,8 +1521,11 @@ local returns = {
 			local bool_15_pos_1 = alloc(1)
 			alloc(1)
 			buffer.writeu8(outgoing_buff, outgoing_apos, value["shark"])
-			if value["dead"] then
+			if value["alive"] then
 				bool_15 = bit32.bor(bool_15, 0b0000000000000001)
+			end
+			if value["created"] then
+				bool_15 = bit32.bor(bool_15, 0b0000000000000010)
 			end
 			assert(value["hp"] >= 0, "value is less than 0!")
 			assert(value["hp"] <= 100, "value is more than 100!")

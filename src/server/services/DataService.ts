@@ -19,7 +19,9 @@ import Sift from "@rbxts/sift";
 
 const defaultSharkSlotData: SharkSlot = {
 	shark: 0,
-	dead: false,
+
+	alive: true,
+	created: false,
 
 	hp: 100,
 	maxhp: 100,
@@ -46,7 +48,9 @@ export const defaultUserData: UserData = {
 
 const validateSharkSlot = t.interface({
 	shark: t.numberConstrained(0, 255),
-	dead: t.boolean,
+
+	alive: t.boolean,
+	created: t.boolean,
 
 	hp: t.numberConstrained(0, 100),
 	maxhp: t.numberConstrained(0, 100),
@@ -184,9 +188,9 @@ export class DataService implements OnStart {
 		}
 
 		World.set(entity, PlayComponent, data.slots[slot - 1]); //minus 1 because of rbxts
-		if (data.slots[slot - 1].dead) {
+		if (!data.slots[slot - 1].alive || !data.slots[slot - 1].created) {
 			//cannot spawn a dead slot!
-			player.Kick("Attempt to spawn a dead slot");
+			player.Kick("Attempt to spawn a dead or uncreated slot");
 			return false;
 		}
 

@@ -19,7 +19,9 @@ opt include_profile_labels = true
 ]]
 type SharkSlot = struct { 
     shark: u8,
-    dead: boolean,
+
+    alive: boolean,
+    created: boolean,
 
     hp: u8(0..100),
     maxhp: u8(0..100),
