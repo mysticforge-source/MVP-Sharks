@@ -31,11 +31,6 @@ export class SpawnController implements OnStart {
 		return hitbox;
 	}
 
-	/* spawns the localplayer's hitbox and begins control */
-	public async Spawn(slot: number) {
-		SpawnSlot.fire(slot);
-	}
-
 	public onStart(): void {
 		// connect signals for hitbox addition to serverauthority
 		const authorityFolder = this.getAuthorityFolder();

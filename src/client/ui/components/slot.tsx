@@ -32,7 +32,8 @@ export default ({ slotnumber = 0 }: Props) => {
 	const size = source(ScaleUDim2(0.4, 0.8));
 	const [sizeSpring] = spring(size, 0.3, 0.7);
 
-	const sharkData = sharkcatalog[slots[slotnumber].shark()];
+	const shark = slots[slotnumber].shark();
+	const sharkData = sharkcatalog[shark];
 
 	return (
 		<frame
@@ -73,7 +74,7 @@ export default ({ slotnumber = 0 }: Props) => {
 				BorderSizePixel={0}
 				MouseEnter={() => buttonColoring(hoveredButtonColoring)}
 				MouseLeave={() => buttonColoring(defaultButtonColoring)}
-				Activated={() => SpawnSlot.fire(slotnumber)}
+				Activated={() => SpawnSlot.fire({ slot: slotnumber, shark: shark })}
 			>
 				<Corner scale={0.23} />
 				<uistroke

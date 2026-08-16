@@ -19,7 +19,7 @@ export class SpawnService implements OnStart {
 	/* connects to the spawn event */
 	public onStart(): void {
 		this.maid.add(
-			SpawnSlot.on((player: Player, slot: number) => {
+			SpawnSlot.on((player: Player, { slot, shark }) => {
 				const data = this.dataservice.getPlayerData(player);
 				if (!data) return "Fail";
 
@@ -28,12 +28,11 @@ export class SpawnService implements OnStart {
 
 				warn("SPAWNSLOT GOT", slot);
 
-				const sharkid = data.slots[slot - 1]?.shark;
-				if (sharkid === undefined) return "Fail";
+				if (!this.dataservice.CreateSlot(player, slot, shark)) return "Fail";
 
-				this.dataservice.RegisterSpawnPlayer(player, slot);
+				if (!this.dataservice.RegisterSpawnPlayer(player, slot)) return "Fail";
 
-				const hitbox = this.hitboxservice.createPlayerHitbox(player, sharkid);
+				const hitbox = this.hitboxservice.createPlayerHitbox(player, shark);
 				if (!hitbox) return "Fail";
 
 				// assign the player play data
