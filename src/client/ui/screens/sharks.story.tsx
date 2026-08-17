@@ -8,11 +8,13 @@ const controls = {
 
 import Vide from "@rbxts/vide";
 
-const story = CreateVideStory(
-	{ vide: Vide, controls: controls },
-	(props: InferVideProps<typeof controls>) => {
-		return <Sharks enabled={props.controls.enabled} />;
-	},
-);
+// const story = CreateVideStory(
+// 	{ vide: Vide, controls: controls },
+// 	(props: InferVideProps<typeof controls>) => {
+// 		return <Sharks enabled={props.controls.enabled} />;
+// 	},
+// );
 
-export = story;
+// export = story;
+
+export = (frame: Instance) => Vide.mount(() => <Sharks enabled={() => true} />, frame);

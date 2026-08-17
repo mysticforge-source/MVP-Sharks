@@ -1,13 +1,19 @@
 import { effect, source, Source, spring } from "@rbxts/vide";
 import Vide from "@rbxts/vide";
-import { ownedsharks, selectedshark, shownshark } from "../sources";
+import { ownedsharks, selectedshark, shark, shownshark } from "../sources";
 import Shark from "../components/slots/shark";
+import { ReplicatedStorage } from "@rbxts/services";
+import { sharkcatalog } from "shared/data";
+import { ModuleResolutionKind } from "typescript";
 
 export default ({ enabled }: { enabled: Source<boolean> }) => {
 	const quithovered = source(false);
 
 	const returnml = source(20);
 	const [returnmlspring] = spring(returnml, 0.3);
+
+	const sharkdata = sharkcatalog[shark()];
+	const sharkmodel = ReplicatedStorage.Models[sharkdata.viewmodelname as keyof {}] as Model;
 
 	return (
 		<>
@@ -52,7 +58,110 @@ export default ({ enabled }: { enabled: Source<boolean> }) => {
 			<frame className="flex items-start justify-center w-full h-full p-10">
 				<textlabel
 					className="text-6xl text-white font-black border-[2.5] border-black"
-					Text="Minawii"
+					Text={`${sharkdata.name}`}
+				/>
+			</frame>
+
+			{/* Shark viewport */}
+			<viewportframe
+				Size={new UDim2(0.7, 0, 0.8, 0)}
+				Position={new UDim2(0.5, 0, 0.5, 0)}
+				BackgroundTransparency={1}
+				AnchorPoint={new Vector2(0.5, 0.5)}
+				ZIndex={0}
+				Ambient={Color3.fromRGB(153, 196, 255)}
+				LightDirection={new Vector3(-1, -1, -1)}
+				LightColor={Color3.fromRGB(255, 255, 255)}
+				CurrentCamera={() =>
+					(
+						<camera
+							CFrame={CFrame.lookAt(
+								new Vector3(2, 0.5, 5).mul(2), //distance
+								new Vector3(0, 0, 0), //target
+							)}
+							CameraType="Scriptable"
+						/>
+					) as Camera
+				}
+			>
+				{() => {
+					const sharkdata = sharkcatalog[shark()]
+						.viewmodelname as keyof typeof ReplicatedStorage.Models;
+					const model = ReplicatedStorage.Models[sharkdata] as Model;
+					const clone = model.Clone();
+					clone.PivotTo(
+						new CFrame(0, 0, 0).mul(
+							CFrame.fromEulerAnglesXYZ(math.rad(0), math.rad(250), 0),
+						),
+					);
+
+					return clone;
+				}}
+			</viewportframe>
+
+			{/* Shark stats */}
+			<frame className="flex-col p-5 w-80 h-200 bg-slate-800 right-50 top-[50%] origin-center rounded-lg">
+				<textlabel
+					className="w-full h-10 text-4xl text-left text-white font-bold"
+					Text="Primary Stats"
+				/>
+				{/* HP */}
+				<frame className="flex w-full p-20 h-5 mt-5 mb-2 justify-evenly items-center">
+					<textlabel
+						className="w-30 h-10 mr-15 ml-5 text-2xl align-middle text-left text-lime font-semibold"
+						Text="Health"
+					/>
+					<textlabel
+						className="w-20 h-10 text-4xl text-right italic text-white font-normal"
+						Text={() => `${sharkdata.speed}`}
+					/>
+				</frame>
+				{/* DMG */}
+				<frame className="flex w-full p-20 h-5 mt-2 mb-2 justify-evenly items-center">
+					<textlabel
+						className="w-30 h-10 mr-15 ml-5 text-2xl align-middle text-left text-red-600 font-semibold"
+						Text="Damage"
+					/>
+					<textlabel
+						className="w-20 h-10 text-4xl text-right italic text-white font-normal"
+						Text={() => `${sharkdata.damage}`}
+					/>
+				</frame>
+				{/* Speed */}
+				<frame className="flex w-full p-20 h-5 mt-2 mb-2 justify-evenly items-center">
+					<textlabel
+						className="w-30 h-10 mr-15 ml-5 text-2xl align-middle text-left text-blue font-semibold"
+						Text="Speed"
+					/>
+					<textlabel
+						className="w-20 h-10 text-4xl text-right italic text-white font-normal"
+						Text={() => `${sharkdata.speed}`}
+					/>
+				</frame>
+				{/* Size */}
+				<frame className="flex w-full p-20 h-5 mt-2 mb-2 justify-evenly items-center">
+					<textlabel
+						className="w-30 h-10 mr-15 ml-5 text-2xl align-middle text-left text-slate-300 font-semibold"
+						Text="Size"
+					/>
+					<textlabel
+						className="w-20 h-10 text-4xl text-right italic text-white font-normal"
+						Text={() => `${math.round(sharkmodel.GetExtentsSize().Z)}`}
+					/>
+				</frame>
+			</frame>
+
+			{/* Bottom div */}
+			<frame className="flex items-end justify-center w-full h-full p-15">
+				{/* Purchase button */}
+				<textbutton
+					className="hidden text-5xl bg-green-400 w-80 h-14 rounded-xl align-middle text-white font-black border-[2.5] border-black"
+					Text={`Purchase (${sharkdata.cost})`}
+				/>
+				{/* Select button */}
+				<textbutton
+					className="text-5xl bg-blue-600 w-80 h-14 rounded-xl align-middle text-white font-black border-[2.5] border-black"
+					Text={`SELECT!`}
 				/>
 			</frame>
 		</>
