@@ -1,10 +1,11 @@
 import { effect, source, Source, spring } from "@rbxts/vide";
 import Vide from "@rbxts/vide";
-import { ownedsharks, selectedshark, shark, shownshark } from "../sources";
+import { Menu, ownedsharks, selectedshark, selectedslot, shark, shownshark } from "../sources";
 import Shark from "../components/slots/shark";
 import { ReplicatedStorage } from "@rbxts/services";
 import { sharkcatalog } from "shared/data";
 import { ModuleResolutionKind } from "typescript";
+import { SpawnSlot } from "client/network/client";
 
 export default ({ enabled }: { enabled: Source<boolean> }) => {
 	const quithovered = source(false);
@@ -12,8 +13,10 @@ export default ({ enabled }: { enabled: Source<boolean> }) => {
 	const returnml = source(20);
 	const [returnmlspring] = spring(returnml, 0.3);
 
-	const sharkdata = sharkcatalog[shark()];
+	const sharkdata = sharkcatalog[shownshark()];
 	const sharkmodel = ReplicatedStorage.Models[sharkdata.viewmodelname as keyof {}] as Model;
+
+	const slot = selectedslot();
 
 	return (
 		<>
@@ -33,6 +36,7 @@ export default ({ enabled }: { enabled: Source<boolean> }) => {
 							]}
 							MouseEnter={() => quithovered(true)}
 							MouseLeave={() => quithovered(false)}
+							Activated={() => Menu("Slot")}
 						>
 							<textlabel
 								className={() => [
@@ -48,7 +52,14 @@ export default ({ enabled }: { enabled: Source<boolean> }) => {
 					<scrollingframe className="w-full h-140 mt-20 flex p-6 gap-2 items-start justify-center flex-wrap">
 						{/* Loop for owned sharks then load locked sharks */}
 						{ownedsharks().map((sharkId) => (
-							<Shark id={sharkId} on_click={() => shownshark(sharkId)} />
+							<Shark
+								id={sharkId}
+								on_click={() => {
+									shownshark(sharkId);
+									// if the shark is owned, immediately select it
+									if (ownedsharks().includes(sharkId)) shark(sharkId);
+								}}
+							/>
 						))}
 					</scrollingframe>
 				</frame>
@@ -161,7 +172,10 @@ export default ({ enabled }: { enabled: Source<boolean> }) => {
 				{/* Select button */}
 				<textbutton
 					className="text-5xl bg-blue-600 w-80 h-14 rounded-xl align-middle text-white font-black border-[2.5] border-black"
-					Text={`SELECT!`}
+					Text={`GO!`}
+					Activated={() => {
+						SpawnSlot.fire({ slot: slot, shark: shark() });
+					}}
 				/>
 			</frame>
 		</>

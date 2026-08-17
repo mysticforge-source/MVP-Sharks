@@ -25,6 +25,8 @@ export const ownedsharks = source<number[]>([0, 0, 0, 0, 0, 0, 0, 0]);
 export const shownshark = source<number>(0);
 export const selectedshark = source<number>(0);
 
+export const selectedslot = source<number>(0);
+
 export const createSharkSlot = () => ({
 	shark: source(0),
 

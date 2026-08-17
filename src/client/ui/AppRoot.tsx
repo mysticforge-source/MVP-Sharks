@@ -6,6 +6,7 @@ import { Menu } from "./sources";
 import Hud from "./screens/hud";
 import Slotselect from "./screens/slotselect";
 import Title from "./screens/title";
+import Sharkselect from "./screens/sharkselect";
 
 export = () => (
 	<>
@@ -13,5 +14,6 @@ export = () => (
 		<Title enabled={() => Menu() === "Title"} />
 		<Hud enabled={() => Menu() === "GAME"} />
 		<Slotselect enabled={() => Menu() === "Slot"} />
+		<Sharkselect enabled={() => Menu() === "Sharks"} />
 	</>
 );

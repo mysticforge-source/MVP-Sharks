@@ -2,7 +2,7 @@ import Vide, { source, spring } from "@rbxts/vide";
 import { ScaleUDim2 } from "shared/utils/scale";
 import { Corner } from "./corner";
 import { Aspect } from "./aspect";
-import { slots } from "../sources";
+import { Menu, selectedslot, slots } from "../sources";
 import { sharkcatalog } from "shared/data";
 import { SpawnSlot } from "client/network/client";
 
@@ -32,6 +32,9 @@ export default ({ slotnumber = 0 }: Props) => {
 	const size = source(ScaleUDim2(0.4, 0.8));
 	const [sizeSpring] = spring(size, 0.3, 0.7);
 
+	const created = slots[slotnumber].created();
+	const alive = slots[slotnumber].alive();
+
 	const shark = slots[slotnumber].shark();
 	const sharkData = sharkcatalog[shark];
 
@@ -55,7 +58,7 @@ export default ({ slotnumber = 0 }: Props) => {
 
 			{/* Shark name label */}
 			<textlabel
-				Text={sharkData.name}
+				Text={() => (created ? sharkData.name : "")}
 				Font="GothamBlack"
 				TextColor3={() => buttonColoring().text}
 				TextScaled={true}
@@ -65,36 +68,30 @@ export default ({ slotnumber = 0 }: Props) => {
 				Size={ScaleUDim2(0.9, 0.15)}
 			/>
 
-			{/* create button */}
+			{/* Create button */}
 			<textbutton
-				Size={ScaleUDim2(0.7, 0.13)}
-				Position={ScaleUDim2(0.5, 0.9)}
-				BackgroundColor3={() => buttonColoring().bg}
-				AnchorPoint={new Vector2(0.5, 0.5)}
-				BorderSizePixel={0}
-				MouseEnter={() => buttonColoring(hoveredButtonColoring)}
-				MouseLeave={() => buttonColoring(defaultButtonColoring)}
+				className={[
+					"w-[80%] h-[10%] origin-center bg-amber-200 text-black hover:w-[85%] hover:h-[11%] hover:bg-blue hover:border-blue-400 transition-all duration-300 font-bold text-5xl rounded-xl left-[50%] top-[88%] ring-[3] border-orange-200",
+					created ? "hidden" : "top-[80%]",
+				]}
+				TextScaled={true}
+				Text="Create"
+				Activated={() => {
+					selectedslot(slotnumber);
+					Menu("Sharks");
+				}}
+			/>
+
+			{/* Play button */}
+			<textbutton
+				className={[
+					"w-[80%] h-[10%] origin-center bg-green-500 text-white hover:w-[85%] hover:h-[11%] hover:bg-blue hover:border-blue-400 transition-all duration-300 font-bold text-5xl rounded-xl left-[50%] top-[75%] ring-[3] border-green-400",
+					!created ? "hidden" : "top-[80%]",
+				]}
+				TextScaled={true}
+				Text="Play"
 				Activated={() => SpawnSlot.fire({ slot: slotnumber, shark: shark })}
-			>
-				<Corner scale={0.23} />
-				<uistroke
-					StrokeSizingMode="ScaledSize"
-					ApplyStrokeMode={"Border"}
-					BorderStrokePosition="Inner"
-					Thickness={0.08}
-					Color={() => buttonColoring().border}
-				/>
-				<textlabel
-					Text="Play"
-					Font="GothamBlack"
-					TextColor3={() => buttonColoring().text}
-					TextScaled={true}
-					AnchorPoint={new Vector2(0.5, 0.5)}
-					Position={ScaleUDim2(0.5, 0.5)}
-					BackgroundTransparency={1}
-					Size={ScaleUDim2(1, 0.75)}
-				/>
-			</textbutton>
+			/>
 		</frame>
 	);
 };
