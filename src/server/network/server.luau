@@ -151,6 +151,9 @@ if not RunService:IsRunning() then
 			fireList = noop,
 			fireSet = noop
 		}),
+		PlaySlot = table.freeze({
+			on = noop
+		}),
 		IngameDataEvent = table.freeze({
 			fire = noop,
 			fireAll = noop,
@@ -191,6 +194,19 @@ end
 Players.PlayerRemoving:Connect(function(player)
 	player_map[player] = nil
 end)
+export type SharkSlot = ({
+	["shark"]: (number),
+	["alive"]: (boolean),
+	["created"]: (boolean),
+	["hp"]: (number),
+	["maxhp"]: (number),
+	["hunger"]: (number),
+	["maxhunger"]: (number),
+	["exp"]: (number),
+	["maxexp"]: (number),
+	["upgrade"]: (number),
+	["level"]: (number),
+})
 export type UserData = ({
 	["coins"]: (number),
 	["sharkcoins"]: (number),
@@ -209,19 +225,6 @@ export type UserData = ({
 		["upgrade"]: (number),
 		["level"]: (number),
 	}) }),
-})
-export type SharkSlot = ({
-	["shark"]: (number),
-	["alive"]: (boolean),
-	["created"]: (boolean),
-	["hp"]: (number),
-	["maxhp"]: (number),
-	["hunger"]: (number),
-	["maxhunger"]: (number),
-	["exp"]: (number),
-	["maxexp"]: (number),
-	["upgrade"]: (number),
-	["level"]: (number),
 })
 
 local function sendEvents()
@@ -244,9 +247,10 @@ end
 
 RunService.Heartbeat:Connect(sendEvents)
 
-local reliable_events = table.create(2)
-reliable_events[0] = {}
+local reliable_events = table.create(3)
 reliable_events[1] = {}
+reliable_events[0] = {}
+reliable_events[2] = {}
 reliable.OnServerEvent:Connect(function(player, buff, inst)
 	debug.profilebegin("Zap Reliable OnServerEvent")
 	incoming_buff = buff
@@ -256,23 +260,37 @@ reliable.OnServerEvent:Connect(function(player, buff, inst)
 	local len = buffer.len(buff)
 	while incoming_read < len do
 		local id = buffer.readu8(buff, read(1))
-		if id == 0 then -- SpawnSlot
+		if id == 1 then -- SpawnSlot
 			debug.profilebegin("SpawnSlot Deserialize")
 			local value
 			value = {  }
 			value["slot"] = buffer.readu8(incoming_buff, read(1))
+			assert(value["slot"] >= 1, "value is less than 1!")
+			assert(value["slot"] <= 3, "value is more than 3!")
 			value["shark"] = buffer.readu8(incoming_buff, read(1))
 			debug.profileend()
-			for _, cb in reliable_events[0] do
+			for _, cb in reliable_events[1] do
 				debug.profilebegin("SpawnSlot Callback")
 				task.spawn(cb, player, value)
 				debug.profileend()
 			end
-		elseif id == 1 then -- BuyUpgrade
+		elseif id == 0 then -- PlaySlot
+			debug.profilebegin("PlaySlot Deserialize")
+			local value
+			value = buffer.readu8(incoming_buff, read(1))
+			assert(value >= 1, "value is less than 1!")
+			assert(value <= 3, "value is more than 3!")
+			debug.profileend()
+			for _, cb in reliable_events[0] do
+				debug.profilebegin("PlaySlot Callback")
+				task.spawn(cb, player, value)
+				debug.profileend()
+			end
+		elseif id == 2 then -- BuyUpgrade
 			debug.profilebegin("BuyUpgrade Deserialize")
 			local value
 			debug.profileend()
-			for _, cb in reliable_events[1] do
+			for _, cb in reliable_events[2] do
 				debug.profilebegin("BuyUpgrade Callback")
 				task.spawn(cb, player, value)
 				debug.profileend()
@@ -293,9 +311,9 @@ local returns = {
 			["slot"]: (number),
 			["shark"]: (number),
 		})) -> ()): () -> ()
-			table.insert(reliable_events[0], callback)
+			table.insert(reliable_events[1], callback)
 			return function()
-				table.remove(reliable_events[0], table.find(reliable_events[0], callback))
+				table.remove(reliable_events[1], table.find(reliable_events[1], callback))
 			end
 		end,
 	},
@@ -1198,6 +1216,14 @@ local returns = {
 			debug.profileend()
 		end,
 	},
+	PlaySlot = {
+		on = function(callback: (player: Player, value: (number)) -> ()): () -> ()
+			table.insert(reliable_events[0], callback)
+			return function()
+				table.remove(reliable_events[0], table.find(reliable_events[0], callback))
+			end
+		end,
+	},
 	IngameDataEvent = {
 		fire = function(player: Player, value: ({
 			["shark"]: (number),
@@ -1537,9 +1563,9 @@ local returns = {
 	},
 	BuyUpgrade = {
 		on = function(callback: (player: Player) -> ()): () -> ()
-			table.insert(reliable_events[1], callback)
+			table.insert(reliable_events[2], callback)
 			return function()
-				table.remove(reliable_events[1], table.find(reliable_events[1], callback))
+				table.remove(reliable_events[2], table.find(reliable_events[2], callback))
 			end
 		end,
 	},

@@ -109,7 +109,7 @@ export class DataService implements OnStart {
 				// player loaded
 
 				// TESTING
-				ses.write(defaultUserData);
+				// ses.write(defaultUserData);
 
 				// we need player's session for long term use
 				this.Sessions.set(player, ses);

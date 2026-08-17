@@ -68,11 +68,18 @@ event IngameDataEvent = {
     data: SharkSlot
 }
 
+-- Enter the game for slot u8
+event PlaySlot = {
+    from: Client,
+    type: Reliable,
+    data: u8(1..3), 
+}
+
 -- Create a new slot and enter the game
 event SpawnSlot = {
     from: Client,
     type: Reliable,
-    data: struct {slot: u8, shark: u8}, 
+    data: struct {slot: u8(1..3), shark: u8}, 
     -- slot must not be created & shark must be owned
 }
 

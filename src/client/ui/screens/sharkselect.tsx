@@ -1,4 +1,4 @@
-import { effect, source, Source, spring } from "@rbxts/vide";
+import { derive, effect, source, Source, spring } from "@rbxts/vide";
 import Vide from "@rbxts/vide";
 import { Menu, ownedsharks, selectedshark, selectedslot, shark, shownshark } from "../sources";
 import Shark from "../components/slots/shark";
@@ -13,16 +13,15 @@ export default ({ enabled }: { enabled: Source<boolean> }) => {
 	const returnml = source(20);
 	const [returnmlspring] = spring(returnml, 0.3);
 
-	const sharkdata = sharkcatalog[shownshark()];
-	const sharkmodel = ReplicatedStorage.Models[sharkdata.viewmodelname as keyof {}] as Model;
+	effect(() => returnml(quithovered() ? 10 : 30));
 
-	const slot = selectedslot();
+	const sharkdata = derive(() => sharkcatalog[shownshark()]);
+	const sharkmodel = derive(
+		() => ReplicatedStorage.Models[sharkdata().viewmodelname as keyof {}] as Model,
+	);
 
 	return (
-		<>
-			{/* effects */}
-			{effect(() => returnml(quithovered() ? 10 : 30))}
-
+		<screengui ResetOnSpawn={false} IgnoreGuiInset={true} Name="Sharkselect" Enabled={enabled}>
 			{/* shark selection */}
 			<frame className="flex items-center justify-start p-10 w-full h-full">
 				<frame className="w-110 h-190 bg-slate-800 ring-1 ring-slate-500 rounded-2xl">
@@ -69,7 +68,7 @@ export default ({ enabled }: { enabled: Source<boolean> }) => {
 			<frame className="flex items-start justify-center w-full h-full p-10">
 				<textlabel
 					className="text-6xl text-white font-black border-[2.5] border-black"
-					Text={`${sharkdata.name}`}
+					Text={`${sharkdata().name}`}
 				/>
 			</frame>
 
@@ -96,10 +95,7 @@ export default ({ enabled }: { enabled: Source<boolean> }) => {
 				}
 			>
 				{() => {
-					const sharkdata = sharkcatalog[shark()]
-						.viewmodelname as keyof typeof ReplicatedStorage.Models;
-					const model = ReplicatedStorage.Models[sharkdata] as Model;
-					const clone = model.Clone();
+					const clone = sharkmodel().Clone();
 					clone.PivotTo(
 						new CFrame(0, 0, 0).mul(
 							CFrame.fromEulerAnglesXYZ(math.rad(0), math.rad(250), 0),
@@ -124,7 +120,7 @@ export default ({ enabled }: { enabled: Source<boolean> }) => {
 					/>
 					<textlabel
 						className="w-20 h-10 text-4xl text-right italic text-white font-normal"
-						Text={() => `${sharkdata.speed}`}
+						Text={() => `${sharkdata().speed}`}
 					/>
 				</frame>
 				{/* DMG */}
@@ -135,7 +131,7 @@ export default ({ enabled }: { enabled: Source<boolean> }) => {
 					/>
 					<textlabel
 						className="w-20 h-10 text-4xl text-right italic text-white font-normal"
-						Text={() => `${sharkdata.damage}`}
+						Text={() => `${sharkdata().damage}`}
 					/>
 				</frame>
 				{/* Speed */}
@@ -146,7 +142,7 @@ export default ({ enabled }: { enabled: Source<boolean> }) => {
 					/>
 					<textlabel
 						className="w-20 h-10 text-4xl text-right italic text-white font-normal"
-						Text={() => `${sharkdata.speed}`}
+						Text={() => `${sharkdata().speed}`}
 					/>
 				</frame>
 				{/* Size */}
@@ -157,7 +153,7 @@ export default ({ enabled }: { enabled: Source<boolean> }) => {
 					/>
 					<textlabel
 						className="w-20 h-10 text-4xl text-right italic text-white font-normal"
-						Text={() => `${math.round(sharkmodel.GetExtentsSize().Z)}`}
+						Text={() => `${math.round(sharkmodel().GetExtentsSize().Z)}`}
 					/>
 				</frame>
 			</frame>
@@ -167,17 +163,18 @@ export default ({ enabled }: { enabled: Source<boolean> }) => {
 				{/* Purchase button */}
 				<textbutton
 					className="hidden text-5xl bg-green-400 w-80 h-14 rounded-xl align-middle text-white font-black border-[2.5] border-black"
-					Text={`Purchase (${sharkdata.cost})`}
+					Text={`Purchase (${sharkdata().cost})`}
+					// TODO ACTIVATED
 				/>
 				{/* Select button */}
 				<textbutton
 					className="text-5xl bg-blue-600 w-80 h-14 rounded-xl align-middle text-white font-black border-[2.5] border-black"
 					Text={`GO!`}
 					Activated={() => {
-						SpawnSlot.fire({ slot: slot, shark: shark() });
+						SpawnSlot.fire({ slot: selectedslot(), shark: shark() });
 					}}
 				/>
 			</frame>
-		</>
+		</screengui>
 	);
 };

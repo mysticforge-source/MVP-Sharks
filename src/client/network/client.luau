@@ -141,6 +141,9 @@ if not RunService:IsRunning() then
 		PlayerDataEvent = table.freeze({
 			on = noop
 		}),
+		PlaySlot = table.freeze({
+			fire = noop
+		}),
 		IngameDataEvent = table.freeze({
 			on = noop
 		}),
@@ -154,6 +157,19 @@ local remotes = ReplicatedStorage:WaitForChild("ZAP")
 local reliable = remotes:WaitForChild("ZAP_RELIABLE")
 assert(reliable:IsA("RemoteEvent"), "Expected ZAP_RELIABLE to be a RemoteEvent")
 
+export type SharkSlot = ({
+	["shark"]: (number),
+	["alive"]: (boolean),
+	["created"]: (boolean),
+	["hp"]: (number),
+	["maxhp"]: (number),
+	["hunger"]: (number),
+	["maxhunger"]: (number),
+	["exp"]: (number),
+	["maxexp"]: (number),
+	["upgrade"]: (number),
+	["level"]: (number),
+})
 export type UserData = ({
 	["coins"]: (number),
 	["sharkcoins"]: (number),
@@ -172,19 +188,6 @@ export type UserData = ({
 		["upgrade"]: (number),
 		["level"]: (number),
 	}) }),
-})
-export type SharkSlot = ({
-	["shark"]: (number),
-	["alive"]: (boolean),
-	["created"]: (boolean),
-	["hp"]: (number),
-	["maxhp"]: (number),
-	["hunger"]: (number),
-	["maxhunger"]: (number),
-	["exp"]: (number),
-	["maxexp"]: (number),
-	["upgrade"]: (number),
-	["level"]: (number),
 })
 
 local function sendEvents()
@@ -407,7 +410,9 @@ local returns = {
 		}))
 			debug.profilebegin("SpawnSlot Fire")
 			alloc(1)
-			buffer.writeu8(outgoing_buff, outgoing_apos, 0)
+			buffer.writeu8(outgoing_buff, outgoing_apos, 1)
+			assert(value["slot"] >= 1, "value is less than 1!")
+			assert(value["slot"] <= 3, "value is more than 3!")
 			alloc(1)
 			buffer.writeu8(outgoing_buff, outgoing_apos, value["slot"])
 			alloc(1)
@@ -461,6 +466,18 @@ local returns = {
 			end
 		end,
 	},
+	PlaySlot = {
+		fire = function(value: (number))
+			debug.profilebegin("PlaySlot Fire")
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, 0)
+			assert(value >= 1, "value is less than 1!")
+			assert(value <= 3, "value is more than 3!")
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, value)
+			debug.profileend()
+		end,
+	},
 	IngameDataEvent = {
 		on = function(callback: (value: ({
 			["shark"]: (number),
@@ -491,7 +508,7 @@ local returns = {
 		fire = function()
 			debug.profilebegin("BuyUpgrade Fire")
 			alloc(1)
-			buffer.writeu8(outgoing_buff, outgoing_apos, 1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, 2)
 			debug.profileend()
 		end,
 	},
