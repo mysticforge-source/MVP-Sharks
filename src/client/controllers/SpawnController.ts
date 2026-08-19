@@ -35,6 +35,11 @@ export class SpawnController implements OnStart {
 			this.HitboxAdded.Fire(child);
 		});
 
+		// connect signals for npcs too
+		this.maid.on(Workspace.Shared.NPC_Hitboxes.ChildAdded, (child: Model) => {
+			this.HitboxAdded.Fire(child);
+		});
+
 		this.maid.add(
 			SpawnResult.on(() => {
 				let hitbox = this.getHitbox();

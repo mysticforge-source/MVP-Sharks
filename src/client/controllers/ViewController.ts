@@ -1,5 +1,5 @@
 import { clientMaid } from "client/clientmaid";
-import { SharkViewComponent } from "client/state/components";
+import { NPCViewComponent, SharkViewComponent } from "client/state/components";
 import { HitboxesVisible } from "client/state/viewstate";
 import { sharkcatalog } from "shared/data";
 import { World } from "shared/ecs/world";
@@ -22,9 +22,15 @@ export type Shark = {
 	hitbox: Hitbox;
 };
 
+export type NPC = {
+	npcModel: Model;
+	npcId: number;
+	level: number;
+	hitbox: Hitbox;
+};
+
 export type Hitbox = MeshPart & {
 	ViewAttachment: Attachment;
-	SharkViewValue: IntValue;
 };
 
 export const PlayerToSharkEntity = new Map<Player, Entity>();
@@ -94,6 +100,27 @@ export class ViewController implements OnStart {
 			this.updateModelSize(Players.LocalPlayer);
 
 			this.maid.add(() => World.delete(sharkEntity));
+		}
+
+		// Its a npc
+		if (npcId !== undefined) {
+			const npcData = sharkcatalog[npcId];
+			const viewmodelName = npcData.viewmodelname;
+
+			const model = this.cloneModel(viewmodelName) as Model & {
+				Attachment: Attachment;
+			};
+
+			model.Parent = Workspace.Client.Models;
+
+			// creating the npc entity immediately attaches it to viewsystem
+			const npcEntity = World.entity();
+			World.set(npcEntity, NPCViewComponent, {
+				npcModel: model,
+				npcId: npcId,
+				level: hitbox.GetAttribute("Level") as number,
+				hitbox: hitbox,
+			});
 		}
 	}
 
