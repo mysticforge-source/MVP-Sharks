@@ -1,4 +1,5 @@
 import { Entity } from "@rbxts/jecs";
+import { NpcData } from "shared/data";
 import { World } from "shared/ecs/world";
 import { SharkSlot } from "shared/networktypes";
 
@@ -33,16 +34,17 @@ export const LevelupIntent = World.entity();
 export const NPC_Hitbox = World.component<Instance>();
 
 export const NPC_Health = World.component<number>();
-export const NPC_Direction = World.component<number>();
-export const NPC_Position = World.component<Vector2>();
+export const NPC_Direction = World.component<Vector3>();
+
+export const NPC_Data = World.component<NpcData & { id: number }>();
 
 export const NPC_Time = World.component<{
-	time_moving: number;
 	time_next_move: number;
+	time_moving_for: number;
 
 	time_next_regen: number;
 	time_next_attack: number;
 }>();
 
 export const NPC_DamageIntent = World.component<number>();
-export const NPC_DirectionIntent = World.component<number>();
+export const NPC_ChangeDirectionIntent = World.component<Vector3>();

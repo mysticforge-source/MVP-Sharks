@@ -6,16 +6,23 @@
 import { OnStart, Service } from "@flamework/core";
 import { Players, ServerStorage, Workspace } from "@rbxts/services";
 import { DataService, PlayerToEntity } from "./DataService";
-import { sharkcatalog } from "shared/data";
+import { npccatalog, sharkcatalog } from "shared/data";
 import { World } from "shared/ecs/world";
 import { HitboxComponent } from "shared/ecs/components";
 import { RegisterPlayer, UnregisterPlayer, DestroyHitbox } from "shared/logic/GameSimulation";
 import { serverMaid } from "server/servermaid";
 import { getSize } from "shared/utils/ageLevel";
 import { PlaySlot, SpawnResult, SpawnSlot } from "server/network/server";
+import { Entity } from "@rbxts/jecs";
+import { NPC_Data } from "server/components";
 
 export const HitboxToPlayer = new Map<MeshPart, Player>();
 export const PlayerToHitbox = new Map<Player, MeshPart>();
+
+/** A set of all existing NPC entities with data each */
+export const NPCEntities = new Set<Entity>();
+export const NPC_HitboxToEntity = new Map<MeshPart, Entity>();
+export const NPC_EntityToHitbox = new Map<Entity, MeshPart>();
 
 @Service()
 export class HitboxService implements OnStart {
@@ -186,12 +193,57 @@ export class HitboxService implements OnStart {
 			positionVel.VectorVelocity = Vector3.zero;
 			positionVel.Parent = clone;
 
-			// parent into serverauthority folder
-			clone.Parent = Workspace.FindFirstChild("ServerAuthority") as Model;
 			return clone;
 		}
 
 		return undefined;
+	}
+
+	public createNPCHitbox(npc: Entity, location: string): MeshPart | undefined {
+		const npcData = World.get(npc, NPC_Data);
+		if (!npcData) return undefined;
+
+		try {
+			const hitbox = this.cloneHitbox(npcData.hitboxname);
+			if (!hitbox) return undefined;
+
+			hitbox.SetAttribute("ObjectType", "NpcHitbox");
+
+			hitbox.SetAttribute("NpcId", npcData.id);
+			hitbox.SetAttribute("Level", npcData.level);
+
+			// cleanup on destroy
+			this.maid.add(
+				hitbox.Destroying.Connect(() => {
+					DestroyHitbox(hitbox);
+					NPC_HitboxToEntity.delete(hitbox);
+					// deleting the entity and from entitytohitbox map
+					// is done from the deletion place, this configures
+					// about the hitbox itself deleting
+				}),
+			);
+
+			// set in maps
+			NPC_EntityToHitbox.set(npc, hitbox);
+			NPC_HitboxToEntity.set(hitbox, npc);
+
+			// Configure location position
+			const loc = Workspace.Shared.NPC_Locations.FindFirstChild(location) as Part;
+			if (!loc)
+				error(
+					"LOCATION stat for this NPC is configured wrong: no spawn location found with this name",
+				);
+
+			hitbox.Position = loc.Position;
+
+			// parent into serverauthority folder
+			hitbox.Parent = Workspace.Shared.NPC_Hitboxes;
+		} catch (e) {
+			warn(
+				`[HitboxService] Failed to create hitbox for NPC ${npcData.id} at ${location}: ${e}`,
+			);
+			return undefined;
+		}
 	}
 
 	/** creates a player hitbox and registers in simulation. REQUIRES ingame state to be set-up */
@@ -239,6 +291,9 @@ export class HitboxService implements OnStart {
 
 			// register in centralized simulation
 			RegisterPlayer(player, hitbox, sharkId, slotdata.level);
+
+			// parent into serverauthority folder
+			hitbox.Parent = Workspace.ServerAuthority;
 
 			// cleanup on destroy
 			this.maid.add(

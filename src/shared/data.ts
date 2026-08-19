@@ -76,7 +76,7 @@ export const npccatalog: Record<number, NpcData> = {
 		movetime: 1,
 
 		spawnlocations: ["Test"],
-		spawnrate: 1,
+		spawnrate: 10,
 		maxspawns: 1,
 
 		maxdistance: 100,
@@ -106,7 +106,7 @@ interface SharkData {
 	showinshop?: true; /* Include 'showinshop: true' to make it purchasable and viewable */
 }
 
-interface NpcData {
+export interface NpcData {
 	name: string; // display name
 	hitboxname: string; // name of the hitbox
 	viewmodelname: string; // name of the animated Model

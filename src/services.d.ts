@@ -1,6 +1,9 @@
 interface Workspace extends Model {
 	Shared: Folder & {
-		Hitboxes: Folder;
+		NPC_Hitboxes: Folder;
+		NPC_Locations: Folder & {
+			Test: Part;
+		};
 	};
 	Client: Folder & {
 		Models: Folder;
