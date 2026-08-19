@@ -52,6 +52,41 @@ export const sharkcatalog: Record<number, SharkData> = {
 	},
 };
 
+export const npccatalog: Record<number, NpcData> = {
+	0: {
+		name: "Reef Shark Medium",
+		hitboxname: "Reef Shark Medium",
+		viewmodelname: "Reef Shark Medium",
+
+		level: 0,
+
+		health: 100,
+		meatdrop: 10,
+
+		damage: 25,
+		damagecooldown: 1,
+		damagerange: 10,
+
+		movement: "walker",
+		behaviour: "ignore",
+		range: 100,
+
+		speed: 20,
+		idletime: 1,
+		movetime: 1,
+
+		spawnlocations: ["Test"],
+		spawnrate: 1,
+		maxspawns: 1,
+
+		maxdistance: 100,
+
+		regenrate: 1,
+		regenhp: 5,
+		regencombattime: 1,
+	},
+};
+
 /* Explanations */
 interface SharkData {
 	name: string; /* General name of the shark */
@@ -69,6 +104,39 @@ interface SharkData {
 	damagemult: number; /* By how much damage is multiplied each age-up */
 
 	showinshop?: true; /* Include 'showinshop: true' to make it purchasable and viewable */
+}
+
+interface NpcData {
+	name: string; // display name
+	hitboxname: string; // name of the hitbox
+	viewmodelname: string; // name of the animated Model
+
+	level: number; // arbitrary level value
+
+	health: number;
+	meatdrop: number; // amount of meat to drop
+
+	damage: number; // one attack damage
+	damagecooldown: number; // cooldown between attacks
+	damagerange: number; // ramage of the attack
+
+	movement: "walker" | "swimmer";
+	behaviour: "ignore" | "run" | "attack";
+	range: number; // range within which the npc sees the nearest player
+
+	speed: number; // speed of movement
+	idletime: number; // how much time to wait between movements
+	movetime: number; // how much time to move
+
+	spawnlocations: string[]; // names of locations in Workspace/Shared/NPCLocations
+	spawnrate: number; // amount of seconds between spawns per location
+	maxspawns: number; // maximum amount of spawned npcs of this type per location
+
+	maxdistance: number; // maximum distance away from spawn, will walk back
+
+	regenrate: number; // how often to regenerate some hp if out of combat
+	regenhp: number; // how many hp to regenerate
+	regencombattime: number; // how many seconds to wait out after combat for regen
 }
 
 interface Upgrade {

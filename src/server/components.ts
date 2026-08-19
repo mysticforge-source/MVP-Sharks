@@ -28,3 +28,21 @@ export const AddExpIntent = World.component<number>();
 
 /* Levels up the player */
 export const LevelupIntent = World.entity();
+
+// NPC components (data changing live)
+export const NPC_Hitbox = World.component<Instance>();
+
+export const NPC_Health = World.component<number>();
+export const NPC_Direction = World.component<number>();
+export const NPC_Position = World.component<Vector2>();
+
+export const NPC_Time = World.component<{
+	time_moving: number;
+	time_next_move: number;
+
+	time_next_regen: number;
+	time_next_attack: number;
+}>();
+
+export const NPC_DamageIntent = World.component<number>();
+export const NPC_DirectionIntent = World.component<number>();

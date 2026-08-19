@@ -65,30 +65,36 @@ export class ViewController implements OnStart {
 
 	/* connected to spawncontroller.hitboxadded, creates the shark entity */
 	public HitboxAttached(hitbox: Hitbox) {
-		const sharkData = sharkcatalog[hitbox.SharkViewValue.Value];
-		const viewmodelName = sharkData.viewmodelname;
+		const sharkId = hitbox.GetAttribute("SharkId") as number;
+		const npcId = hitbox.GetAttribute("NpcId") as number;
 
-		const model = this.cloneModel(viewmodelName) as Model & {
-			Attachment: Attachment;
-		};
+		// Its a player
+		if (sharkId) {
+			const sharkData = sharkcatalog[sharkId];
+			const viewmodelName = sharkData.viewmodelname;
 
-		model.Parent = Workspace.Client.Models;
+			const model = this.cloneModel(viewmodelName) as Model & {
+				Attachment: Attachment;
+			};
 
-		// creating the shark's state immediately attaches it to viewsystem
-		const sharkEntity = World.entity();
-		World.set(sharkEntity, SharkViewComponent, {
-			defaultsharkModel: this.getDefaultModel(viewmodelName) as Model,
-			sharkModel: model,
-			sharkId: hitbox.SharkViewValue.Value,
-			level: hitbox.GetAttribute("Level") as number,
-			hitbox: hitbox,
-		});
+			model.Parent = Workspace.Client.Models;
 
-		PlayerToSharkEntity.set(Players.LocalPlayer, sharkEntity);
+			// creating the shark's state immediately attaches it to viewsystem
+			const sharkEntity = World.entity();
+			World.set(sharkEntity, SharkViewComponent, {
+				defaultsharkModel: this.getDefaultModel(viewmodelName) as Model,
+				sharkModel: model,
+				sharkId: sharkId,
+				level: hitbox.GetAttribute("Level") as number,
+				hitbox: hitbox,
+			});
 
-		this.updateModelSize(Players.LocalPlayer);
+			PlayerToSharkEntity.set(Players.LocalPlayer, sharkEntity);
 
-		this.maid.add(() => World.delete(sharkEntity));
+			this.updateModelSize(Players.LocalPlayer);
+
+			this.maid.add(() => World.delete(sharkEntity));
+		}
 	}
 
 	public onStart(): void {

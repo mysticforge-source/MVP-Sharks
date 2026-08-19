@@ -12,6 +12,7 @@ import { HitboxComponent } from "shared/ecs/components";
 import { RegisterPlayer, UnregisterPlayer, DestroyHitbox } from "shared/logic/GameSimulation";
 import { serverMaid } from "server/servermaid";
 import { getSize } from "shared/utils/ageLevel";
+import { PlaySlot, SpawnResult, SpawnSlot } from "server/network/server";
 
 export const HitboxToPlayer = new Map<MeshPart, Player>();
 export const PlayerToHitbox = new Map<Player, MeshPart>();
@@ -27,6 +28,63 @@ export class HitboxService implements OnStart {
 		this.maid.on(Players.PlayerRemoving, (player) => {
 			this.destroyPlayerHitbox(player);
 		});
+
+		// Handle player spawns
+		this.maid.add(
+			// Enter the game
+			PlaySlot.on((player: Player, slot) => {
+				const data = this.dataservice.getPlayerData(player);
+				if (!data) return "Fail";
+
+				// fail if player already in-game
+				if (this.dataservice.getPlayerIngameData(player)) return "Fail";
+
+				if (!this.dataservice.RegisterSpawnPlayer(player, slot)) return "Fail";
+
+				const shark = data.slots[slot - 1].shark;
+
+				const hitbox = this.createPlayerHitbox(player, shark);
+				if (!hitbox) return "Fail";
+
+				// assign the player play data
+				const entity = PlayerToEntity.get(player);
+				if (!entity) {
+					this.destroyPlayerHitbox(player);
+					return "Fail";
+				}
+
+				SpawnResult.fire(player);
+			}),
+		);
+
+		this.maid.add(
+			// Create slot and enter the game
+			SpawnSlot.on((player: Player, { slot, shark }) => {
+				const data = this.dataservice.getPlayerData(player);
+				if (!data) return "Fail";
+
+				// fail if player already in-game
+				if (this.dataservice.getPlayerIngameData(player)) return "Fail";
+
+				warn("SPAWNSLOT GOT", slot);
+
+				if (!this.dataservice.CreateSlot(player, slot, shark)) return "Fail";
+
+				if (!this.dataservice.RegisterSpawnPlayer(player, slot)) return "Fail";
+
+				const hitbox = this.createPlayerHitbox(player, shark);
+				if (!hitbox) return "Fail";
+
+				// assign the player play data
+				const entity = PlayerToEntity.get(player);
+				if (!entity) {
+					this.destroyPlayerHitbox(player);
+					return "Fail";
+				}
+
+				SpawnResult.fire(player);
+			}),
+		);
 	}
 
 	/*
@@ -88,7 +146,7 @@ export class HitboxService implements OnStart {
 	}
 
 	/* clones a hitbox template from serverstorage */
-	private cloneHitbox(name: string): MeshPart | undefined {
+	public cloneHitbox(name: string): MeshPart | undefined {
 		const hitbox = ServerStorage.Hitboxes.FindFirstChild(name) as MeshPart | undefined;
 
 		if (hitbox && hitbox.IsA("MeshPart")) {
@@ -97,6 +155,36 @@ export class HitboxService implements OnStart {
 			clone.Position = new Vector3(0, 35, 0);
 			clone.Anchored = false;
 			clone.Massless = true;
+
+			/* physics constraints */
+			hitbox.Anchored = false;
+			const centerAttach = new Instance("Attachment", hitbox);
+
+			// anti-gravity force
+			const antigrav = new Instance("VectorForce");
+			antigrav.Name = "AntiGravity";
+			antigrav.Force = new Vector3(0, hitbox.AssemblyMass * Workspace.Gravity, 0);
+			antigrav.ApplyAtCenterOfMass = true;
+			antigrav.Attachment0 = centerAttach;
+			antigrav.RelativeTo = Enum.ActuatorRelativeTo.World;
+			antigrav.Parent = hitbox;
+
+			// camera-aligned rotation
+			const alignRotation = new Instance("AlignOrientation");
+			alignRotation.Attachment0 = centerAttach;
+			alignRotation.Responsiveness = 15;
+			alignRotation.Mode = Enum.OrientationAlignmentMode.OneAttachment;
+			alignRotation.Parent = hitbox;
+			alignRotation.MaxTorque = math.huge;
+			alignRotation.MaxAngularVelocity = 20;
+
+			// linear velocity for movement
+			const positionVel = new Instance("LinearVelocity");
+			positionVel.Attachment0 = centerAttach;
+			positionVel.RelativeTo = Enum.ActuatorRelativeTo.World;
+			positionVel.MaxForce = 5e3;
+			positionVel.VectorVelocity = Vector3.zero;
+			positionVel.Parent = hitbox;
 
 			// parent into serverauthority folder
 			clone.Parent = Workspace.FindFirstChild("ServerAuthority") as Model;
@@ -133,42 +221,6 @@ export class HitboxService implements OnStart {
 
 			// name it for client identification
 			hitbox.Name = player.Name;
-
-			// store shark id for visual model attachment
-			const sharkView = new Instance("IntValue");
-			sharkView.Value = sharkId;
-			sharkView.Name = "SharkViewValue";
-			sharkView.Parent = hitbox;
-
-			/* physics constraints */
-			hitbox.Anchored = false;
-			const centerAttach = new Instance("Attachment", hitbox);
-
-			// anti-gravity force
-			const antigrav = new Instance("VectorForce");
-			antigrav.Name = "AntiGravity";
-			antigrav.Force = new Vector3(0, hitbox.AssemblyMass * Workspace.Gravity, 0);
-			antigrav.ApplyAtCenterOfMass = true;
-			antigrav.Attachment0 = centerAttach;
-			antigrav.RelativeTo = Enum.ActuatorRelativeTo.World;
-			antigrav.Parent = hitbox;
-
-			// camera-aligned rotation
-			const alignRotation = new Instance("AlignOrientation");
-			alignRotation.Attachment0 = centerAttach;
-			alignRotation.Responsiveness = 15;
-			alignRotation.Mode = Enum.OrientationAlignmentMode.OneAttachment;
-			alignRotation.Parent = hitbox;
-			alignRotation.MaxTorque = math.huge;
-			alignRotation.MaxAngularVelocity = 20;
-
-			// linear velocity for movement
-			const positionVel = new Instance("LinearVelocity");
-			positionVel.Attachment0 = centerAttach;
-			positionVel.RelativeTo = Enum.ActuatorRelativeTo.World;
-			positionVel.MaxForce = 5e3;
-			positionVel.VectorVelocity = Vector3.zero;
-			positionVel.Parent = hitbox;
 
 			// === Server Authority: no SetNetworkOwner calls ===
 			// server retains default ownership of all parts in the authority folder
