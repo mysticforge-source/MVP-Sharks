@@ -157,24 +157,24 @@ export class HitboxService implements OnStart {
 			clone.Massless = true;
 
 			/* physics constraints */
-			hitbox.Anchored = false;
-			const centerAttach = new Instance("Attachment", hitbox);
+			clone.Anchored = false;
+			const centerAttach = new Instance("Attachment", clone);
 
 			// anti-gravity force
 			const antigrav = new Instance("VectorForce");
 			antigrav.Name = "AntiGravity";
-			antigrav.Force = new Vector3(0, hitbox.AssemblyMass * Workspace.Gravity, 0);
+			antigrav.Force = new Vector3(0, clone.AssemblyMass * Workspace.Gravity, 0);
 			antigrav.ApplyAtCenterOfMass = true;
 			antigrav.Attachment0 = centerAttach;
 			antigrav.RelativeTo = Enum.ActuatorRelativeTo.World;
-			antigrav.Parent = hitbox;
+			antigrav.Parent = clone;
 
 			// camera-aligned rotation
 			const alignRotation = new Instance("AlignOrientation");
 			alignRotation.Attachment0 = centerAttach;
 			alignRotation.Responsiveness = 15;
 			alignRotation.Mode = Enum.OrientationAlignmentMode.OneAttachment;
-			alignRotation.Parent = hitbox;
+			alignRotation.Parent = clone;
 			alignRotation.MaxTorque = math.huge;
 			alignRotation.MaxAngularVelocity = 20;
 
@@ -184,7 +184,7 @@ export class HitboxService implements OnStart {
 			positionVel.RelativeTo = Enum.ActuatorRelativeTo.World;
 			positionVel.MaxForce = 5e3;
 			positionVel.VectorVelocity = Vector3.zero;
-			positionVel.Parent = hitbox;
+			positionVel.Parent = clone;
 
 			// parent into serverauthority folder
 			clone.Parent = Workspace.FindFirstChild("ServerAuthority") as Model;
@@ -222,7 +222,6 @@ export class HitboxService implements OnStart {
 			// name it for client identification
 			hitbox.Name = player.Name;
 
-			// === Server Authority: no SetNetworkOwner calls ===
 			// server retains default ownership of all parts in the authority folder
 
 			// write initial attributes
@@ -242,8 +241,7 @@ export class HitboxService implements OnStart {
 			RegisterPlayer(player, hitbox, sharkId, slotdata.level);
 
 			// cleanup on destroy
-			const hitboxMaid = this.maid.sub();
-			hitboxMaid.add(
+			this.maid.add(
 				hitbox.Destroying.Connect(() => {
 					UnregisterPlayer(player);
 					DestroyHitbox(hitbox);

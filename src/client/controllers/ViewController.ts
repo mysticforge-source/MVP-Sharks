@@ -69,7 +69,7 @@ export class ViewController implements OnStart {
 		const npcId = hitbox.GetAttribute("NpcId") as number;
 
 		// Its a player
-		if (sharkId) {
+		if (sharkId !== undefined) {
 			const sharkData = sharkcatalog[sharkId];
 			const viewmodelName = sharkData.viewmodelname;
 

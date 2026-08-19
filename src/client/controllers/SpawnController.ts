@@ -18,25 +18,20 @@ export class SpawnController implements OnStart {
 	protected maid = clientMaid.sub();
 
 	public HitboxAdded = new Signal<Model>();
-
-	/* returns the serverauthority folder */
-	private getAuthorityFolder(): Instance {
-		return Workspace.FindFirstChild("ServerAuthority") ?? Workspace;
-	}
+	public authorityFolder = Workspace.WaitForChild("ServerAuthority");
 
 	/* finds localplayer hitbox in serverauthority */
 	public getHitbox(): MeshPart | undefined {
-		const authorityFolder = this.getAuthorityFolder();
-		const hitbox = authorityFolder.FindFirstChild(this.player.Name) as MeshPart | undefined;
+		const hitbox = this.authorityFolder.FindFirstChild(this.player.Name) as
+			| MeshPart
+			| undefined;
 		return hitbox;
 	}
 
 	public onStart(): void {
 		// connect signals for hitbox addition to serverauthority
-		const authorityFolder = this.getAuthorityFolder();
-		this.maid.on(authorityFolder.ChildAdded, (child: Model) => {
+		this.maid.on(this.authorityFolder.ChildAdded, (child: Model) => {
 			warn("[SpawnController] CHILD ADDED to ServerAuthority");
-			child.WaitForChild("SharkViewValue");
 			this.HitboxAdded.Fire(child);
 		});
 
