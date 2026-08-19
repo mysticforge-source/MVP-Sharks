@@ -36,7 +36,11 @@ export const NPC_Hitbox = World.component<Instance>();
 export const NPC_Health = World.component<number>();
 export const NPC_Direction = World.component<Vector3>();
 
-export const NPC_Data = World.component<NpcData & { id: number }>();
+// stale context about this specific NPC
+export const NPC_Data = World.component<{
+	id: number;
+	location: string;
+}>();
 
 export const NPC_Time = World.component<{
 	time_next_move: number;

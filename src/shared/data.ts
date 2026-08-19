@@ -67,7 +67,7 @@ export const npccatalog: Record<number, NpcData> = {
 		damagecooldown: 1,
 		damagerange: 10,
 
-		movement: "walker",
+		movement: "swimmer",
 		behaviour: "ignore",
 		range: 100,
 
@@ -75,9 +75,12 @@ export const npccatalog: Record<number, NpcData> = {
 		idletime: 1,
 		movetime: 1,
 
-		spawnlocations: ["Test"],
-		spawnrate: 10,
-		maxspawns: 1,
+		spawnlocations: {
+			Test: {
+				spawnrate: 10,
+				maxspawns: 1,
+			},
+		},
 
 		maxdistance: 100,
 
@@ -128,9 +131,13 @@ export interface NpcData {
 	idletime: number; // how much time to wait between movements
 	movetime: number; // how much time to move
 
-	spawnlocations: string[]; // names of locations in Workspace/Shared/NPCLocations
-	spawnrate: number; // amount of seconds between spawns per location
-	maxspawns: number; // maximum amount of spawned npcs of this type per location
+	spawnlocations: {
+		[name: string]: {
+			// name of location in Workspace/Shared/NPCLocations
+			spawnrate: number; // amount of seconds between spawns for this location
+			maxspawns: number; // maximum amount of spawned npcs of this type for this location
+		};
+	};
 
 	maxdistance: number; // maximum distance away from spawn, will walk back
 

@@ -203,14 +203,16 @@ export class HitboxService implements OnStart {
 		const npcData = World.get(npc, NPC_Data);
 		if (!npcData) return undefined;
 
+		const npcInfo = npccatalog[npcData.id];
+
 		try {
-			const hitbox = this.cloneHitbox(npcData.hitboxname);
+			const hitbox = this.cloneHitbox(npcInfo.hitboxname);
 			if (!hitbox) return undefined;
 
 			hitbox.SetAttribute("ObjectType", "NpcHitbox");
 
 			hitbox.SetAttribute("NpcId", npcData.id);
-			hitbox.SetAttribute("Level", npcData.level);
+			hitbox.SetAttribute("Level", npcInfo.level);
 
 			// cleanup on destroy
 			this.maid.add(
