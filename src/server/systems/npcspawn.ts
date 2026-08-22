@@ -138,12 +138,23 @@ export default (dt: number, hitboxservice: HitboxService) => {
 		if (!hitbox) continue;
 
 		const linearvel = hitbox.LinearVelocity;
-
 		const currentVelocity = linearvel.VectorVelocity;
-		// if it's too similar or identical just ignore it
-		if (currentVelocity.FuzzyEq(direction, 0.2)) continue;
+
+		// print(currentVelocity);
 
 		const npcData = npccatalog[data.id];
+
+		// if it's identical just ignore it
+		if (currentVelocity.X === direction.mul(npcData.speed).X) continue;
+
+		// align the hitbox!
+		if (direction.Magnitude > 0)
+			hitbox.AlignOrientation.CFrame = CFrame.lookAt(
+				hitbox.Position,
+				hitbox.Position.add(direction),
+			);
+
 		linearvel.VectorVelocity = direction.mul(npcData.speed);
+		print("rotated!", linearvel.VectorVelocity, direction.mul(npcData.speed));
 	}
 };

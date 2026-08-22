@@ -1,7 +1,7 @@
 import { clientMaid } from "client/clientmaid";
 import { NPCViewComponent, SharkViewComponent } from "client/state/components";
 import { HitboxesVisible } from "client/state/viewstate";
-import { sharkcatalog } from "shared/data";
+import { animdata, sharkcatalog } from "shared/data";
 import { World } from "shared/ecs/world";
 
 import { Controller, OnStart } from "@flamework/core";
@@ -42,6 +42,10 @@ export class ViewController implements OnStart {
 
 	protected maid = clientMaid.sub();
 
+	protected animations = {
+		idle: new Instance("Animation"),
+	};
+
 	public inputs = {
 		ToggleHitboxes: new CompositeActionBuilder("LeftControl", "H").setTiming(1),
 	};
@@ -54,6 +58,13 @@ export class ViewController implements OnStart {
 	public cloneModel(name: string): Model | undefined {
 		const model = this.getDefaultModel(name);
 		if (model) {
+			// load animations
+			const animator = model
+				.FindFirstChild("AnimationController")
+				?.FindFirstChild("Animator") as Animator;
+			const idle = animator.LoadAnimation(this.animations.idle);
+			idle.Play();
+
 			return model.Clone() as Model;
 		}
 	}
@@ -128,9 +139,12 @@ export class ViewController implements OnStart {
 	}
 
 	public onStart(): void {
+		// load anims
+		this.animations.idle.AnimationId = animdata.UniversalIdle;
+
 		this.maid.on(this.spawncontroller.HitboxAdded, (h) => this.HitboxAttached(h));
 
-		this.inputs.ToggleHitboxes.activated.Connect(() => {
+		this.maid.on(this.inputs.ToggleHitboxes.activated, () => {
 			HitboxesVisible(!HitboxesVisible());
 			const authorityFolder = Workspace.FindFirstChild("ServerAuthority");
 			if (authorityFolder) {

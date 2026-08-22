@@ -164,7 +164,7 @@ interface Upgrade {
 }
 
 export const animdata = {
-	UniversalIdle: "134716316716783",
+	UniversalIdle: "rbxassetid://134716316716783",
 	UniversalAttack: "116268079065083",
 };
 
