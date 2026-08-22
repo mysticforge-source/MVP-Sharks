@@ -2,7 +2,7 @@ interface Workspace extends Model {
 	Shared: Folder & {
 		NPC_Hitboxes: Folder;
 		NPC_Locations: Folder & {
-			Test: Part;
+			[key: string]: Part;
 		};
 	};
 	Client: Folder & {

@@ -11,7 +11,7 @@ import { World } from "shared/ecs/world";
 import { UpdatePlayerLevel } from "shared/logic/GameSimulation";
 
 const config = {
-	test_exp_dt: 0.1,
+	test_exp_dt: 1,
 	test_exp_amount: 24,
 };
 

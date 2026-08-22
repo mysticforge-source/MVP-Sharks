@@ -73,6 +73,9 @@ export class ViewController implements OnStart {
 	public HitboxAttached(hitbox: Hitbox) {
 		const sharkId = hitbox.GetAttribute("SharkId") as number;
 		const npcId = hitbox.GetAttribute("NpcId") as number;
+		const hidden = hitbox.GetAttribute("Hidden") as boolean;
+
+		if (hidden === true) return;
 
 		// Its a player
 		if (sharkId !== undefined) {
@@ -132,6 +135,11 @@ export class ViewController implements OnStart {
 			const authorityFolder = Workspace.FindFirstChild("ServerAuthority");
 			if (authorityFolder) {
 				for (const hitbox of authorityFolder.GetChildren() as MeshPart[]) {
+					if (hitbox.IsA("BasePart")) {
+						hitbox.Transparency = HitboxesVisible() ? 0 : 1;
+					}
+				}
+				for (const hitbox of Workspace.Shared.NPC_Hitboxes.GetChildren() as MeshPart[]) {
 					if (hitbox.IsA("BasePart")) {
 						hitbox.Transparency = HitboxesVisible() ? 0 : 1;
 					}

@@ -22,7 +22,7 @@ export const PlayerToHitbox = new Map<Player, MeshPart>();
 /** A set of all existing NPC entities with data each */
 export const NPCEntities = new Set<Entity>();
 export const NPC_HitboxToEntity = new Map<MeshPart, Entity>();
-export const NPC_EntityToHitbox = new Map<Entity, MeshPart>();
+export const NPC_EntityToHitbox = new Map<Entity, MeshPart & { LinearVelocity: LinearVelocity }>();
 
 @Service()
 export class HitboxService implements OnStart {
@@ -153,7 +153,7 @@ export class HitboxService implements OnStart {
 	}
 
 	/* clones a hitbox template from serverstorage */
-	public cloneHitbox(name: string): MeshPart | undefined {
+	public cloneHitbox(name: string): (MeshPart & { LinearVelocity: LinearVelocity }) | undefined {
 		const hitbox = ServerStorage.Hitboxes.FindFirstChild(name) as MeshPart | undefined;
 
 		if (hitbox && hitbox.IsA("MeshPart")) {
@@ -162,6 +162,8 @@ export class HitboxService implements OnStart {
 			clone.Position = new Vector3(0, 35, 0);
 			clone.Anchored = false;
 			clone.Massless = true;
+
+			clone.CollisionGroup = "Hitbox";
 
 			/* physics constraints */
 			clone.Anchored = false;
@@ -193,7 +195,7 @@ export class HitboxService implements OnStart {
 			positionVel.VectorVelocity = Vector3.zero;
 			positionVel.Parent = clone;
 
-			return clone;
+			return clone as MeshPart & { LinearVelocity: LinearVelocity };
 		}
 
 		return undefined;
@@ -209,10 +211,14 @@ export class HitboxService implements OnStart {
 			const hitbox = this.cloneHitbox(npcInfo.hitboxname);
 			if (!hitbox) return undefined;
 
+			hitbox.CollisionGroup = "NPC_Hitbox";
+
 			hitbox.SetAttribute("ObjectType", "NpcHitbox");
 
 			hitbox.SetAttribute("NpcId", npcData.id);
 			hitbox.SetAttribute("Level", npcInfo.level);
+
+			// hitbox.SetAttribute("Hidden", true);
 
 			// cleanup on destroy
 			this.maid.add(

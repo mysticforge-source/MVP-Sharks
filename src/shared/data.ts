@@ -69,20 +69,32 @@ export const npccatalog: Record<number, NpcData> = {
 
 		movement: "swimmer",
 		behaviour: "ignore",
-		range: 100,
+		range: 25,
 
-		speed: 20,
-		idletime: 1,
-		movetime: 1,
+		speed: 10,
+		idletime: 1.5,
+		movetime: 2.5,
 
 		spawnlocations: {
 			Test: {
-				spawnrate: 10,
-				maxspawns: 1,
+				spawnrate: 15,
+				maxspawns: 2,
+			},
+			Test2: {
+				spawnrate: 15,
+				maxspawns: 2,
+			},
+			Test3: {
+				spawnrate: 15,
+				maxspawns: 2,
+			},
+			Test4: {
+				spawnrate: 15,
+				maxspawns: 2,
 			},
 		},
 
-		maxdistance: 100,
+		maxdistance: 50,
 
 		regenrate: 1,
 		regenhp: 5,
@@ -155,3 +167,6 @@ export const animdata = {
 	UniversalIdle: "134716316716783",
 	UniversalAttack: "116268079065083",
 };
+
+// TODO
+export const clientviewdistance = 100;
