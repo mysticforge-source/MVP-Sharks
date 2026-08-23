@@ -68,8 +68,9 @@ export const npccatalog: Record<number, NpcData> = {
 		damagerange: 10,
 
 		movement: "swimmer",
-		behaviour: "ignore",
-		range: 25,
+		behaviour: "attack",
+		range: 50,
+		attackrange: 20,
 
 		speed: 10,
 		idletime: 1.5,
@@ -77,15 +78,15 @@ export const npccatalog: Record<number, NpcData> = {
 
 		spawnlocations: {
 			Test: {
-				spawnrate: 15,
+				spawnrate: 10,
 				maxspawns: 2,
 			},
 			Test2: {
-				spawnrate: 15,
+				spawnrate: 10,
 				maxspawns: 2,
 			},
 			Test3: {
-				spawnrate: 15,
+				spawnrate: 10,
 				maxspawns: 2,
 			},
 			Test4: {
@@ -138,6 +139,7 @@ export interface NpcData {
 	movement: "walker" | "swimmer";
 	behaviour: "ignore" | "run" | "attack";
 	range: number; // range within which the npc sees the nearest player
+	attackrange: number; // range within which the npc attacks and stops moving
 
 	speed: number; // speed of movement
 	idletime: number; // how much time to wait between movements

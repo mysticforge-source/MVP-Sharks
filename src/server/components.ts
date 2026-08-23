@@ -46,6 +46,9 @@ export const NPC_Time = World.component<{
 	time_next_move: number;
 	time_moving_for: number;
 
+	// target to look at
+	target?: MeshPart;
+
 	time_next_regen: number;
 	time_next_attack: number;
 }>();

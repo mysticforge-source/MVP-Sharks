@@ -10,7 +10,10 @@ import { World } from "shared/ecs/world";
 
 import { OnStart, Service } from "@flamework/core";
 import { Entity } from "@rbxts/jecs";
-import { createCollection, Document } from "@rbxts/lapis";
+
+import "@rbxts/lapis-mockdatastore";
+
+import { Collection, createCollection, Document } from "@rbxts/lapis";
 import { Players } from "@rbxts/services";
 import { t } from "@rbxts/t";
 import { merge } from "@rbxts/sift/out/Dictionary";
@@ -78,27 +81,54 @@ export const EntityToPlayer = new Map<Entity, Player>(); // player owner of this
 
 export const PlayerToGameSlot = new Map<Player, number>(); // slot number of this spawned player
 
+const TESTING = game.PlaceId === 0;
+
 @Service()
 export class DataService implements OnStart {
-	protected Collection = createCollection<UserData>("PROD_PlayerData", {
-		defaultData: defaultUserData,
-		validate: validateUserData,
-		migrations: [
-			// TEST
-			(data) => {
-				return defaultUserData;
-			},
-			(data) => {
-				return defaultUserData;
-			},
-		],
-	});
+	protected Collection = TESTING
+		? undefined
+		: createCollection<UserData>("PROD_PlayerData", {
+				defaultData: defaultUserData,
+				validate: validateUserData,
+				migrations: [
+					// TEST
+					(data) => {
+						return defaultUserData;
+					},
+					(data) => {
+						return defaultUserData;
+					},
+				],
+			});
 	protected Sessions = new Map<Player, Document<UserData, true>>();
 	protected maid = serverMaid.sub();
 
 	// loads the session and adds it to sessions
 	private async PlayerAdded(player: Player) {
-		this.Collection.load(`User${player.UserId}`, [player.UserId])
+		// mockery for testing
+		if (TESTING) {
+			let data = defaultUserData;
+
+			this.Sessions.set(player, {
+				read: () => data,
+				write: (newdata: UserData) => {
+					data = newdata;
+				},
+			} as any as Document<UserData, true>);
+
+			const entity = World.entity();
+			PlayerToEntity.set(player, entity);
+			EntityToPlayer.set(entity, player);
+
+			// source of truth is the player's component
+			World.set(entity, UserDataComponent, data);
+
+			PlayerDataEvent.fire(player, data);
+
+			return;
+		}
+
+		this.Collection!.load(`User${player.UserId}`, [player.UserId])
 			.then(async (ses) => {
 				// player could leave while it was loading
 				if (!player.Parent) {
@@ -133,6 +163,8 @@ export class DataService implements OnStart {
 
 	// closes the session and deletes it from sessions
 	private async PlayerRemoving(player: Player) {
+		if (TESTING) return;
+
 		const ses = this.Sessions.get(player);
 		if (ses) {
 			// SAVE UNSAVED DATA

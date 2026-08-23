@@ -35,6 +35,7 @@
     "@rbxts/destroyable": "^1.0.10",
     "@rbxts/jecs": "^0.11.0",
     "@rbxts/lapis": "^0.3.8",
+    "@rbxts/lapis-mockdatastore": "^0.3.7",
     "@rbxts/lemon-signal": "^1.2.0",
     "@rbxts/mechanism": "^1.1.2",
     "@rbxts/ripple": "^0.10.2",

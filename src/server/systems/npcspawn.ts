@@ -1,7 +1,7 @@
 import { Workspace } from "@rbxts/services";
 import { merge } from "@rbxts/sift/out/Dictionary";
 import { NPC_Data, NPC_Direction, NPC_Health, NPC_Time } from "server/components";
-import { HitboxService, NPC_EntityToHitbox } from "server/services/HitboxService";
+import { HitboxService, NPC_EntityToHitbox, PlayerToHitbox } from "server/services/HitboxService";
 import { npccatalog } from "shared/data";
 import { World } from "shared/ecs/world";
 
@@ -79,10 +79,12 @@ export default (dt: number, hitboxservice: HitboxService) => {
 	}
 
 	// tick times for each npc entity
-	for (let [entity, times, data, dir] of World.query(NPC_Time, NPC_Data, NPC_Direction)) {
+	for (let [entity, times, data] of World.query(NPC_Time, NPC_Data)) {
 		const npcData = npccatalog[data.id];
 		const hitbox = NPC_EntityToHitbox.get(entity);
 		if (!hitbox) continue;
+
+		const linearvel = hitbox.LinearVelocity;
 
 		// const locData = npcData.spawnlocations[data.location];
 
@@ -94,67 +96,165 @@ export default (dt: number, hitboxservice: HitboxService) => {
 			time_moving_for: times.time_moving_for - dt,
 		};
 
-		// disable direction if we stopped moving
-		if (times.time_moving_for <= 0 && dir !== Vector3.zero) {
-			World.set(entity, NPC_Direction, Vector3.zero);
+		// stop moving if time is over
+		if (times.time_moving_for <= 0 && linearvel.VectorVelocity.Magnitude > 0) {
+			linearvel.VectorVelocity = Vector3.zero;
 		}
 
 		// set direction and time to move if we just started moving
 		if (times.time_next_move <= 0) {
-			// construct a vector having yaw and pitch
-			const yaw = random.NextInteger(0, 360);
-			const pitch = random.NextInteger(0, 360);
+			// firstly detect if we are an aggro npc
+			if (npcData.behaviour === "attack") {
+				// find a new target
+				let mindist = npcData.range;
+				let besttarget = undefined;
 
-			World.set(
-				entity,
-				NPC_Direction,
-				new Vector3(
+				for (const [player, playerhitbox] of PlayerToHitbox) {
+					const dist = playerhitbox.Position.sub(hitbox.Position).Magnitude;
+					const disttospawn = Workspace.Shared.NPC_Locations[data.location].Position.sub(
+						playerhitbox.Position,
+					);
+
+					// if we will ever be able to reach the player without moving back to spawn
+					if (
+						dist <= mindist &&
+						disttospawn.Magnitude <= npcData.maxdistance + npcData.attackrange * 0.5
+					) {
+						besttarget = playerhitbox;
+						mindist = dist;
+					}
+				}
+
+				// if theres a target we can attack
+				if (besttarget) {
+					// if we're too close already
+					if (mindist <= npcData.attackrange) {
+						// align the hitbox to target
+						hitbox.AlignOrientation.CFrame = CFrame.lookAt(
+							hitbox.Position,
+							hitbox.Position.add(besttarget.Position.sub(hitbox.Position)),
+						);
+
+						// just dont move but rotate
+						times.time_next_move = npcData.idletime;
+					} else {
+						// get the direction to target
+						const vect = besttarget.Position.sub(hitbox.Position);
+						const direction = vect.Unit;
+
+						// get the time to get to target and get closer in attackrange
+						const t = (vect.Magnitude - npcData.attackrange) / npcData.speed;
+
+						// align the hitbox to target
+						hitbox.AlignOrientation.CFrame = CFrame.lookAt(
+							hitbox.Position,
+							hitbox.Position.add(direction),
+						);
+
+						// if we should move to attack:
+						if (t > 0) {
+							print(t, "seconds to move, because vect is", vect.Magnitude);
+							// move to target now
+							linearvel.VectorVelocity = direction.mul(npcData.speed);
+
+							// recheck in idletime seconds
+							times.time_moving_for = t;
+							times.time_next_move = t + npcData.idletime;
+						}
+
+						// however if too far-from-home, set the direction to home
+						const distance = Workspace.Shared.NPC_Locations[data.location].Position.sub(
+							hitbox.Position,
+						);
+						if (distance.Magnitude >= npcData.maxdistance) {
+							linearvel.VectorVelocity = distance.Unit.mul(npcData.speed);
+							hitbox.AlignOrientation.CFrame = CFrame.lookAt(
+								hitbox.Position,
+								hitbox.Position.add(distance.Unit),
+							);
+
+							// move less, just incase the player is still there
+							times.time_moving_for = npcData.movetime * 0.75;
+							times.time_next_move = npcData.movetime * 0.75 + npcData.idletime;
+						}
+					}
+				} else {
+					// if theres no target just do ignore behaviour
+
+					// construct a vector having random yaw and pitch
+					const yaw = random.NextInteger(0, 360);
+					const pitch = random.NextInteger(0, 360);
+
+					const dir = new Vector3(
+						math.cos(pitch) * math.sin(yaw),
+						math.sin(pitch),
+						math.cos(pitch) * math.cos(yaw),
+					).Unit.mul(npcData.speed);
+
+					linearvel.VectorVelocity = dir;
+
+					hitbox.AlignOrientation.CFrame = CFrame.lookAt(
+						hitbox.Position,
+						hitbox.Position.add(dir.Unit),
+					);
+
+					// we'll move for movetime and idle for idletime
+					times.time_next_move = npcData.movetime + npcData.idletime;
+					// will move now for Movetime
+					times.time_moving_for = npcData.movetime;
+
+					// however if too far-from-home, set the direction to home
+					const distance = Workspace.Shared.NPC_Locations[data.location].Position.sub(
+						hitbox.Position,
+					);
+					if (distance.Magnitude >= npcData.maxdistance) {
+						linearvel.VectorVelocity = distance.Unit.mul(npcData.speed);
+						hitbox.AlignOrientation.CFrame = CFrame.lookAt(
+							hitbox.Position,
+							hitbox.Position.add(distance.Unit),
+						);
+					}
+				}
+			} else {
+				// if we're not aggressive
+
+				// construct a vector having random yaw and pitch
+				const yaw = random.NextInteger(0, 360);
+				const pitch = random.NextInteger(0, 360);
+
+				const dir = new Vector3(
 					math.cos(pitch) * math.sin(yaw),
 					math.sin(pitch),
 					math.cos(pitch) * math.cos(yaw),
-				).Unit,
-			);
-			// we'll move for movetime and idle for idletime
-			times.time_next_move = npcData.movetime + npcData.idletime;
-			// will move now for Movetime
-			times.time_moving_for = npcData.movetime;
+				).Unit.mul(npcData.speed);
 
-			// however if too far-from-home, set the direction to home
-			const distance = Workspace.Shared.NPC_Locations[data.location].Position.sub(
-				hitbox.Position,
-			);
-			if (distance.Magnitude >= npcData.maxdistance) {
-				World.set(entity, NPC_Direction, distance.Unit);
+				linearvel.VectorVelocity = dir;
+
+				hitbox.AlignOrientation.CFrame = CFrame.lookAt(
+					hitbox.Position,
+					hitbox.Position.add(dir.Unit),
+				);
+
+				// we'll move for movetime and idle for idletime
+				times.time_next_move = npcData.movetime + npcData.idletime;
+				// will move now for Movetime
+				times.time_moving_for = npcData.movetime;
+
+				// however if too far-from-home, set the direction to home
+				const distance = Workspace.Shared.NPC_Locations[data.location].Position.sub(
+					hitbox.Position,
+				);
+				if (distance.Magnitude >= npcData.maxdistance) {
+					linearvel.VectorVelocity = distance.Unit.mul(npcData.speed);
+					hitbox.AlignOrientation.CFrame = CFrame.lookAt(
+						hitbox.Position,
+						hitbox.Position.add(distance.Unit),
+					);
+				}
 			}
 		}
 
 		// update stuff
 		World.set(entity, NPC_Time, times);
-	}
-
-	// update velocities!
-	for (let [entity, direction, data] of World.query(NPC_Direction, NPC_Data)) {
-		const hitbox = NPC_EntityToHitbox.get(entity);
-		if (!hitbox) continue;
-
-		const linearvel = hitbox.LinearVelocity;
-		const currentVelocity = linearvel.VectorVelocity;
-
-		// print(currentVelocity);
-
-		const npcData = npccatalog[data.id];
-
-		// if it's identical just ignore it
-		if (currentVelocity.X === direction.mul(npcData.speed).X) continue;
-
-		// align the hitbox!
-		if (direction.Magnitude > 0)
-			hitbox.AlignOrientation.CFrame = CFrame.lookAt(
-				hitbox.Position,
-				hitbox.Position.add(direction),
-			);
-
-		linearvel.VectorVelocity = direction.mul(npcData.speed);
-		print("rotated!", linearvel.VectorVelocity, direction.mul(npcData.speed));
 	}
 };
