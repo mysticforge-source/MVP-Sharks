@@ -198,7 +198,7 @@ export class HitboxService implements OnStart {
 			const positionVel = new Instance("LinearVelocity");
 			positionVel.Attachment0 = centerAttach;
 			positionVel.RelativeTo = Enum.ActuatorRelativeTo.World;
-			positionVel.MaxForce = 5e3;
+			positionVel.MaxForce = 10000;
 			positionVel.VectorVelocity = Vector3.zero;
 			positionVel.Parent = clone;
 

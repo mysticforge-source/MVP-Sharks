@@ -20,6 +20,8 @@ export type Shark = {
 	sharkId: number;
 	level: number;
 	hitbox: Hitbox;
+
+	attack_track: AnimationTrack;
 };
 
 export type NPC = {
@@ -27,6 +29,8 @@ export type NPC = {
 	npcId: number;
 	level: number;
 	hitbox: Hitbox;
+
+	attack_track: AnimationTrack;
 };
 
 export type Hitbox = MeshPart & {
@@ -34,6 +38,7 @@ export type Hitbox = MeshPart & {
 };
 
 export const PlayerToSharkEntity = new Map<Player, Entity>();
+export const HitboxToNPC = new Map<Hitbox, Entity>();
 
 @Controller()
 /* attaches models to hitboxservice's hitboxes */
@@ -44,6 +49,7 @@ export class ViewController implements OnStart {
 
 	protected animations = {
 		idle: new Instance("Animation"),
+		attack: new Instance("Animation"),
 	};
 
 	public inputs = {
@@ -58,13 +64,6 @@ export class ViewController implements OnStart {
 	public cloneModel(name: string): Model | undefined {
 		const model = this.getDefaultModel(name);
 		if (model) {
-			// load animations
-			const animator = model
-				.FindFirstChild("AnimationController")
-				?.FindFirstChild("Animator") as Animator;
-			const idle = animator.LoadAnimation(this.animations.idle);
-			idle.Play();
-
 			return model.Clone() as Model;
 		}
 	}
@@ -99,6 +98,16 @@ export class ViewController implements OnStart {
 
 			model.Parent = Workspace.Client.Models;
 
+			const animator = model
+				.FindFirstChild("AnimationController")
+				?.FindFirstChild("Animator") as Animator;
+			const idle = animator.LoadAnimation(this.animations.idle);
+			idle.Looped = true;
+
+			idle.Play();
+
+			model.PrimaryPart?.PivotTo(hitbox.ViewAttachment.CFrame);
+
 			// creating the shark's state immediately attaches it to viewsystem
 			const sharkEntity = World.entity();
 			World.set(sharkEntity, SharkViewComponent, {
@@ -107,6 +116,8 @@ export class ViewController implements OnStart {
 				sharkId: sharkId,
 				level: hitbox.GetAttribute("Level") as number,
 				hitbox: hitbox,
+
+				attack_track: animator.LoadAnimation(this.animations.attack),
 			});
 
 			PlayerToSharkEntity.set(Players.LocalPlayer, sharkEntity);
@@ -127,6 +138,14 @@ export class ViewController implements OnStart {
 
 			model.Parent = Workspace.Client.Models;
 
+			const animator = model
+				.FindFirstChild("AnimationController")
+				?.FindFirstChild("Animator") as Animator;
+			const idle = animator.LoadAnimation(this.animations.idle);
+			idle.Looped = true;
+
+			idle.Play();
+
 			// creating the npc entity immediately attaches it to viewsystem
 			const npcEntity = World.entity();
 			World.set(npcEntity, NPCViewComponent, {
@@ -134,13 +153,18 @@ export class ViewController implements OnStart {
 				npcId: npcId,
 				level: hitbox.GetAttribute("Level") as number,
 				hitbox: hitbox,
+
+				attack_track: animator.LoadAnimation(this.animations.attack),
 			});
+
+			HitboxToNPC.set(hitbox, npcEntity);
 		}
 	}
 
 	public onStart(): void {
 		// load anims
 		this.animations.idle.AnimationId = animdata.UniversalIdle;
+		this.animations.attack.AnimationId = animdata.UniversalAttack;
 
 		this.maid.on(this.spawncontroller.HitboxAdded, (h) => this.HitboxAttached(h));
 

@@ -73,8 +73,8 @@ export const npccatalog: Record<number, NpcData> = {
 		attackrange: 20,
 
 		speed: 10,
-		idletime: 1.5,
-		movetime: 2.5,
+		idletime: 0.1,
+		movetime: 2,
 
 		spawnlocations: {
 			Test: {

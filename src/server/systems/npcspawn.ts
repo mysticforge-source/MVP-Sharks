@@ -97,12 +97,14 @@ export default (dt: number, hitboxservice: HitboxService) => {
 		};
 
 		// stop moving if time is over
-		if (times.time_moving_for <= 0 && linearvel.VectorVelocity.Magnitude > 0) {
-			linearvel.VectorVelocity = Vector3.zero;
+		if (times.time_moving_for <= 0 && linearvel.VectorVelocity.Magnitude > 0.02) {
+			linearvel.VectorVelocity = linearvel.VectorVelocity.mul(0.5);
 		}
 
 		// set direction and time to move if we just started moving
 		if (times.time_next_move <= 0) {
+			// linearvel.Enabled = true;
+
 			// firstly detect if we are an aggro npc
 			if (npcData.behaviour === "attack") {
 				// find a new target
