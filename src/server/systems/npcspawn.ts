@@ -124,7 +124,7 @@ export default (dt: number, hitboxservice: HitboxService) => {
 					// if we will ever be able to reach the player without moving back to spawn
 					if (
 						dist <= mindist &&
-						disttospawn.Magnitude <= npcData.maxdistance + npcData.attackrange * 0.5
+						disttospawn.Magnitude <= npcData.maxdistance + npcData.damagerange * 0.5
 					) {
 						besttarget = playerhitbox;
 						mindist = dist;
@@ -137,7 +137,7 @@ export default (dt: number, hitboxservice: HitboxService) => {
 				// if theres a target we can attack
 				if (besttarget) {
 					// if we're too close already
-					if (mindist <= npcData.attackrange) {
+					if (mindist <= npcData.damagerange) {
 						// align the hitbox to target
 						hitbox.AlignOrientation.CFrame = CFrame.lookAt(
 							hitbox.Position,
@@ -151,8 +151,8 @@ export default (dt: number, hitboxservice: HitboxService) => {
 						const vect = besttarget.Position.sub(hitbox.Position);
 						const direction = vect.Unit;
 
-						// get the time to get to target and get closer in attackrange
-						const t = (vect.Magnitude - npcData.attackrange) / npcData.speed;
+						// get the time to get to target and get closer in damagerange
+						const t = (vect.Magnitude - npcData.damagerange) / npcData.speed;
 
 						// align the hitbox to target
 						hitbox.AlignOrientation.CFrame = CFrame.lookAt(

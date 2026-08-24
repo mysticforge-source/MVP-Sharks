@@ -148,6 +148,7 @@ export class ViewController implements OnStart {
 			idle.Play();
 
 			const attack_anim = animator.LoadAnimation(this.animations.attack);
+			attack_anim.Looped = false;
 
 			// creating the npc entity immediately attaches it to viewsystem
 			const npcEntity = World.entity();

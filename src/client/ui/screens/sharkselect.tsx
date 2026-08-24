@@ -3,7 +3,7 @@ import Vide from "@rbxts/vide";
 import { Menu, ownedsharks, selectedshark, selectedslot, shark, shownshark } from "../sources";
 import Shark from "../components/slots/shark";
 import { ReplicatedStorage } from "@rbxts/services";
-import { sharkcatalog } from "shared/data";
+import { animdata, sharkcatalog } from "shared/data";
 import { ModuleResolutionKind } from "typescript";
 import { SpawnSlot } from "client/network/client";
 
@@ -19,6 +19,9 @@ export default ({ enabled }: { enabled: Source<boolean> }) => {
 	const sharkmodel = derive(
 		() => ReplicatedStorage.Models[sharkdata().viewmodelname as keyof {}] as Model,
 	);
+
+	const IDLE_ANIM = new Instance("Animation");
+	IDLE_ANIM.AnimationId = animdata.UniversalIdle;
 
 	return (
 		<screengui ResetOnSpawn={false} IgnoreGuiInset={true} Name="Sharkselect" Enabled={enabled}>
@@ -96,11 +99,21 @@ export default ({ enabled }: { enabled: Source<boolean> }) => {
 			>
 				{() => {
 					const clone = sharkmodel().Clone();
+
+					const animator = clone
+						.FindFirstChild("AnimationController")
+						?.FindFirstChild("Animator") as Animator;
+
+					const track = animator.LoadAnimation(IDLE_ANIM);
+					track.Looped = true;
+
 					clone.PivotTo(
 						new CFrame(0, 0, 0).mul(
 							CFrame.fromEulerAnglesXYZ(math.rad(0), math.rad(250), 0),
 						),
 					);
+
+					// TODO: FIGURE OUT HOW TO ANIMATE IT
 
 					return clone;
 				}}

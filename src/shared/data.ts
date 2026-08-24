@@ -64,13 +64,12 @@ export const npccatalog: Record<number, NpcData> = {
 		meatdrop: 10,
 
 		damage: 25,
-		damagecooldown: 2,
-		damagerange: 10,
+		damagecooldown: 3,
+		damagerange: 12,
 
 		movement: "swimmer",
 		behaviour: "attack",
-		range: 50,
-		attackrange: 20,
+		range: 25,
 
 		speed: 10,
 		idletime: 0.1,
@@ -95,7 +94,7 @@ export const npccatalog: Record<number, NpcData> = {
 			},
 		},
 
-		maxdistance: 50,
+		maxdistance: 75,
 
 		regenrate: 1,
 		regenhp: 5,
@@ -134,12 +133,11 @@ export interface NpcData {
 
 	damage: number; // one attack damage
 	damagecooldown: number; // cooldown between attacks
-	damagerange: number; // ramage of the attack
+	damagerange: number; // range within which the npc attacks and stops moving
 
 	movement: "walker" | "swimmer";
 	behaviour: "ignore" | "run" | "attack";
 	range: number; // range within which the npc sees the nearest player
-	attackrange: number; // range within which the npc attacks and stops moving
 
 	speed: number; // speed of movement
 	idletime: number; // how much time to wait between movements
