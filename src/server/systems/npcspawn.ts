@@ -1,6 +1,6 @@
 import { Workspace } from "@rbxts/services";
 import { merge } from "@rbxts/sift/out/Dictionary";
-import { NPC_Data, NPC_Direction, NPC_Health, NPC_Time } from "server/components";
+import { NPC_Data, NPC_Health, NPC_Time } from "server/components";
 import { HitboxService, NPC_EntityToHitbox, PlayerToHitbox } from "server/services/HitboxService";
 import { npccatalog } from "shared/data";
 import { World } from "shared/ecs/world";
@@ -64,10 +64,11 @@ export default (dt: number, hitboxservice: HitboxService) => {
 				World.set(npc, NPC_Data, { id: id, location: spawnlocation as string });
 				// health component, default is max
 				World.set(npc, NPC_Health, npcData.health);
-				World.set(npc, NPC_Direction, Vector3.zero);
 				World.set(npc, NPC_Time, {
 					time_next_move: npcData.idletime, //move in Idletime
 					time_moving_for: 0,
+
+					target: undefined,
 
 					time_next_attack: 0,
 					time_next_regen: 0,
@@ -94,11 +95,14 @@ export default (dt: number, hitboxservice: HitboxService) => {
 			...times,
 			time_next_move: times.time_next_move - dt,
 			time_moving_for: times.time_moving_for - dt,
+
+			// still tick attack to attack instantly next time
+			time_next_attack: times.time_next_attack - dt,
 		};
 
 		// stop moving if time is over
-		if (times.time_moving_for <= 0 && linearvel.VectorVelocity.Magnitude > 0.02) {
-			linearvel.VectorVelocity = linearvel.VectorVelocity.mul(0.5);
+		if (times.time_moving_for <= 0 && linearvel.VectorVelocity.Magnitude > 0) {
+			linearvel.VectorVelocity = Vector3.zero;
 		}
 
 		// set direction and time to move if we just started moving
@@ -126,6 +130,9 @@ export default (dt: number, hitboxservice: HitboxService) => {
 						mindist = dist;
 					}
 				}
+
+				// even if we found no target
+				times.target = besttarget;
 
 				// if theres a target we can attack
 				if (besttarget) {
@@ -155,7 +162,6 @@ export default (dt: number, hitboxservice: HitboxService) => {
 
 						// if we should move to attack:
 						if (t > 0) {
-							print(t, "seconds to move, because vect is", vect.Magnitude);
 							// move to target now
 							linearvel.VectorVelocity = direction.mul(npcData.speed);
 
@@ -254,6 +260,18 @@ export default (dt: number, hitboxservice: HitboxService) => {
 					);
 				}
 			}
+		}
+
+		// we should attack if we have a target and we can
+		if (times.target && times.time_next_attack <= 0) {
+			times.time_next_attack = npcData.damagecooldown;
+
+			print("attacked");
+
+			hitbox.SetAttribute(
+				"AttackAmount",
+				(hitbox.GetAttribute("AttackAmount") as number) + 1,
+			);
 		}
 
 		// update stuff

@@ -24,5 +24,16 @@ export default (dt: number) => {
 		);
 
 		// data.npcModel.PrimaryPart?.PivotTo(data.hitbox.ViewAttachment.WorldCFrame);
+
+		// play the attack animation if attack amount value is different
+		const attackAmount = data.hitbox.GetAttribute("AttackAmount") as number;
+		if (attackAmount !== data.prev_attacks) {
+			data.attack_track.Play();
+
+			World.set(entity, NPCViewComponent, {
+				...data,
+				prev_attacks: attackAmount,
+			});
+		}
 	}
 };

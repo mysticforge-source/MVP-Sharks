@@ -64,7 +64,7 @@ export const npccatalog: Record<number, NpcData> = {
 		meatdrop: 10,
 
 		damage: 25,
-		damagecooldown: 1,
+		damagecooldown: 2,
 		damagerange: 10,
 
 		movement: "swimmer",
@@ -74,7 +74,7 @@ export const npccatalog: Record<number, NpcData> = {
 
 		speed: 10,
 		idletime: 0.1,
-		movetime: 2,
+		movetime: 1.5,
 
 		spawnlocations: {
 			Test: {
@@ -167,7 +167,7 @@ interface Upgrade {
 
 export const animdata = {
 	UniversalIdle: "rbxassetid://134716316716783",
-	UniversalAttack: "116268079065083",
+	UniversalAttack: "rbxassetid://116268079065083",
 };
 
 // TODO

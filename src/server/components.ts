@@ -34,7 +34,6 @@ export const LevelupIntent = World.entity();
 export const NPC_Hitbox = World.component<Instance>();
 
 export const NPC_Health = World.component<number>();
-export const NPC_Direction = World.component<Vector3>();
 
 // stale context about this specific NPC
 export const NPC_Data = World.component<{
@@ -46,7 +45,7 @@ export const NPC_Time = World.component<{
 	time_next_move: number;
 	time_moving_for: number;
 
-	// target to look at
+	// target to look at and attack
 	target?: MeshPart;
 
 	time_next_regen: number;
@@ -54,4 +53,3 @@ export const NPC_Time = World.component<{
 }>();
 
 export const NPC_DamageIntent = World.component<number>();
-export const NPC_ChangeDirectionIntent = World.component<Vector3>();

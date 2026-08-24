@@ -5,8 +5,8 @@ const config = {
 	hungerdraintime: 2,
 	hungerdrainamount: 13,
 
-	hpdraintime: 1,
-	hpdrainamount: 7,
+	hpdraintime: 2,
+	hpdrainamount: 6,
 };
 
 /** Drains hunger of each PlayComponent entity every hungerdraintime */

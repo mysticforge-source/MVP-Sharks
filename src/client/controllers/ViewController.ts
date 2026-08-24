@@ -30,6 +30,7 @@ export type NPC = {
 	level: number;
 	hitbox: Hitbox;
 
+	prev_attacks: number;
 	attack_track: AnimationTrack;
 };
 
@@ -146,6 +147,8 @@ export class ViewController implements OnStart {
 
 			idle.Play();
 
+			const attack_anim = animator.LoadAnimation(this.animations.attack);
+
 			// creating the npc entity immediately attaches it to viewsystem
 			const npcEntity = World.entity();
 			World.set(npcEntity, NPCViewComponent, {
@@ -154,7 +157,9 @@ export class ViewController implements OnStart {
 				level: hitbox.GetAttribute("Level") as number,
 				hitbox: hitbox,
 
-				attack_track: animator.LoadAnimation(this.animations.attack),
+				// played in viewsys
+				prev_attacks: 0,
+				attack_track: attack_anim,
 			});
 
 			HitboxToNPC.set(hitbox, npcEntity);
