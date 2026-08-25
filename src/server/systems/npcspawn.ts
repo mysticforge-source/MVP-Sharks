@@ -70,8 +70,10 @@ export default (dt: number, hitboxservice: HitboxService) => {
 
 					target: undefined,
 
+					time_in_combat: npcData.regencombattime,
+
 					time_next_attack: 0,
-					time_next_regen: 0,
+					time_next_regen: npcData.regenrate,
 				});
 
 				hitboxservice.createNPCHitbox(npc, spawnlocation as string);
@@ -80,7 +82,7 @@ export default (dt: number, hitboxservice: HitboxService) => {
 	}
 
 	// tick times for each npc entity
-	for (let [entity, times, data] of World.query(NPC_Time, NPC_Data)) {
+	for (let [entity, times, data, hp] of World.query(NPC_Time, NPC_Data, NPC_Health)) {
 		const npcData = npccatalog[data.id];
 		const hitbox = NPC_EntityToHitbox.get(entity);
 		if (!hitbox) continue;
@@ -96,9 +98,23 @@ export default (dt: number, hitboxservice: HitboxService) => {
 			time_next_move: times.time_next_move - dt,
 			time_moving_for: times.time_moving_for - dt,
 
+			time_in_combat: times.time_in_combat - dt,
+
 			// still tick attack to attack instantly next time
 			time_next_attack: times.time_next_attack - dt,
 		};
+
+		// regen: regen if we dont have full hp && we left combat
+		// (its 0 if 10s passed out of combat)
+		if (hp < npcData.health && times.time_in_combat <= 0) {
+			times.time_next_regen -= dt;
+			if (times.time_next_regen <= 0) {
+				times.time_next_regen = npcData.regenrate;
+
+				World.set(entity, NPC_Health, hp + npcData.regenhp);
+				hitbox.SetAttribute("HP", hp + npcData.regenhp);
+			}
+		}
 
 		// stop moving if time is over
 		if (times.time_moving_for <= 0 && linearvel.VectorVelocity.Magnitude > 0) {
@@ -266,7 +282,8 @@ export default (dt: number, hitboxservice: HitboxService) => {
 		if (times.target && times.time_next_attack <= 0) {
 			times.time_next_attack = npcData.damagecooldown;
 
-			print("attacked");
+			// enter combat time
+			times.time_in_combat = npcData.regencombattime;
 
 			hitbox.SetAttribute(
 				"AttackAmount",

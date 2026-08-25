@@ -4,6 +4,7 @@
  */
 
 import { NPCViewComponent, SharkViewComponent } from "client/state/components";
+import { npccatalog } from "shared/data";
 import { World } from "shared/ecs/world";
 
 const npc_lerpSpeed = 2.5;
@@ -35,5 +36,13 @@ export default (dt: number) => {
 				prev_attacks: attackAmount,
 			});
 		}
+
+		const hp = data.hitbox.GetAttribute("HP") as number;
+		const maxhp = npccatalog[data.npcId].health;
+
+		// figure out the hp display
+		data.npcModel.Display.HP.Green.Size = UDim2.fromScale(hp / maxhp, 1);
+
+		data.npcModel.Display.HPText.Text = `${hp}/${maxhp}`;
 	}
 };

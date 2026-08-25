@@ -3,10 +3,10 @@ import { World } from "shared/ecs/world";
 
 const config = {
 	hungerdraintime: 2,
-	hungerdrainamount: 13,
+	hungerdrainamount: 3,
 
 	hpdraintime: 2,
-	hpdrainamount: 6,
+	hpdrainamount: 3,
 };
 
 /** Drains hunger of each PlayComponent entity every hungerdraintime */
@@ -22,8 +22,6 @@ export default (dt: number) => {
 
 			if (newhelperdata.hungertime > config.hungerdraintime) {
 				// update syshelper
-				warn("drain hunger");
-
 				newhelperdata.hungertime -= config.hungerdraintime;
 
 				// update hunger
@@ -40,7 +38,6 @@ export default (dt: number) => {
 
 			if (newhelperdata.hpdraintime > config.hpdraintime) {
 				// update syshelper
-				warn("drain hp");
 				newhelperdata.hpdraintime -= config.hpdraintime;
 
 				// update hp

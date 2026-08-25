@@ -30,6 +30,9 @@ export const AddExpIntent = World.component<number>();
 /* Levels up the player */
 export const LevelupIntent = World.entity();
 
+// Damage the player
+export const DamageIntent = World.component<number>();
+
 // NPC components (data changing live)
 export const NPC_Hitbox = World.component<Instance>();
 
@@ -47,6 +50,8 @@ export const NPC_Time = World.component<{
 
 	// target to look at and attack
 	target?: MeshPart;
+
+	time_in_combat: number;
 
 	time_next_regen: number;
 	time_next_attack: number;

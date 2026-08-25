@@ -24,8 +24,18 @@ export type Shark = {
 	attack_track: AnimationTrack;
 };
 
+export type ViewModel = Model & {
+	Attachment: Attachment;
+	Display: BillboardGui & {
+		HP: Frame & {
+			Green: Frame;
+		};
+		HPText: TextLabel;
+	};
+};
+
 export type NPC = {
-	npcModel: Model;
+	npcModel: ViewModel;
 	npcId: number;
 	level: number;
 	hitbox: Hitbox;
@@ -153,7 +163,7 @@ export class ViewController implements OnStart {
 			// creating the npc entity immediately attaches it to viewsystem
 			const npcEntity = World.entity();
 			World.set(npcEntity, NPCViewComponent, {
-				npcModel: model,
+				npcModel: model as ViewModel,
 				npcId: npcId,
 				level: hitbox.GetAttribute("Level") as number,
 				hitbox: hitbox,

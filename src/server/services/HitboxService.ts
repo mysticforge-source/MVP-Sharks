@@ -226,6 +226,7 @@ export class HitboxService implements OnStart {
 			hitbox.SetAttribute("ObjectType", "NpcHitbox");
 			// used for tracking individual attacks and displaying animations
 			hitbox.SetAttribute("AttackAmount", 0);
+			hitbox.SetAttribute("HP", npcInfo.health);
 
 			hitbox.SetAttribute("NpcId", npcData.id);
 			hitbox.SetAttribute("Level", npcInfo.level);
