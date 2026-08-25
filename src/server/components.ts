@@ -14,6 +14,8 @@ export interface SystemHelper {
 	hungertime: number;
 	hpdraintime: number;
 	test_exp_t: number;
+
+	time_next_attack: number;
 }
 
 export const SystemHelperComponent = World.component<SystemHelper>();
@@ -22,6 +24,8 @@ export const SystemHelperData: SystemHelper = {
 	hungertime: 0,
 	hpdraintime: 0,
 	test_exp_t: 0,
+
+	time_next_attack: 0,
 };
 
 /* Add EXP intent */
@@ -30,8 +34,11 @@ export const AddExpIntent = World.component<number>();
 /* Levels up the player */
 export const LevelupIntent = World.entity();
 
-// Damage the player
+// Damage the player OR npc
 export const DamageIntent = World.component<number>();
+export const AttackIntent = World.entity();
+
+// NPC STUFF
 
 // NPC components (data changing live)
 export const NPC_Hitbox = World.component<Instance>();

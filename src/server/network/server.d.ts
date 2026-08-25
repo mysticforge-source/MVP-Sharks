@@ -360,3 +360,6 @@ export declare const IngameDataEvent: {
 export declare const BuyUpgrade: {
 	on: (callback: (player: Player) => void) => () => void;
 };
+export declare const Attack: {
+	on: (callback: (player: Player) => void) => () => void;
+};

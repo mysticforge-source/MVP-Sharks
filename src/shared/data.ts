@@ -43,6 +43,8 @@ export const sharkcatalog: Record<number, SharkData> = {
 		cost: 100,
 		speed: 20,
 		damage: 25,
+		damagecooldown: 2,
+		damagerange: 20,
 
 		sizemult: 1.25,
 		speedmult: 1.5,
@@ -63,9 +65,9 @@ export const npccatalog: Record<number, NpcData> = {
 		health: 100,
 		meatdrop: 10,
 
-		damage: 25,
-		damagecooldown: 3,
-		damagerange: 12,
+		damage: 5,
+		damagecooldown: 2,
+		damagerange: 10,
 
 		movement: "swimmer",
 		behaviour: "attack",
@@ -98,7 +100,7 @@ export const npccatalog: Record<number, NpcData> = {
 
 		regenrate: 1,
 		regenhp: 5,
-		regencombattime: 1,
+		regencombattime: 10,
 	},
 };
 
@@ -113,6 +115,8 @@ interface SharkData {
 
 	speed: number; /* Baby age speed */
 	damage: number; /* Baby age damage */
+	damagecooldown: number; // cooldown between attacks
+	damagerange: number; // range within which npcs and players will be attacked
 
 	sizemult: number; /* By how much size is multiplied each age-up */
 	speedmult: number; /* By how much speed is multiplied each age-up */

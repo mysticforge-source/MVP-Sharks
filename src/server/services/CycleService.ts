@@ -8,6 +8,7 @@ import levelup from "server/systems/levelup";
 import network from "server/systems/network";
 import { DataService } from "./DataService";
 import npcspawn from "server/systems/npcspawn";
+import attack from "server/systems/attack";
 
 @Service()
 /*
@@ -35,6 +36,10 @@ export class CycleService implements OnStart, OnTick {
 
 		// run systems in order, compensate lag
 		for (this.t; this.t >= this.ECS_HZ; this.t -= this.ECS_HZ) {
+			// handle attacks
+			attack(this.ECS_HZ);
+
+			// handle npcs
 			npcspawn(this.ECS_HZ, this.hitboxservice);
 
 			// drain hunger

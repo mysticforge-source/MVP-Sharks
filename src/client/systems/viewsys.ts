@@ -13,6 +13,17 @@ export default (dt: number) => {
 	// render player models
 	for (const [entity, data] of World.query(SharkViewComponent)) {
 		data.sharkModel.PrimaryPart?.PivotTo(data.hitbox.ViewAttachment.WorldCFrame);
+
+		// play the attack animation if attack amount value is different
+		const attackAmount = data.hitbox.GetAttribute("AttackAmount") as number;
+		if (attackAmount !== data.prev_attacks) {
+			data.attack_track.Play();
+
+			World.set(entity, SharkViewComponent, {
+				...data,
+				prev_attacks: attackAmount,
+			});
+		}
 	}
 
 	// render npc models
@@ -23,6 +34,14 @@ export default (dt: number) => {
 				1 - math.exp(-npc_lerpSpeed * dt),
 			),
 		);
+
+		const hp = data.hitbox.GetAttribute("HP") as number;
+		const maxhp = npccatalog[data.npcId].health;
+
+		// figure out the hp display
+		data.npcModel.Display.HP.Green.Size = UDim2.fromScale(hp / maxhp, 1);
+
+		data.npcModel.Display.HPText.Text = `${hp}/${maxhp}`;
 
 		// data.npcModel.PrimaryPart?.PivotTo(data.hitbox.ViewAttachment.WorldCFrame);
 
@@ -36,13 +55,5 @@ export default (dt: number) => {
 				prev_attacks: attackAmount,
 			});
 		}
-
-		const hp = data.hitbox.GetAttribute("HP") as number;
-		const maxhp = npccatalog[data.npcId].health;
-
-		// figure out the hp display
-		data.npcModel.Display.HP.Green.Size = UDim2.fromScale(hp / maxhp, 1);
-
-		data.npcModel.Display.HPText.Text = `${hp}/${maxhp}`;
 	}
 };

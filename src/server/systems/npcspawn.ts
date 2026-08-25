@@ -313,4 +313,17 @@ export default (dt: number, hitboxservice: HitboxService) => {
 		// update stuff
 		World.set(entity, NPC_Time, times);
 	}
+
+	// handle damage for each npc
+	for (let [entity, damage, hp] of World.query(DamageIntent, NPC_Health)) {
+		World.remove(entity, DamageIntent);
+
+		World.set(entity, NPC_Health, math.max(0, hp - damage));
+
+		warn("handled damage!");
+
+		// display clientside
+		const hitbox = NPC_EntityToHitbox.get(entity);
+		if (hitbox) hitbox.SetAttribute("HP", hp);
+	}
 };

@@ -19,6 +19,7 @@ import { NPC_Data } from "server/components";
 export const HitboxToPlayer = new Map<MeshPart, Player>();
 export const PlayerToHitbox = new Map<Player, MeshPart>();
 export const HitboxToEntity = new Map<MeshPart, Entity>();
+export const EntityToHitbox = new Map<Entity, MeshPart>();
 
 /** A set of all existing NPC entities with data each */
 export const NPCEntities = new Set<Entity>();
@@ -305,6 +306,8 @@ export class HitboxService implements OnStart {
 			hitbox.SetAttribute("SharkId", sharkId);
 			hitbox.SetAttribute("Level", slotdata.level);
 
+			hitbox.SetAttribute("AttackAmount", 0);
+
 			// resize hitbox
 			this.resizeHitbox(hitbox, sharkId, slotdata.level);
 
@@ -325,6 +328,7 @@ export class HitboxService implements OnStart {
 					HitboxToPlayer.delete(hitbox);
 					HitboxToEntity.delete(hitbox);
 					PlayerToHitbox.delete(player);
+					if (playerEntity) EntityToHitbox.delete(playerEntity);
 
 					/* clean up cloned input folder */
 					const inputFolder = player.FindFirstChild("Input");
@@ -343,6 +347,7 @@ export class HitboxService implements OnStart {
 				World.set(playerEntity, HitboxComponent, hitbox);
 
 				HitboxToEntity.set(hitbox, playerEntity);
+				EntityToHitbox.set(playerEntity, hitbox);
 			}
 
 			// set replication focus

@@ -150,6 +150,9 @@ if not RunService:IsRunning() then
 		BuyUpgrade = table.freeze({
 			fire = noop
 		}),
+		Attack = table.freeze({
+			fire = noop
+		}),
 	}) :: Events
 end
 local remotes = ReplicatedStorage:WaitForChild("ZAP")
@@ -157,6 +160,8 @@ local remotes = ReplicatedStorage:WaitForChild("ZAP")
 local reliable = remotes:WaitForChild("ZAP_RELIABLE")
 assert(reliable:IsA("RemoteEvent"), "Expected ZAP_RELIABLE to be a RemoteEvent")
 
+local unreliable = { remotes:WaitForChild("ZAP_UNRELIABLE_0") }
+assert(unreliable[1]:IsA("UnreliableRemoteEvent"), "Expected ZAP_UNRELIABLE_0 to be an UnreliableRemoteEvent")
 export type SharkSlot = ({
 	["shark"]: (number),
 	["alive"]: (boolean),
@@ -509,6 +514,18 @@ local returns = {
 			debug.profilebegin("BuyUpgrade Fire")
 			alloc(1)
 			buffer.writeu8(outgoing_buff, outgoing_apos, 2)
+			debug.profileend()
+		end,
+	},
+	Attack = {
+		fire = function()
+			debug.profilebegin("Attack Fire")
+			local saved = save()
+			load_empty()
+			local buff = buffer.create(outgoing_used)
+			buffer.copy(buff, 0, outgoing_buff, 0, outgoing_used)
+			unreliable[1]:FireServer(buff, outgoing_inst)
+			load(saved)
 			debug.profileend()
 		end,
 	},

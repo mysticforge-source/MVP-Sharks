@@ -88,6 +88,12 @@ event SpawnResult = {
     type: Reliable
 }
 
+-- click to attack, no data
+event Attack = {
+    from: Client,
+    type: Unreliable
+}
+
 event BuyUpgrade = {
     from: Client,
     type: Reliable

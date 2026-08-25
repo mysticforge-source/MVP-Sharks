@@ -21,6 +21,7 @@ export type Shark = {
 	level: number;
 	hitbox: Hitbox;
 
+	prev_attacks: number;
 	attack_track: AnimationTrack;
 };
 
@@ -115,6 +116,9 @@ export class ViewController implements OnStart {
 			const idle = animator.LoadAnimation(this.animations.idle);
 			idle.Looped = true;
 
+			const attack_anim = animator.LoadAnimation(this.animations.attack);
+			attack_anim.Looped = false;
+
 			idle.Play();
 
 			model.PrimaryPart?.PivotTo(hitbox.ViewAttachment.CFrame);
@@ -128,7 +132,9 @@ export class ViewController implements OnStart {
 				level: hitbox.GetAttribute("Level") as number,
 				hitbox: hitbox,
 
-				attack_track: animator.LoadAnimation(this.animations.attack),
+				// played in viewsys
+				prev_attacks: 0,
+				attack_track: attack_anim,
 			});
 
 			PlayerToSharkEntity.set(Players.LocalPlayer, sharkEntity);

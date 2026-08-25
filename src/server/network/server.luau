@@ -164,6 +164,9 @@ if not RunService:IsRunning() then
 		BuyUpgrade = table.freeze({
 			on = noop
 		}),
+		Attack = table.freeze({
+			on = noop
+		}),
 	}) :: Events
 end
 
@@ -181,6 +184,20 @@ if reliable == nil then
 	reliable.Parent = remotes
 end
 
+local function getOrCreateUnreliableRemote(name: string): UnreliableRemoteEvent
+	local remote = remotes:FindFirstChild(name)
+
+	if remote == nil then
+		remote = Instance.new("UnreliableRemoteEvent")
+		remote.Name = name
+		remote.Parent = remotes
+	end
+
+	return remote
+end
+
+local unreliable = { getOrCreateUnreliableRemote("ZAP_UNRELIABLE_0") }
+assert(unreliable[1]:IsA("UnreliableRemoteEvent"), "Expected ZAP_UNRELIABLE_0 to be an UnreliableRemoteEvent")
 local player_map = {}
 
 local function load_player(player: Player)
@@ -248,9 +265,11 @@ end
 RunService.Heartbeat:Connect(sendEvents)
 
 local reliable_events = table.create(3)
+local unreliable_events = table.create(1)
 reliable_events[1] = {}
 reliable_events[0] = {}
 reliable_events[2] = {}
+unreliable_events[0] = {}
 reliable.OnServerEvent:Connect(function(player, buff, inst)
 	debug.profilebegin("Zap Reliable OnServerEvent")
 	incoming_buff = buff
@@ -298,6 +317,20 @@ reliable.OnServerEvent:Connect(function(player, buff, inst)
 		else
 			error("Unknown event id")
 		end
+	end
+	debug.profileend()
+end)
+unreliable[1].OnServerEvent:Connect(function(player, buff, inst) -- Attack
+	debug.profilebegin("Zap Attack OnServerEvent")
+	incoming_buff = buff
+	incoming_inst = inst
+	incoming_read = 0
+	incoming_ipos = 0
+	local value
+	for _, cb in unreliable_events[0] do
+		debug.profilebegin("Attack Callback")
+		task.spawn(cb, player, value)
+		debug.profileend()
 	end
 	debug.profileend()
 end)
@@ -1566,6 +1599,14 @@ local returns = {
 			table.insert(reliable_events[2], callback)
 			return function()
 				table.remove(reliable_events[2], table.find(reliable_events[2], callback))
+			end
+		end,
+	},
+	Attack = {
+		on = function(callback: (player: Player) -> ()): () -> ()
+			table.insert(unreliable_events[0], callback)
+			return function()
+				table.remove(unreliable_events[0], table.find(unreliable_events[0], callback))
 			end
 		end,
 	},

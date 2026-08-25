@@ -14,6 +14,9 @@ import { World } from "shared/ecs/world";
 import { PlayerEntity } from "./DataController";
 import { LevelChangeIntent } from "client/state/components";
 import { states } from "client/state/viewstate";
+import { InputManager, StandardActionBuilder } from "@rbxts/mechanism";
+import { sharkcatalog } from "shared/data";
+import { Attack } from "client/network/client";
 
 @Controller()
 export class MovementController implements OnInit {
@@ -23,6 +26,8 @@ export class MovementController implements OnInit {
 	private camera!: Camera;
 
 	private rotBinding!: InputBinding;
+
+	private otherInputManager = new InputManager();
 
 	private maid = clientMaid.sub();
 
@@ -53,6 +58,22 @@ export class MovementController implements OnInit {
 			sharkid: shark(),
 			level: level(),
 		};
+
+		// handle attacking
+		const AttackBinding = new StandardActionBuilder("MouseButton1").setCooldown(
+			sharkcatalog[shark()].damagecooldown,
+		);
+		this.otherInputManager.bind(AttackBinding);
+
+		this.maid.add(() => this.otherInputManager.unbind(AttackBinding));
+
+		this.maid.add(
+			AttackBinding.activated.Connect(() => {
+				// send to server the will to attack
+				warn("CLICKED");
+				Attack.fire();
+			}),
+		);
 
 		// register local player for client-side prediction
 		RegisterPlayer(this.player, hitbox, ingamedata.sharkid, ingamedata.level);

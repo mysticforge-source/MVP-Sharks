@@ -132,3 +132,6 @@ export declare const IngameDataEvent: {
 export declare const BuyUpgrade: {
 	fire: () => void;
 };
+export declare const Attack: {
+	fire: () => void;
+};
