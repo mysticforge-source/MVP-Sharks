@@ -1,7 +1,12 @@
 import { Workspace } from "@rbxts/services";
 import { merge } from "@rbxts/sift/out/Dictionary";
-import { NPC_Data, NPC_Health, NPC_Time } from "server/components";
-import { HitboxService, NPC_EntityToHitbox, PlayerToHitbox } from "server/services/HitboxService";
+import { DamageIntent, NPC_Data, NPC_Health, NPC_Time } from "server/components";
+import {
+	HitboxService,
+	HitboxToEntity,
+	NPC_EntityToHitbox,
+	PlayerToHitbox,
+} from "server/services/HitboxService";
 import { npccatalog } from "shared/data";
 import { World } from "shared/ecs/world";
 
@@ -285,10 +290,24 @@ export default (dt: number, hitboxservice: HitboxService) => {
 			// enter combat time
 			times.time_in_combat = npcData.regencombattime;
 
+			// for animaions
 			hitbox.SetAttribute(
 				"AttackAmount",
 				(hitbox.GetAttribute("AttackAmount") as number) + 1,
 			);
+
+			// damage the player by assigning an intent
+			const playerentity = HitboxToEntity.get(times.target);
+
+			if (playerentity) {
+				const previntent = World.get(playerentity, DamageIntent);
+
+				World.set(
+					playerentity,
+					DamageIntent,
+					previntent ? previntent + npcData.damage : npcData.damage,
+				);
+			}
 		}
 
 		// update stuff

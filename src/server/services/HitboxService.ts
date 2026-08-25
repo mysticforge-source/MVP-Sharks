@@ -18,6 +18,7 @@ import { NPC_Data } from "server/components";
 
 export const HitboxToPlayer = new Map<MeshPart, Player>();
 export const PlayerToHitbox = new Map<Player, MeshPart>();
+export const HitboxToEntity = new Map<MeshPart, Entity>();
 
 /** A set of all existing NPC entities with data each */
 export const NPCEntities = new Set<Entity>();
@@ -322,6 +323,9 @@ export class HitboxService implements OnStart {
 					UnregisterPlayer(player);
 					DestroyHitbox(hitbox);
 					HitboxToPlayer.delete(hitbox);
+					HitboxToEntity.delete(hitbox);
+					PlayerToHitbox.delete(player);
+
 					/* clean up cloned input folder */
 					const inputFolder = player.FindFirstChild("Input");
 					if (inputFolder) {
@@ -337,6 +341,8 @@ export class HitboxService implements OnStart {
 			// store in ecs
 			if (playerEntity) {
 				World.set(playerEntity, HitboxComponent, hitbox);
+
+				HitboxToEntity.set(hitbox, playerEntity);
 			}
 
 			// set replication focus

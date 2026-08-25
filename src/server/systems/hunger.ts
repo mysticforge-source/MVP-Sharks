@@ -1,4 +1,9 @@
-import { DirtyPlayComponent, PlayComponent, SystemHelperComponent } from "server/components";
+import {
+	DamageIntent,
+	DirtyPlayComponent,
+	PlayComponent,
+	SystemHelperComponent,
+} from "server/components";
 import { World } from "shared/ecs/world";
 
 const config = {
@@ -48,5 +53,15 @@ export default (dt: number) => {
 
 		World.set(entity, SystemHelperComponent, newhelperdata);
 		World.set(entity, PlayComponent, newdata);
+	}
+
+	// handle damage intents
+	for (const [entity, data, damage] of World.query(PlayComponent, DamageIntent)) {
+		World.remove(entity, DamageIntent);
+
+		World.set(entity, PlayComponent, {
+			...data,
+			hp: math.max(data.hp - damage, 0),
+		});
 	}
 };
