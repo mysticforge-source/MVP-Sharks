@@ -315,15 +315,15 @@ export default (dt: number, hitboxservice: HitboxService) => {
 	}
 
 	// handle damage for each npc
-	for (let [entity, damage, hp] of World.query(DamageIntent, NPC_Health)) {
-		World.remove(entity, DamageIntent);
+	for (let [npc_entity, damage, hp] of World.query(DamageIntent, NPC_Health)) {
+		World.remove(npc_entity, DamageIntent);
 
-		World.set(entity, NPC_Health, math.max(0, hp - damage));
+		World.set(npc_entity, NPC_Health, math.max(0, hp - damage));
 
-		warn("handled damage!");
+		warn("handled damage! NEW HP:", hp - damage);
 
 		// display clientside
-		const hitbox = NPC_EntityToHitbox.get(entity);
-		if (hitbox) hitbox.SetAttribute("HP", hp);
+		const hitbox = NPC_EntityToHitbox.get(npc_entity);
+		if (hitbox) hitbox.SetAttribute("HP", hp - damage);
 	}
 };

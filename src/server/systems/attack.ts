@@ -39,22 +39,19 @@ export default (dt: number) => {
 			newhelperdata.time_next_attack = sharkData.damagecooldown;
 
 			// firstly, npcs
-			for (const [npc_entity, npcdata, npchp] of World.query(NPC_Data, NPC_Health)) {
+			for (const [npc_entity, npcdata] of World.query(NPC_Data)) {
 				// if their hitbox is near
 
 				const npchitbox = NPC_EntityToHitbox.get(npc_entity);
+
+				print("queried an npc");
 
 				if (
 					(npchitbox as MeshPart).Position.sub(hitbox?.Position!).Magnitude <=
 					sharkData.damagerange
 				) {
 					// attack the NPC! by asigning damage intent
-					const prevdamage = World.get(npc_entity, DamageIntent);
-					World.set(
-						npc_entity,
-						DamageIntent,
-						prevdamage ? prevdamage + sharkData.damage : sharkData.damage,
-					);
+					World.set(npc_entity, DamageIntent, sharkData.damage);
 				}
 			}
 		}

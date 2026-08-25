@@ -7,7 +7,7 @@ import { NPCViewComponent, SharkViewComponent } from "client/state/components";
 import { npccatalog } from "shared/data";
 import { World } from "shared/ecs/world";
 
-const npc_lerpSpeed = 2.5;
+const npc_lerpSpeed = 4; //2.5
 
 export default (dt: number) => {
 	// render player models

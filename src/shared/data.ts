@@ -80,7 +80,7 @@ export const npccatalog: Record<number, NpcData> = {
 		spawnlocations: {
 			Test: {
 				spawnrate: 10,
-				maxspawns: 2,
+				maxspawns: 1,
 			},
 			Test2: {
 				spawnrate: 10,
